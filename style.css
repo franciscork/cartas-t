@@ -1,0 +1,550 @@
+:root {
+    --bg-dark: #e6e2d3;
+    --bg-mid: #f0ece1;
+    --bg-light: #fbf9f1;
+    --text-main: #1a1a1a;
+    --text-muted: #4a4a4a;
+    --accent-red: #d32f2f;
+    --accent-blue: #1976d2;
+    --card-bg: #fffcf5;
+    --card-border: #111111;
+    --font-heading: 'Cinzel', serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: radial-gradient(circle at center, var(--bg-light), var(--bg-dark));
+    color: var(--text-main);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    letter-spacing: 1px;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-in-out;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Start Screen */
+#start-screen {
+    text-align: center;
+}
+
+#start-screen h1 {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-red);
+    display: inline-block;
+    padding-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-style: italic;
+}
+
+.input-container {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.input-container p {
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    border-radius: 4px;
+    color: var(--text-main);
+    padding: 0.8rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    resize: none;
+    transition: all 0.3s ease;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-red);
+    background: rgba(255,255,255,0.5);
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border: 2px solid var(--text-main);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-main);
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.primary-btn:hover {
+    background: var(--text-main);
+    color: var(--bg-light);
+}
+
+.secondary-btn {
+    margin-top: 2rem;
+}
+
+.secondary-btn:hover {
+    background: var(--text-main);
+    color: var(--bg-light);
+}
+
+/* Game Screen */
+.game-header {
+    position: absolute;
+    top: 5%;
+    text-align: center;
+    width: 100%;
+}
+
+.game-header h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+#instruction-text {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
+
+.table-area {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    margin-top: 8rem;
+}
+
+.card-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 2rem;
+    border-radius: 8px;
+    transition: all 0.5s ease;
+    cursor: pointer;
+}
+
+/* Hover/Feel effect */
+.card-row:hover {
+    background: rgba(0, 0, 0, 0.03);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.card-row:hover .card {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+}
+
+.card-row.discarding {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    pointer-events: none;
+}
+
+/* Card Styles */
+.card {
+    width: 80px;
+    height: 140px;
+    perspective: 1000px;
+    transition: all 0.3s ease;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* Card Back Design */
+.card-back {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-back-inner {
+    width: 85%;
+    height: 90%;
+    border: 1px solid var(--accent-red);
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(211, 47, 47, 0.05) 5px, rgba(211, 47, 47, 0.05) 10px);
+}
+
+.card-back-t {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    color: var(--card-border);
+}
+
+/* Card Front Design */
+.card-front {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+}
+
+.card-front-inner {
+    width: 100%;
+    height: 100%;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--card-bg);
+}
+
+/* Card Text Styling */
+.card-text-container {
+    position: absolute;
+    bottom: 30px;
+    text-align: center;
+    width: 100%;
+}
+.card-title-text {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+.card-type-text {
+    font-size: 0.5rem;
+    color: var(--text-muted);
+}
+.card-meaning-text {
+    display: none; /* Hide meaning on small cards */
+}
+
+/* Original Card Layout Elements */
+.card-num-circle {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.5rem;
+    font-weight: bold;
+}
+
+.card-symbol-circle {
+    position: absolute;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.6rem;
+}
+
+.card-bottom-circle {
+    position: absolute;
+    bottom: 5px;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.5rem;
+}
+
+.schematic-human {
+    margin-top: 30px;
+    width: 2px;
+    height: 60px;
+    background: var(--card-border);
+    position: relative;
+}
+
+.human-arms {
+    position: absolute;
+    top: 20px;
+    left: -15px;
+    width: 32px;
+    height: 2px;
+    background: var(--card-border);
+}
+
+.human-legs {
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: 22px;
+    height: 20px;
+    border: 2px solid var(--card-border);
+    border-top: none;
+    border-bottom: none;
+}
+
+.chakra {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-red);
+    border-radius: 50%;
+    left: -2px;
+}
+
+.chakra-1 { top: -8px; width: 8px; height: 8px; left: -3px; background: var(--card-bg); border: 1px solid var(--card-border); } /* Head */
+.chakra-2 { top: 10px; } /* Throat */
+.chakra-3 { top: 20px; } /* Heart */
+.chakra-4 { top: 35px; } /* Plexus */
+.chakra-5 { top: 50px; } /* Root */
+
+/* Result Screen */
+.final-cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.final-cards-container .card {
+    width: 220px;
+    height: 380px;
+}
+
+.final-cards-container .card-face {
+    border-radius: 12px;
+    border-width: 3px;
+}
+
+.final-cards-container .card-back-inner,
+.final-cards-container .card-front-inner {
+    border-radius: 8px;
+    border-width: 3px;
+}
+
+.final-cards-container .card-num-circle {
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+}
+
+.final-cards-container .card-symbol-circle {
+    top: 15px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+}
+
+.final-cards-container .card-bottom-circle {
+    bottom: 15px;
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+}
+
+.final-cards-container .schematic-human {
+    margin-top: 80px;
+    height: 180px;
+    width: 4px;
+}
+
+.final-cards-container .human-arms {
+    top: 60px;
+    left: -40px;
+    width: 84px;
+    height: 4px;
+}
+
+.final-cards-container .human-legs {
+    bottom: -30px;
+    left: -25px;
+    width: 54px;
+    height: 60px;
+    border-width: 4px;
+}
+
+.final-cards-container .chakra {
+    width: 14px;
+    height: 14px;
+    left: -5px;
+}
+
+.final-cards-container .chakra-1 { top: -25px; width: 24px; height: 24px; left: -10px; border-width: 2px;}
+.final-cards-container .chakra-2 { top: 30px; }
+.final-cards-container .chakra-3 { top: 60px; }
+.final-cards-container .chakra-4 { top: 110px; }
+.final-cards-container .chakra-5 { top: 160px; }
+
+.final-cards-container .card-text-container {
+    bottom: 50px;
+}
+
+.final-cards-container .card-title-text {
+    font-size: 1.5rem;
+}
+
+.final-cards-container .card-type-text {
+    font-size: 1rem;
+}
+
+.final-cards-container .card-meaning-text {
+    display: block;
+    position: absolute;
+    bottom: 120px;
+    text-align: center;
+    width: 85%;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--text-muted);
+    background: rgba(255, 252, 245, 0.8);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.combined-concept {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    border-radius: 4px;
+    font-size: 1.1rem;
+    max-width: 800px;
+    text-align: left;
+    color: var(--text-main);
+    line-height: 1.6;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 1s ease;
+}
+
+.combined-concept.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.combined-concept h3 {
+    margin-bottom: 10px;
+    color: var(--accent-red);
+    font-size: 1.2rem;
+}
+
+.combined-concept p {
+    margin-bottom: 15px;
+}
+
+.combined-concept strong {
+    font-family: var(--font-heading);
+}
+
+@media (max-width: 768px) {
+    #start-screen h1 {
+        font-size: 2.5rem;
+    }
+    
+    .card {
+        width: 60px;
+        height: 105px;
+    }
+    .card-face {
+        border-radius: 6px;
+    }
+    .card-front-inner, .card-back-inner {
+        border-radius: 4px;
+    }
+    .schematic-human {
+        display: none; /* Hide on small cards to keep clean */
+    }
+    
+    .final-cards-container {
+        flex-direction: column;
+        align-items: center;
+    }
+}

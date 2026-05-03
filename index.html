@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciencia de las Cartas T</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1>Ciencia de las Cartas T</h1>
+            <p class="subtitle">Conecta con tu intención y descubre el mensaje de los Arcanos Mayores</p>
+            
+            <div class="input-container">
+                <p>Nivel Cósmico (Mental/Abstracto):</p>
+                <textarea id="intention-cosmic" placeholder="Ej. ¿Cuál es el propósito mayor de..." rows="2"></textarea>
+                <p>Nivel Psíquico (Emocional/Vincular):</p>
+                <textarea id="intention-psychic" placeholder="Ej. ¿Cómo me siento respecto a..." rows="2"></textarea>
+                <p>Nivel Alquímico (Físico/Material):</p>
+                <textarea id="intention-alchemical" placeholder="Ej. ¿Qué acción debo tomar en..." rows="2"></textarea>
+            </div>
+            
+            <button id="start-btn" class="btn primary-btn">Comenzar Ritual</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <h2 id="current-intention-display">Tu Intención</h2>
+                <p id="instruction-text">Siente la vibración térmica y magnética de las cartas. Selecciona la fila que más resuene contigo.</p>
+            </div>
+
+            <div class="table-area">
+                <div id="row-1" class="card-row" data-row="1"></div>
+                <div id="row-2" class="card-row" data-row="2"></div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <h2>El Mensaje de las Cartas</h2>
+            <div id="final-cards" class="final-cards-container"></div>
+            <div id="combined-concept" class="combined-concept"></div>
+            <button id="restart-btn" class="btn secondary-btn">Nuevo Ritual</button>
+        </div>
+    </div>
+
+    <!-- Modals or overlays for specific actions -->
+    <div id="overlay" class="overlay hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
