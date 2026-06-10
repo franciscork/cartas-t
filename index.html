@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciencia de las Cartas T — Máquina T</title>
+    <meta name="description" content="El sistema completo de las Cartas T de Daniel Zimmermann. Cuatro máquinas: Síquica, Alquimia, Árbol y Horóscopo.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+
+        <!-- ═══ PANTALLA 1: INICIO ═══ -->
+        <div id="start-screen" class="screen active">
+            <div class="start-inner">
+                <div class="logo-area">
+                    <div class="logo-t">T</div>
+                    <h1>Ciencia de las Cartas T</h1>
+                    <p class="subtitle">Sistema completo de las 4 Máquinas según Daniel Zimmermann</p>
+                </div>
+
+                <div class="machine-selector">
+                    <p class="section-label">Elige tu Máquina</p>
+                    <div class="machine-grid">
+                        <div class="machine-card" data-machine="siquica">
+                            <div class="machine-icon">🧘</div>
+                            <div class="machine-name">Síquica</div>
+                            <div class="machine-desc">Los 5 centros del ser interior</div>
+                        </div>
+                        <div class="machine-card" data-machine="alquimia">
+                            <div class="machine-icon">⬡</div>
+                            <div class="machine-name">Alquimia</div>
+                            <div class="machine-desc">El Eneagrama de transformación</div>
+                        </div>
+                        <div class="machine-card" data-machine="arbol">
+                            <div class="machine-icon">🌳</div>
+                            <div class="machine-name">Árbol</div>
+                            <div class="machine-desc">Las 10 esferas del cosmos</div>
+                        </div>
+                        <div class="machine-card" data-machine="horoscopo">
+                            <div class="machine-icon">♈</div>
+                            <div class="machine-name">Horóscopo</div>
+                            <div class="machine-desc">Las 12 casas del ciclo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="intention-area">
+                    <p class="section-label">Tu Pregunta Triple</p>
+                    <div class="triple-inputs">
+                        <div class="input-group">
+                            <span class="input-level cosmic">Cósmico</span>
+                            <textarea id="intention-cosmic" placeholder="¿Cuál es el propósito mayor de...?" rows="2"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-level psychic">Psíquico</span>
+                            <textarea id="intention-psychic" placeholder="¿Cómo me siento respecto a...?" rows="2"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-level alchemical">Alquímico</span>
+                            <textarea id="intention-alchemical" placeholder="¿Qué acción debo tomar en...?" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="btn primary-btn" disabled>Selecciona una Máquina</button>
+            </div>
+        </div>
+
+        <!-- ═══ PANTALLA 2: JUEGO (SELECCIÓN DE FILAS) ═══ -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="game-machine-badge" id="game-machine-badge"></div>
+                <p id="instruction-text">Siente la vibración magnética. Selecciona la fila que más resuene contigo.</p>
+                <div class="cards-remaining">Cartas restantes: <span id="cards-count">22</span></div>
+            </div>
+            <div class="table-area">
+                <div id="row-1" class="card-row" data-row="1">
+                    <div class="row-label">FILA A — Haz clic para elegir</div>
+                </div>
+                <div id="row-2" class="card-row" data-row="2">
+                    <div class="row-label">FILA B — Haz clic para elegir</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PANTALLA 3: RESULTADO POR MÁQUINA ═══ -->
+        <div id="result-screen" class="screen">
+            <div class="result-header">
+                <h2 id="result-title">Lectura de la Máquina</h2>
+                <p id="result-subtitle"></p>
+            </div>
+            <div id="machine-layout" class="machine-layout"></div>
+            <div id="combined-concept" class="combined-concept"></div>
+            <button id="restart-btn" class="btn secondary-btn">Nuevo Ritual</button>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
