@@ -15,6 +15,7 @@ Uso:
 
 import json
 import sys
+import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -92,6 +93,42 @@ def clear():
         pass
 
 
+
+
+
+# ── Error Logging ──────────────────────────────────────────────────────────
+
+def log_exception(source: str, icon: str = "❌", exc: BaseException = None, context: str = ""):
+    """Log an exception with full traceback.
+
+    Captura y registra hasta 20 frames del traceback.
+    Si no se pasa exc explícitamente, usa sys.exc_info().
+    """
+    try:
+        if exc is None:
+            exc_info = sys.exc_info()
+            if exc_info[1] is None:
+                return  # No active exception
+            tb_str = "".join(traceback.format_exception(*exc_info, limit=10))
+            exc_name = type(exc_info[1]).__name__
+            exc_msg = str(exc_info[1])
+        else:
+            tb_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, limit=10))
+            exc_name = type(exc).__name__
+            exc_msg = str(exc)
+
+        msg = f"{exc_name}: {exc_msg}"
+        if context:
+            msg = f"[{context}] {msg}"
+
+        log(source, icon, msg)
+
+        # Log traceback as a multi-line entry
+        for line in tb_str.strip().split('\n'):
+            if line.strip():
+                log(source, "·", line)
+    except Exception:
+        pass  # Never break the caller
 
 
 # ── Helpers for Agent Activity Logging ────────────────────────────────────

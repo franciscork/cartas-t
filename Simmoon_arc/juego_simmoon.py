@@ -3696,11 +3696,11 @@ class JuegoSimmoon:
 
             self.mostrando_resumen = False
 
-            elif self.mostrando_permiso:
+            if self.mostrando_permiso:
 
                 self.mostrando_permiso = False
 
-                elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
 
                     pant_w, pant_h = self.pantalla.get_width(), self.pantalla.get_height()
 
@@ -3718,7 +3718,7 @@ class JuegoSimmoon:
 
                             self.mostrando_finanzas = False
 
-                        continue
+            # continue removed (not in loop)
 
                     ancho, alto = 460, 540
 
@@ -3750,11 +3750,11 @@ class JuegoSimmoon:
 
                             self.mostrando_permiso = False
 
-                elif evento.type == pygame.QUIT:
+            if evento.type == pygame.QUIT:
 
-                    self.ejecutando = False
+                self.ejecutando = False
 
-                continue  # Bloquear resto de interacciones
+            # continue removed (not in loop)
 
 
 
@@ -3867,7 +3867,8 @@ class JuegoSimmoon:
 
                     if mouse_pos[0] >= panel_x:
 
-                        continue
+                        pass  # was continue
+
 
 
 
@@ -3885,7 +3886,8 @@ class JuegoSimmoon:
 
                             SonidoProcedural.sonido_alerta()
 
-                        continue
+                        pass  # was continue
+
 
 
 
@@ -3971,7 +3973,8 @@ class JuegoSimmoon:
 
                                     self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
 
-                            continue
+                            pass  # was continue
+
 
 
 
