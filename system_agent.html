@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON · Fábrica de Juegos v5.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  :root {
+    --bg: #0b0b14; --bg2: #11111e; --bg3: #181830;
+    --card: #1c1c34; --card-hover: #262644; --border: #2a2a48;
+    --text: #e8e8f0; --text2: #8888b0; --text3: #55557a;
+    --accent: #6c5ce7; --accent2: #00cec9; --accent3: #fd79a8;
+    --orange: #fdcb6e; --green: #00b894; --red: #e17055; --blue: #74b9ff;
+    --glow: rgba(108,92,231,0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; overflow-x: hidden; line-height: 1.6;
+  }
+  .stars { position: fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:0;
+    background: radial-gradient(1px 1px at 20px 30px, #eee, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 200px 100px, #eee, transparent),
+      radial-gradient(1px 1px at 300px 120px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 120px 220px, #fff, transparent);
+    background-size: 450px 300px; background-repeat: repeat;
+  }
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+  .header { text-align: center; padding: 40px 20px 25px; }
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace; font-size: 2.4em; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--orange));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px;
+  }
+  .header .badge {
+    display: inline-block; margin-top: 10px; padding: 5px 16px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 20px; font-size: 0.8em; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .header p { color: var(--text2); margin-top: 6px; font-size: 0.95em; }
+  .section { margin-top: 35px; }
+  .section h2 {
+    font-family: 'JetBrains Mono', monospace; font-size: 1.2em; font-weight: 600; color: var(--text);
+    padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .diagram {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; overflow-x: auto;
+  }
+  .diagram pre { font-family: 'JetBrains Mono', monospace; font-size: 0.82em; line-height: 1.8; color: var(--text); white-space: pre; min-width: max-content; }
+  .diagram pre .k { color: var(--accent); font-weight: 700; }
+  .diagram pre .s { color: var(--accent2); }
+  .diagram pre .c { color: var(--text3); font-style: italic; }
+  .diagram pre .g { color: var(--green); }
+  .diagram pre .d { color: var(--text3); }
+  .diagram pre .p { color: var(--orange); font-weight: 600; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; transition: all 0.3s;
+  }
+  .card:hover { border-color: var(--accent); box-shadow: 0 4px 20px var(--glow); transform: translateY(-2px); }
+  .card .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .card .h .name { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.9em; }
+  .card .h .tag { font-size: 0.6em; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .card .h .tag.ok { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
+  .card .h .tag.warn { background: rgba(253,203,110,0.15); color: var(--orange); border: 1px solid rgba(253,203,110,0.3); }
+  .card .h .tag.study { background: rgba(108,92,231,0.15); color: var(--accent); border: 1px solid rgba(108,92,231,0.3); }
+  .card .info { font-size: 0.8em; color: var(--text2); line-height: 1.5; }
+  .card .info code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; background: var(--bg3); padding: 1px 5px; border-radius: 4px; color: var(--accent2); }
+
+  .runs-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+  .runs-table th { text-align: left; padding: 10px 14px; background: var(--bg3); color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .runs-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .runs-table td.ok { color: var(--green); }
+  .runs-table td.counterfeit { color: var(--accent2); font-weight: 600; }
+
+  .footer { text-align: center; padding: 30px 0 10px; color: var(--text3); font-size: 0.75em; font-family: 'JetBrains Mono', monospace; }
+
+  @media (max-width: 768px) {
+    .header h1 { font-size: 1.6em; }
+    .diagram pre { font-size: 0.65em; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="container">
+
+<header class="header">
+  <h1>☾ SIMMOON · Fábrica de Juegos</h1>
+  <span class="badge">Arquitectura Honesta v5.0 — Solo lo necesario</span>
+  <p>Windows 11 → WSL2 → ComfyUI + Ollama + Agentes AI · Fecha: 2026-06-04</p>
+</header>
+
+<!-- ══════════════════════════════════════ -->
+<!-- ARQUITECTURA -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>📐 Arquitectura del Sistema</h2>
+  <div class="diagram">
+<pre>
+<span class="k">Windows 11</span> <span class="d">────────────────────</span> <span class="k">Freebuff</span> <span class="c">(orquestador desde CLI)</span>
+<span class="d">│</span>
+<span class="d">└──</span> <span class="k">WSL2 Ubuntu 24.04</span> <span class="d">───────────</span> <span class="g">comfyui :8188</span> <span class="c">(backend oficial de generación)</span>
+    <span class="d">│</span>                                   <span class="d">│</span>
+    <span class="d">│</span>                                   <span class="d">├──</span> <span class="p">Leonardo.ai ?</span> <span class="c">(en estudio)</span>
+    <span class="d">│</span>                                   <span class="d">├──</span> <span class="p">InvokeAI ?</span>    <span class="c">(en estudio)</span>
+    <span class="d">│</span>                                   <span class="d">└──</span> <span class="p">Scenario.gg ?</span> <span class="c">(en estudio)</span>
+    <span class="d">│</span>
+    <span class="d">├──</span> <span class="k">Ollama :11434</span>
+    <span class="d">│</span>   <span class="d">└──</span> <span class="g">LangGraph · AutoGen · CrewAI</span> <span class="c">(agentes AI sobre LLM local)</span>
+    <span class="d">│</span>
+    <span class="d">├──</span> <span class="k">Docker</span> <span class="c">29.1.3</span>
+    <span class="d">├──</span> <span class="k">uv</span> <span class="c">0.11.18</span>
+    <span class="d">├──</span> <span class="k">pnpm</span> <span class="c">11.5.0</span>
+    <span class="d">├──</span> <span class="k">Python 3.12</span> <span class="c">(simmoon-cuda-env + ComfyUI venv)</span>
+    <span class="d">└──</span> <span class="k">Qwen3-Coder</span> <span class="c">30.5B (modelo LLM principal)</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- COMPONENTES -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>⚙️ Componentes Activos</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="h"><span class="name">ComfyUI</span><span class="tag ok">✓ Corriendo</span></div>
+      <div class="info">Backend oficial de generación de assets.<br>API REST en <code>:8188</code> · 5 checkpoints · 3 LoRAs<br>Python 3.12 + torch 2.6.0+cu124 + RTX 4070</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">Ollama</span><span class="tag ok">✓ Corriendo</span></div>
+      <div class="info">LLM local con qwen3-coder (30.5B), llama3.1:8b, tinyllama.<br>API en <code>:11434</code></div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">Docker</span><span class="tag ok">✓ Activo</span></div>
+      <div class="info">v29.1.3 + containerd<br>Servicio systemd activo</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">uv</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info">v0.11.18 en <code>~/.local/bin/uv</code><br>Gestión rápida de paquetes Python</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">pnpm</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info">v11.5.0<br>Gestión de paquetes JS/TS</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">Python 3.12</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info"><code>simmoon-cuda-env</code> + <code>ComfyUI/venv</code><br>Generación CUDA con RTX 4070</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- AGENTES AI -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>🤖 Agentes AI (sobre Ollama)</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="h"><span class="name">LangGraph</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info">v1.2.4 en <code>simmoon-env</code><br>Grafos de agentes con memoria y flujo condicional</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">AutoGen</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info">v0.7.5 en <code>simmoon-env</code><br>Conversaciones multi-agente</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">CrewAI</span><span class="tag ok">✓ Listo</span></div>
+      <div class="info">v1.14.6 en <code>simmoon-cuda-env</code><br>Equipos de agentes con roles</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- EN ESTUDIO -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>🔬 En Estudio — Posibles Adiciones</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="h"><span class="name">Leonardo.ai</span><span class="tag study">📖 Estudio</span></div>
+      <div class="info">API cloud con pay-as-you-go. Bueno si la GPU local no es suficiente. Plan gratuito para pruebas.</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">InvokeAI</span><span class="tag study">📖 Estudio</span></div>
+      <div class="info">Local + open source. Unified Canvas. Instalación guiada con launcher. Enfoque artístico.</div>
+    </div>
+    <div class="card">
+      <div class="h"><span class="name">Scenario.gg</span><span class="tag study">📖 Estudio</span></div>
+      <div class="info">API especializada en juegos. Consistencia de estilo. Plan profesional.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- RUNS GENERADOS -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>🏁 Runs de Assets Generados</h2>
+  <table class="runs-table">
+    <thead><tr><th>#</th><th>Run</th><th>Checkpoint</th><th>Assets</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Default (v1-5 base)</td><td>v1-5-pruned-emaonly</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>2</td><td>DreamShaper v8 + LoRA</td><td>dreamshaper_8</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>3</td><td>DreamShaper v8 (no LoRA)</td><td>dreamshaper_8</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>4</td><td>Pixel Art + LoRA</td><td>pixelArtSpriteDiffusion</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>5</td><td>Pixel Art (no LoRA)</td><td>pixelArtSpriteDiffusion</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>6</td><td>ReV Animated</td><td>revAnimated_v122</td><td>108</td><td class="ok">✅</td></tr>
+      <tr><td>7</td><td class="counterfeit">Counterfeit-V3.0</td><td>counterfeit_v30</td><td>108</td><td class="counterfeit">✅ COMPLETADO</td></tr>
+      <tr><td></td><td><strong>TOTAL</strong></td><td></td><td><strong>~800+</strong></td><td class="ok"><strong>✅ 7/7 runs</strong></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- HISTORIAL -->
+<!-- ══════════════════════════════════════ -->
+<section class="section">
+  <h2>📜 Historial de Cambios Recientes</h2>
+  <div class="diagram">
+<pre>
+<span class="g">2026-06-04</span>  <span class="c">──</span>  <span class="k">v5.0 — Esquema honesto</span>
+  <span class="d">├──</span> A1111 eliminado del proyecto (reemplazado por ComfyUI)
+  <span class="d">├──</span> openclaw desinstalado
+  <span class="d">├──</span> Counterfeit-V3.0 completado (108 assets)
+  <span class="d">├──</span> Documentación simplificada y honesta
+  <span class="d">└──</span> Leonardo.ai, InvokeAI, Scenario.gg en estudio
+
+<span class="g">2026-06-03</span>  <span class="c">──</span>  <span class="k">v4.0 — Instalación de ComfyUI</span>
+  <span class="d">├──</span> ComfyUI instalado en WSL2
+  <span class="d">├──</span> 108 imágenes profesionales 2.5D generadas
+  <span class="d">├──</span> Sistema de votación en viewer.html
+  <span class="d">├──</span> Esquema PostgreSQL con 108 assets
+  <span class="d">└──</span> Pixel-art de todas las imágenes
+
+<span class="g">2026-06-02</span>  <span class="c">──</span>  <span class="k">v3.0 — Generación inicial</span>
+  <span class="d">├──</span> 78 imágenes base con v1-5
+  <span class="d">├──</span> simmoon_pixelator.py
+  <span class="d">├──</span> viewer.html con lightbox
+  <span class="d">└──</span> Documentación inicial del stack</pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>☾ SIMMOON · Fábrica de Juegos v5.0 — 2026-06-04</p>
+  <p style="margin-top:4px;">Windows 11 + WSL2 Ubuntu 24.04 · Freebuff / Codebuff CLI</p>
+</footer>
+
+</div>
+</body>
+</html>

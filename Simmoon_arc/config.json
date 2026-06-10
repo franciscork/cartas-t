@@ -1,0 +1,100 @@
+{
+  "project": "SIMMOON - Lunar Simulation Game",
+  "description": "Configuration for AI image generation - SimCity 2000 pixel art style",
+  "output_base_dir": "~/simmoon/output",
+  "image_settings": {
+    "width": 512,
+    "height": 512,
+    "steps": 28,
+    "cfg_scale": 9,
+    "sampler": "DPM++ 2M Karras",
+    "batch_size": 1,
+    "seed": -1
+  },
+  "game_asset_settings": {
+    "buildings": {
+      "width": 512,
+      "height": 512,
+      "style": "dimetric pixel art, single tile, flat shading"
+    },
+    "vehicles": {
+      "width": 384,
+      "height": 384,
+      "style": "side view pixel art sprite"
+    },
+    "terrain": {
+      "width": 512,
+      "height": 512,
+      "style": "top-down view pixel art tile"
+    },
+    "ui_elements": {
+      "width": 256,
+      "height": 256,
+      "style": "pixel art icon, transparent background"
+    },
+    "maps": {
+      "width": 512,
+      "height": 512,
+      "style": "top-down pixel art map tile"
+    },
+    "sites": {
+      "width": 768,
+      "height": 768,
+      "style": "isometric colony scene, wider view, multiple buildings"
+    }
+  },
+  "backends": {
+    "comfyui": {
+      "enabled": true,
+      "url": "http://127.0.0.1:8188",
+      "ws_endpoint": "/ws",
+      "prompt_endpoint": "/prompt",
+      "history_endpoint": "/history",
+      "view_endpoint": "/view",
+      "checkpoint": "dreamshaper_8.safetensors",
+      "loras": [
+        {
+          "name": "isometric_world_01.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        }
+      ]
+    },
+    "invokeai": {
+      "enabled": true,
+      "url": "http://127.0.0.1:9090",
+      "model": "dreamshaper_8",
+      "model_keys": {
+        "v1-5-pruned-emaonly": "b75a0357-280d-4646-9ebe-ba43a6e734be",
+        "dreamshaper_8": "89fedde5-3626-49d7-b0b0-121dbe51dba0",
+        "counterfeit_v30": "873417e2-45b3-4174-a0c9-d305bfb36f5d",
+        "pixelArtSpriteDiffusion_safetensors": "916dd15e-8b0c-48c4-ae6e-2e8989056412",
+        "revAnimated_v122": "629dcc72-f2bd-4d1b-8166-5000e8ae8a00"
+      },
+      "note": "Local GPU generation via InvokeAI REST API. No API key needed."
+    },
+    "huggingface": {
+      "enabled": true,
+      "api_key_env": "HF_API_KEY",
+      "model": "stabilityai/stable-diffusion-xl-base-1.0",
+      "url_template": "https://api-inference.huggingface.co/models/{model}"
+    },
+    "leonardo": {
+      "enabled": false,
+      "api_key_env": "LEONARDO_API_KEY",
+      "model_id": "",
+      "preset_style": "DYNAMIC",
+      "note": "Model ID empty = use Leonardo default. Get API key at https://app.leonardo.ai → API Access"
+    },
+    "stability_ai": {
+      "enabled": true,
+      "api_key_env": "STABILITY_API_KEY",
+      "url": "https://api.stability.ai/v2beta/stable-image/generate/core"
+    }
+  },
+  "vote_api": {
+    "api_key": "Wyp6EhQ0nziVi7HSuq7-h8UDUExCQXCOtPrXupgVwF8",
+    "note": "Required for POST /api/votes. GET endpoints are public."
+  },
+  "negative_prompt": "blurry, low quality, distorted, ugly, deformed, watermark, text, logo, signature, worst quality, jpeg artifacts, cropped, out of frame, mutation, poorly drawn, bad anatomy, extra limbs, disfigured, grainy, photorealistic, 3D render, realistic lighting, complex scene, multiple objects"
+}

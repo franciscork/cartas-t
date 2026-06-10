@@ -1,0 +1,90 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─── Entorno ──────────────────────────────────────────────
+.env
+.env.local
+venv/
+.venv/
+env/
+
+# ─── Secretos / Config local ─────────────────────────────
+# Obsidian REST API key (contiene API key real)
+Simmoon_arc/obsidian_rest_config.json
+
+# API key de votación local
+Simmoon_arc/vote_config.js
+
+# ─── Logs ─────────────────────────────────────────────────
+Simmoon_arc/system_log.jsonl
+*.log
+
+# ─── Assets generados (pixel art) ────────────────────────
+# Estos directorios son output de simmoon_pixelator.py
+*_pixel/
+!Simmoon_arc/*_pixel/
+Simmoon_arc/*_pixel/
+
+# ─── Modelos de IA (pesan GBs) ──────────────────────────
+*.safetensors
+*.ckpt
+*.bin
+*.pth
+
+# ─── Directorios de assets generados ─────────────────────
+# Son regenerables desde los prompts + generadores
+Simmoon_arc/businesses/
+Simmoon_arc/vehicles/
+Simmoon_arc/greenhouses/
+Simmoon_arc/solar_energy/
+Simmoon_arc/buildings_misc/
+Simmoon_arc/lunar_sites/
+Simmoon_arc/ui_elements/
+Simmoon_arc/roads/
+Simmoon_arc/decorations/
+Simmoon_arc/characters/
+Simmoon_arc/lunar_flora/
+Simmoon_arc/infrastructure/
+Simmoon_arc/lunar_map/
+Simmoon_arc/civic/
+Simmoon_arc/government/
+Simmoon_arc/housing/
+Simmoon_arc/industry/
+Simmoon_arc/life_support/
+Simmoon_arc/risk_management/
+Simmoon_arc/transport/
+
+# ─── Node / npm ──────────────────────────────────────────
+node_modules/
+package-lock.json
+
+# ─── IDE ──────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Archivos de votos locales ──────────────────────────
+Simmoon_arc/votes.json
+
+# ─── Vault de memoria (se regenera) ─────────────────────
+simmoon-memoria/
+
+# ─── Factories y reportes generados ─────────────────────
+Simmoon_arc/factory_memoria/
+Simmoon_arc/simmoon_health_report.html
+Simmoon_arc/.last_pipeline.json

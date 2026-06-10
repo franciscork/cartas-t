@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON — Monitor Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #08080e;
+    --bg2: #0d0d18;
+    --card: #121220;
+    --card2: #181830;
+    --border: #1e1e36;
+    --text: #e0e0f0;
+    --text2: #6a6a8a;
+    --accent: #6c5ce7;
+    --accent2: #00cec9;
+    --green: #00b894;
+    --green-dim: rgba(0, 184, 148, 0.12);
+    --yellow: #fdcb6e;
+    --yellow-dim: rgba(253, 203, 110, 0.12);
+    --red: #ff7675;
+    --red-dim: rgba(255, 118, 117, 0.12);
+    --blue: #74b9ff;
+    --blue-dim: rgba(116, 185, 255, 0.12);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  /* ── Stars background ── */
+  .stars {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #eee, transparent),
+      radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,.8), transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.5px 1.5px at 200px 100px, #eee, transparent),
+      radial-gradient(1px 1px at 250px 50px, rgba(255,255,255,.7), transparent),
+      radial-gradient(1px 1px at 300px 120px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 350px 80px, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 10px 200px, #eee, transparent),
+      radial-gradient(1px 1px at 70px 180px, rgba(255,255,255,.8), transparent),
+      radial-gradient(1.5px 1.5px at 120px 220px, #fff, transparent);
+    background-size: 450px 300px;
+    background-repeat: repeat;
+    opacity: 0.4;
+  }
+
+  /* ── Header ── */
+  .header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 4px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s;
+  }
+  .header h1 .status-dot.ok { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .header h1 .status-dot.warn { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+  .header h1 .status-dot.err { background: var(--red); box-shadow: 0 0 10px var(--red); }
+
+  .header .meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--text2);
+  }
+
+  .header .meta .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .header .meta .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  .header .meta .badge {
+    background: var(--card2);
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-full { grid-column: 1 / -1; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card:hover {
+    border-color: rgba(108, 92, 231, 0.3);
+    box-shadow: 0 0 20px rgba(108, 92, 231, 0.04);
+  }
+
+  .card h2 {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card h2 .icon { font-size: 1rem; }
+
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 0.82rem;
+  }
+
+  .metric .label { color: var(--text2); }
+  .metric .value { font-weight: 600; }
+  .metric .value.green { color: var(--green); }
+  .metric .value.yellow { color: var(--yellow); }
+  .metric .value.red { color: var(--red); }
+  .metric .value.blue { color: var(--blue); }
+  .metric .value.num { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+
+  .progress-bar {
+    width: 100%; height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    margin: 5px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.yellow { background: var(--yellow); }
+  .progress-fill.red { background: var(--red); }
+  .progress-fill.blue { background: var(--blue); }
+
+  /* ── Service rows ── */
+  .service-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    transition: background 0.12s;
+  }
+  .service-row:hover { background: rgba(108, 92, 231, 0.04); }
+
+  .service-row .s-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .service-row .s-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .service-row .s-dot.off { background: var(--red); opacity: 0.4; }
+
+  .service-row .s-name { flex: 1; font-weight: 500; }
+  .service-row .s-latency {
+    font-size: 0.7rem;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .service-row .s-status {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .service-row .s-status.on { background: var(--green-dim); color: var(--green); }
+  .service-row .s-status.off { background: var(--red-dim); color: var(--red); }
+
+  /* ── Alert box ── */
+  .alert-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    margin: 4px 0;
+    line-height: 1.4;
+  }
+  .alert-box.warn { background: var(--yellow-dim); border: 1px solid rgba(253,203,110,0.15); color: var(--yellow); }
+  .alert-box.err { background: var(--red-dim); border: 1px solid rgba(255,118,117,0.15); color: var(--red); }
+  .alert-box.ok { background: var(--green-dim); border: 1px solid rgba(0,184,148,0.15); color: var(--green); }
+
+  /* ── Footer ── */
+  .footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text2);
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+  }
+
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── Loading / Error ── */
+  .loading-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text2);
+  }
+
+  .loading-state .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .error-state .retry-btn {
+    margin-top: 12px;
+    padding: 8px 20px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .error-state .retry-btn:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ── GPU processes ── */
+  .gpu-proc {
+    font-size: 0.7rem;
+    color: var(--text2);
+    padding: 2px 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 700px) {
+    body { padding: 10px; }
+    .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .header { flex-direction: column; align-items: start; }
+    .header .meta { width: 100%; justify-content: space-between; }
+    .card { padding: 12px; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+  <h1>
+    <span class="status-dot" id="statusDot"></span>
+    ☾ SIMMOON — Monitor
+  </h1>
+  <div class="meta">
+    <span class="live-indicator"><span class="live-dot"></span> Live</span>
+    <span id="tsDisplay">—</span>
+    <span class="badge" id="servicesBadge">—</span>
+    <span class="badge" id="alertsBadge" style="display:none;">🚨 —</span>
+  </div>
+</div>
+
+<!-- ═══ LOADING ═══ -->
+<div id="loadingState" class="loading-state">
+  <div class="spinner"></div>
+  <div>Conectando con el sistema...</div>
+  <div style="font-size:0.8rem;color:var(--text2);margin-top:6px;">
+    Asegúrate de que el dashboard Flask esté corriendo:<br>
+    <code style="background:var(--card2);padding:2px 8px;border-radius:4px;">python dashboard.py</code>
+  </div>
+</div>
+
+<!-- ═══ ERROR ═══ -->
+<div id="errorState" class="error-state" style="display:none;">
+  <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+  <div style="color:var(--red);font-weight:600;">No se pudo conectar con el sistema</div>
+  <div id="errorDetail" style="color:var(--text2);font-size:0.85rem;margin-top:6px;"></div>
+  <button class="retry-btn" onclick="init()">🔄 Reintentar</button>
+</div>
+
+<!-- ═══ DASHBOARD CONTENT ═══ -->
+<div id="dashboardContent" style="display:none;">
+
+  <!-- Row 1: GPU · RAM · Disk · CPU/Entorno -->
+  <div class="grid grid-4">
+    <!-- GPU -->
+    <div class="card" id="gpuCard">
+      <h2><span class="icon">🎮</span> GPU</h2>
+      <div id="gpuContent">
+        <div class="metric"><span class="label">Modelo</span><span class="value" id="gpuName">—</span></div>
+        <div class="metric">
+          <span class="label">Temperatura</span>
+          <span class="value num" id="gpuTemp">—°C</span>
+        </div>
+        <div class="metric">
+          <span class="label">VRAM</span>
+          <span class="value num" id="gpuVram">—</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="gpuVramBar" style="width:0%"></div>
+        </div>
+        <div class="metric">
+          <span class="label">Utilización</span>
+          <span class="value num" id="gpuUtil">—</span>
+        </div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border);">
+          <div style="font-size:0.65rem;color:var(--text2);margin-bottom:2px;">Procesos</div>
+          <div id="gpuProcesses"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAM -->
+    <div class="card">
+      <h2><span class="icon">🧠</span> RAM</h2>
+      <div class="metric">
+        <span class="label">Usada</span>
+        <span class="value num" id="ramUsed">—</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="ramBar" style="width:0%"></div>
+      </div>
+      <div class="metric">
+        <span class="label">Total</span>
+        <span class="value num" id="ramTotal">—</span>
+      </div>
+      <div class="metric">
+        <span class="label">Disponible</span>
+        <span class="value green num" id="ramAvail">—</span>
+      </div>
+    </div>
+
+    <!-- Disk -->
+    <div class="card">
+      <h2><span class="icon">💾</span> Disco</h2>
+      <div id="diskContent"></div>
+    </div>
+
+    <!-- Entorno -->
+    <div class="card">
+      <h2><span class="icon">🌍</span> Entorno</h2>
+      <div id="envContent">
+        <div class="metric"><span class="label">Uptime</span><span class="value" id="envUptime" style="font-size:0.75rem;">—</span></div>
+        <div class="metric"><span class="label">🌡️ CPU</span><span class="value num" id="envCpuTemp">—</span></div>
+        <div class="metric"><span class="label">🖼️ Assets</span><span class="value blue num" id="envAssets">—</span></div>
+        <div class="metric"><span class="label">📂 Categorías</span><span class="value blue num" id="envCategories">—</span></div>
+      </div>
+      <div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--border);">
+        <div style="font-size:0.65rem;color:var(--text2);margin-bottom:4px;">🧠 Modelos Ollama</div>
+        <div id="ollamaModels" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Servicios + Alertas -->
+  <div class="grid grid-3">
+    <!-- Servicios -->
+    <div class="card">
+      <h2><span class="icon">🔌</span> Servicios</h2>
+      <div id="servicesContent"></div>
+    </div>
+
+    <!-- Agentes IA -->
+    <div class="card">
+      <h2><span class="icon">🤖</span> Agentes IA</h2>
+      <div id="agentsContent"></div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="card">
+      <h2><span class="icon">🚨</span> Alertas</h2>
+      <div id="alertsContent">
+        <div class="alert-box ok">✅ Sin alertas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    ☾ SIMMOON — Actualización cada 8s ·
+    <a href="http://localhost:5000" target="_blank">Dashboard Flask</a> ·
+    <a href="http://localhost:5000/api/health" target="_blank">API JSON</a>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  SIMMOON — Monitor Dashboard v1.0
+//  Fetch data from Flask dashboard API, auto-refresh every 8s.
+//  Also falls back to hardcoded JSON if API unavailable.
+// ══════════════════════════════════════════════════════════════════════════
+
+const API_URL = 'http://localhost:5000/api/dashboard';
+const AGENTS_API = 'http://localhost:5000/api/agents';
+const ENV_API = 'http://localhost:5000/api/environment';
+
+let dataCache = null;
+
+function $(id) { return document.getElementById(id); }
+
+// ── Fetch data ──────────────────────────────────────────────────────────
+async function fetchDashboard() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const resp = await fetch(API_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    // Also fetch agents and environment in parallel
+    const [agentsResp, envResp] = await Promise.all([
+      fetch(AGENTS_API, { signal: AbortSignal.timeout(3000) }).catch(() => null),
+      fetch(ENV_API, { signal: AbortSignal.timeout(3000) }).catch(() => null),
+    ]);
+
+    if (agentsResp && agentsResp.ok) {
+      const agentsData = await agentsResp.json();
+      data.agent_stats = agentsData;
+    }
+    if (envResp && envResp.ok) {
+      const envData = await envResp.json();
+      data.environment = envData;
+      data.ollama_models = envData.ollama_models || [];
+    }
+
+    return data;
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
+// ── Color helpers ───────────────────────────────────────────────────────
+function tempColor(temp) {
+  if (temp < 60) return 'green';
+  if (temp < 75) return 'yellow';
+  return 'red';
+}
+
+function pctColor(pct) {
+  if (pct < 65) return 'green';
+  if (pct < 85) return 'yellow';
+  return 'red';
+}
+
+function diskColor(gb) {
+  if (gb > 100) return 'green';
+  if (gb > 50) return 'yellow';
+  return 'red';
+}
+
+// ── Render ──────────────────────────────────────────────────────────────
+function renderDashboard(data) {
+  // ── Header ──
+  const dot = $('statusDot');
+  if (data.alerts && data.alerts.length > 0) {
+    dot.className = 'status-dot err';
+  } else if (data.healthy === false) {
+    dot.className = 'status-dot warn';
+  } else {
+    dot.className = 'status-dot ok';
+  }
+
+  $('tsDisplay').textContent = data.timestamp || '—';
+
+  // Services badge
+  if (data.services) {
+    const svcList = Object.values(data.services);
+    const ok = svcList.filter(s => s.healthy).length;
+    const total = svcList.length;
+    $('servicesBadge').textContent = `🔌 ${ok}/${total}`;
+  }
+
+  // Alerts badge
+  if (data.alerts && data.alerts.length > 0) {
+    $('alertsBadge').style.display = '';
+    $('alertsBadge').textContent = `🚨 ${data.alerts.length}`;
+  } else {
+    $('alertsBadge').style.display = 'none';
+  }
+
+  // ── GPU ──
+  const gpu = data.gpu || {};
+  if (gpu.available) {
+    $('gpuName').textContent = (gpu.name || '').substring(0, 42);
+    $('gpuName').className = 'value';
+
+    const temp = gpu.temperature_c || 0;
+    $('gpuTemp').textContent = `${temp}°C`;
+    $('gpuTemp').className = `value num ${tempColor(temp)}`;
+
+    const vramUsed = gpu.memory_used_mb || 0;
+    const vramTotal = gpu.memory_total_mb || 1;
+    const vramPct = gpu.memory_used_percent || 0;
+    $('gpuVram').textContent = `${vramUsed}/${vramTotal} MB`;
+    $('gpuVram').className = `value num ${pctColor(vramPct)}`;
+
+    const vramBar = $('gpuVramBar');
+    vramBar.style.width = `${Math.min(vramPct, 100)}%`;
+    vramBar.className = `progress-fill ${pctColor(vramPct)}`;
+
+    const util = gpu.utilization_gpu_percent || 0;
+    $('gpuUtil').textContent = `${util}%`;
+    $('gpuUtil').className = `value num`;
+
+    // GPU processes
+    const procs = gpu.processes || [];
+    const procEl = $('gpuProcesses');
+    if (procs.length > 0) {
+      procEl.innerHTML = procs.slice(0, 4).map(p =>
+        `<div class="gpu-proc">${p.name} — ${p.memory_mb}MB</div>`
+      ).join('');
+      if (procs.length > 4) {
+        procEl.innerHTML += `<div class="gpu-proc" style="color:var(--text2);">+${procs.length - 4} más</div>`;
+      }
+    } else {
+      procEl.innerHTML = '<div class="gpu-proc" style="color:var(--text2);">Sin procesos activos</div>';
+    }
+  } else {
+    $('gpuContent').innerHTML = '<div class="metric"><span class="label">Estado</span><span class="value red">No detectada</span></div>';
+  }
+
+  // ── RAM ──
+  const ram = data.ram || {};
+  const ramUsed = ram.used_gb || 0;
+  const ramTotal = ram.total_gb || 0;
+  const ramPct = ram.used_percent || 0;
+  $('ramUsed').textContent = `${ramUsed}/${ramTotal} GB (${ramPct}%)`;
+  $('ramUsed').className = `value num ${pctColor(ramPct)}`;
+  $('ramBar').style.width = `${Math.min(ramPct, 100)}%`;
+  $('ramBar').className = `progress-fill ${pctColor(ramPct)}`;
+  $('ramTotal').textContent = `${ramTotal} GB`;
+  $('ramAvail').textContent = `${ram.available_gb || 0} GB`;
+
+  // ── Disk ──
+  const disk = data.disk || {};
+  const diskEl = $('diskContent');
+  const diskEntries = Object.entries(disk);
+  if (diskEntries.length > 0) {
+    diskEl.innerHTML = diskEntries.map(([mount, info]) => {
+      const gb = info.available_gb || 0;
+      const pct = info.used_percent || 0;
+      const label = mount.split('/').pop() || mount;
+      return `
+        <div class="metric">
+          <span class="label">${label}</span>
+          <span class="value num ${diskColor(gb)}">${gb}GB libre</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill ${pctColor(pct)}" style="width:${Math.min(pct, 100)}%"></div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    diskEl.innerHTML = '<div class="metric"><span class="label">Sin datos</span><span class="value">—</span></div>';
+  }
+
+  // ── Environment ──
+  const env = data.environment || {};
+  $('envUptime').textContent = env.uptime || '—';
+  $('envCpuTemp').textContent = env.cpu_temp_c ? `${env.cpu_temp_c.toFixed(1)}°C` : '—';
+  $('envCpuTemp').className = `value num ${env.cpu_temp_c ? tempColor(env.cpu_temp_c) : ''}`;
+  $('envAssets').textContent = env.asset_count || '—';
+  $('envCategories').textContent = env.total_categories || '—';
+
+  // Ollama models
+  const models = data.ollama_models || [];
+  const modelEl = $('ollamaModels');
+  if (models.length > 0) {
+    modelEl.innerHTML = models.slice(0, 10).map(m =>
+      `<span style="background:var(--card2);padding:2px 7px;border-radius:4px;font-size:0.65rem;border:1px solid var(--border);">${m.name}</span>`
+    ).join('');
+    if (models.length > 10) {
+      modelEl.innerHTML += `<span style="background:var(--card2);padding:2px 7px;border-radius:4px;font-size:0.65rem;color:var(--text2);">+${models.length - 10}</span>`;
+    }
+  } else {
+    modelEl.innerHTML = '<span style="font-size:0.7rem;color:var(--text2);">Sin modelos</span>';
+  }
+
+  // ── Services ──
+  const services = data.services || {};
+  const svcEl = $('servicesContent');
+  if (Object.keys(services).length > 0) {
+    svcEl.innerHTML = Object.entries(services).map(([name, svc]) => {
+      const ok = svc.healthy || false;
+      const lat = svc.latency_ms != null ? `${svc.latency_ms}ms` : '—';
+      const displayName = svc.name || name.charAt(0).toUpperCase() + name.slice(1);
+      return `
+        <div class="service-row">
+          <span class="s-dot ${ok ? 'on' : 'off'}"></span>
+          <span class="s-name">${displayName}</span>
+          <span class="s-latency">${lat}</span>
+          <span class="s-status ${ok ? 'on' : 'off'}">${ok ? 'OK' : 'OFF'}</span>
+        </div>
+      `;
+    }).join('');
+  } else {
+    svcEl.innerHTML = '<div style="color:var(--text2);font-size:0.8rem;">Sin datos de servicios</div>';
+  }
+
+  // ── Agents ──
+  const agentsData = data.agent_stats || {};
+  const agents = agentsData.agents || agentsData.list || [];
+  const agentsEl = $('agentsContent');
+  if (agents.length > 0) {
+    const onAgents = agents.filter(a => a.running);
+    const offAgents = agents.filter(a => !a.running);
+    let html = `<div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px;">${onAgents.length}/${agents.length} activos</div>`;
+    // Active agents
+    html += onAgents.slice(0, 10).map(a => `
+      <div class="service-row">
+        <span class="s-dot on"></span>
+        <span class="s-name">${a.icon || '🤖'} ${a.name}</span>
+        <span class="s-status on">ON</span>
+      </div>
+    `).join('');
+    // Some inactive
+    const offCount = offAgents.length;
+    if (offCount > 0) {
+      html += `<div style="font-size:0.65rem;color:var(--text2);margin-top:4px;">⬜ ${offCount} agente(s) inactivo(s)</div>`;
+    }
+    agentsEl.innerHTML = html;
+  } else {
+    agentsEl.innerHTML = '<div style="color:var(--text2);font-size:0.8rem;">Sin datos de agentes</div>';
+  }
+
+  // ── Alerts ──
+  const alerts = data.alerts || [];
+  const alertsEl = $('alertsContent');
+  if (alerts.length > 0) {
+    alertsEl.innerHTML = alerts.map(a => {
+      const isErr = a.includes('❌');
+      const text = a.replace('❌ ', '').replace('⚠️ ', '');
+      return `<div class="alert-box ${isErr ? 'err' : 'warn'}"><span>${isErr ? '❌' : '⚠️'}</span>${text}</div>`;
+    }).join('');
+  } else {
+    alertsEl.innerHTML = '<div class="alert-box ok">✅ Sin alertas — todos los sistemas nominales</div>';
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────────────────
+async function init() {
+  const loadingEl = $('loadingState');
+  const errorEl = $('errorState');
+  const contentEl = $('dashboardContent');
+  const errDetail = $('errorDetail');
+
+  loadingEl.style.display = '';
+  errorEl.style.display = 'none';
+  contentEl.style.display = 'none';
+
+  try {
+    const data = await fetchDashboard();
+    dataCache = data;
+    loadingEl.style.display = 'none';
+    contentEl.style.display = '';
+    renderDashboard(data);
+  } catch (err) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = '';
+    errDetail.textContent = err.message || 'Error de conexión';
+  }
+}
+
+// ── Auto-refresh ────────────────────────────────────────────────────────
+function autoRefresh() {
+  if ($('dashboardContent').style.display === '') {
+    fetchDashboard()
+      .then(data => {
+        dataCache = data;
+        renderDashboard(data);
+      })
+      .catch(() => {
+        // Silently fail on refresh errors
+      });
+  }
+}
+
+// ── Start ────────────────────────────────────────────────────────────────
+init();
+setInterval(autoRefresh, 8000);
+// Full page reload every 3 minutes to pick up any DOM changes
+setTimeout(() => location.reload(), 180000);
+</script>
+</body>
+</html>

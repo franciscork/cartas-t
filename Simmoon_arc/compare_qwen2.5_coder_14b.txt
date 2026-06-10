@@ -1,0 +1,150 @@
+EXIT: 0DURATION: 116.3sSUCCESS: TrueOUTPUT:```python
+import json
+import logging
+import time
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class Task:
+    def __init__(self, name: str, fn: Callable, args: Optional[List[Any]] = None, kwargs: Optional[Dict[str, Any]] = None):
+        self.name = name
+        self.fn = fn
+        self.args = args if args is not None else []
+        self.kwargs = kwargs if kwargs is not None else {}
+        self.status = 'pending'
+        self.creation_time = datetime.now()
+        self.last_execution_time: Optional[datetime] = None
+
+    def execute(self) -> bool:
+        self.status = 'running'
+        self.last_execution_time = datetime.now()
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+            logger.info(f"Task '{self.name}' completed successfully with result: {result}")
+            self.status = 'success'
+            return True
+        except Exception as e:
+            logger.error(f"Task '{self.name}' failed with error: {e}")
+            self.status = 'failed'
+            return False
+
+class TaskQueue:
+    def __init__(self, max_retries: int = 3, retry_delay: float = 1.0, persist_path: Optional[str] = None):
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.persist_path = persist_path
+        self.tasks: List[Task] = []
+        if self.persist_path:
+            self.load_state()
+
+    def add_task(self, name: str, fn: Callable, args: Optional[List[Any]] = None, kwargs: Optional[Dict[str, Any]] = None) -> None:
+        task = Task(name, fn, args, kwargs)
+        self.tasks.append(task)
+        logger.info(f"Task '{name}' added to the queue.")
+
+    def run_all(self) -> None:
+        try:
+            for i, task in enumerate(self.tasks):
+                if task.status == 'pending':
+                    self.run_one(i)
+        except KeyboardInterrupt:
+            logger.info("Run interrupted by user.")
+        finally:
+            self.save_state()
+
+    def run_one(self, task_id: int) -> bool:
+        if 0 <= task_id < len(self.tasks):
+            task = self.tasks[task_id]
+            retries = 0
+            while retries < self.max_retries and task.status != 'success':
+                time.sleep(self.retry_delay)
+                if task.execute():
+                    break
+                retries += 1
+            return task.status == 'success'
+        else:
+            logger.error(f"Task ID {task_id} out of range.")
+            return False
+
+    def get_status(self, task_id: int) -> str:
+        if 0 <= task_id < len(self.tasks):
+            return self.tasks[task_id].status
+        else:
+            logger.error(f"Task ID {task_id} out of range.")
+            return 'unknown'
+
+    def summary(self) -> Dict[str, Any]:
+        total = len(self.tasks)
+        completed = sum(1 for task in self.tasks if task.status == 'success')
+        failed = sum(1 for task in self.tasks if task.status == 'failed')
+        pending = total - completed - failed
+        total_time = sum((task.last_execution_time - task.creation_time).total_seconds() if task.last_execution_time else 0 for task in self.tasks)
+        return {
+            'total': total,
+            'completed': completed,
+            'failed': failed,
+            'pending': pending,
+            'total_time': total_time
+        }
+
+    def save_state(self) -> None:
+        if self.persist_path:
+            state = {
+                'tasks': [
+                    {
+                        'name': task.name,
+                        'args': task.args,
+                        'kwargs': task.kwargs,
+                        'status': task.status,
+                        'creation_time': task.creation_time.isoformat(),
+                        'last_execution_time': task.last_execution_time.isoformat() if task.last_execution_time else None
+                    }
+                    for task in self.tasks
+                ],
+                'max_retries': self.max_retries,
+                'retry_delay': self.retry_delay
+            }
+            with open(self.persist_path, 'w') as f:
+                json.dump(state, f)
+            logger.info("State saved to file.")
+
+    def load_state(self) -> None:
+        if self.persist_path and self.persist_path.exists():
+            with open(self.persist_path, 'r') as f:
+                state = json.load(f)
+            for task_data in state['tasks']:
+                task = Task(
+                    name=task_data['name'],
+                    fn=None,
+                    args=task_data['args'],
+                    kwargs=task_data['kwargs']
+                )
+                task.status = task_data['status']
+                task.creation_time = datetime.fromisoformat(task_data['creation_time'])
+                if task_data['last_execution_time']:
+                    task.last_execution_time = datetime.fromisoformat(task_data['last_execution_time'])
+                self.tasks.append(task)
+            self.max_retries = state['max_retries']
+            self.retry_delay = state['retry_delay']
+            logger.info("State loaded from file.")
+
+# Ejemplo de uso
+def example_task(x: int) -> int:
+    return x * 2
+
+queue = TaskQueue(max_retries=3, retry_delay=1.0, persist_path='task_queue_state.json')
+queue.add_task('Task 1', example_task, args=[5])
+queue.add_task('Task 2', example_task, args=[10])
+
+try:
+    queue.run_all()
+except KeyboardInterrupt:
+    logger.info("Run interrupted by user.")
+
+print(queue.summary())
+```
+
+RESUMEN: Implementé una clase `TaskQueue` con todas las características solicitadas. Incluí métodos para agregar tareas, ejecutarlas en orden o individualmente, obtener el estado de una tarea y generar un resumen. También manejo la persistencia del estado en un archivo JSON si se especifica una ruta. Además, implementé el manejo de `KeyboardInterrupt` durante la ejecución de todas las tareas.

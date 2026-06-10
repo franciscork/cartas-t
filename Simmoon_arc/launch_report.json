@@ -1,0 +1,765 @@
+{
+  "directorio": "C:\\Program Files\\PowerShell\\7",
+  "total_scripts": 45,
+  "scripts_limpios": 20,
+  "scripts_con_issues": 25,
+  "scripts": [
+    {
+      "nombre": "backup_postgres.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\backup_postgres.sh",
+      "tipo": "sh",
+      "lineas": 152,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "buffy_poll.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\buffy_poll.sh",
+      "tipo": "sh",
+      "lineas": 250,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "ias.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\ias.sh",
+      "tipo": "sh",
+      "lineas": 824,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "jarvis_monitor.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\jarvis_monitor.sh",
+      "tipo": "sh",
+      "lineas": 143,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_agatha.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_agatha.sh",
+      "tipo": "sh",
+      "lineas": 109,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_all.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_all.sh",
+      "tipo": "sh",
+      "lineas": 187,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_all_services.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_all_services.sh",
+      "tipo": "sh",
+      "lineas": 399,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_buffy_telegram.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_buffy_telegram.sh",
+      "tipo": "sh",
+      "lineas": 121,
+      "tiene_shebang": true,
+      "shebang": "/bin/bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/bin/bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_hermes.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_hermes.sh",
+      "tipo": "sh",
+      "lineas": 266,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_jarvis.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_jarvis.sh",
+      "tipo": "sh",
+      "lineas": 190,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_openhuman.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_openhuman.sh",
+      "tipo": "sh",
+      "lineas": 45,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_telegram_bot.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_telegram_bot.sh",
+      "tipo": "sh",
+      "lineas": 106,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "openhuman_setup.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\openhuman_setup.sh",
+      "tipo": "sh",
+      "lineas": 123,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [
+        "Variable sin definir: $OLLAMA_BASE_URL",
+        "Variable sin definir: $OPENHUMAN_CORE_PORT"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "OLLAMA_BASE_URL",
+        "OPENHUMAN_CORE_PORT"
+      ]
+    },
+    {
+      "nombre": "restore_postgres.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\restore_postgres.sh",
+      "tipo": "sh",
+      "lineas": 105,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [
+        "Variable sin definir: $confirm"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "confirm"
+      ]
+    },
+    {
+      "nombre": "xserver_wsl_setup.sh",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\xserver_wsl_setup.sh",
+      "tipo": "sh",
+      "lineas": 121,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env bash",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env bash",
+      "modo_estricto": true,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "cambiar_plan_energia.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\cambiar_plan_energia.ps1",
+      "tipo": "ps1",
+      "lineas": 21,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "diagnostico_sistema.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\diagnostico_sistema.ps1",
+      "tipo": "ps1",
+      "lineas": 102,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "Install-PowerShellRemoting.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\Install-PowerShellRemoting.ps1",
+      "tipo": "ps1",
+      "lineas": 446,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida",
+        "Referencia rota: Version:",
+        "Referencia rota: version.",
+        "Variable sin definir: $PROCESSOR_ARCHITECTURE"
+      ],
+      "referencias_rotas": [
+        "Version:",
+        "version."
+      ],
+      "variables_sin_definir": [
+        "PROCESSOR_ARCHITECTURE"
+      ]
+    },
+    {
+      "nombre": "InstallPSCorePolicyDefinitions.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\InstallPSCorePolicyDefinitions.ps1",
+      "tipo": "ps1",
+      "lineas": 301,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida",
+        "Variable sin definir: $WINDIR"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "WINDIR"
+      ]
+    },
+    {
+      "nombre": "launch_agatha.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_agatha.ps1",
+      "tipo": "ps1",
+      "lineas": 84,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_agent.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_agent.ps1",
+      "tipo": "ps1",
+      "lineas": 71,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_all.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_all.ps1",
+      "tipo": "ps1",
+      "lineas": 176,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida",
+        "Variable sin definir: $PYTHONIOENCODING",
+        "Variable sin definir: $PYTHONUTF8"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "PYTHONIOENCODING",
+        "PYTHONUTF8"
+      ]
+    },
+    {
+      "nombre": "launch_autogen.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_autogen.ps1",
+      "tipo": "ps1",
+      "lineas": 71,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_buffy_telegram.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_buffy_telegram.ps1",
+      "tipo": "ps1",
+      "lineas": 111,
+      "tiene_shebang": true,
+      "shebang": "/usr/bin/env pwsh",
+      "cabecera_valida": true,
+      "cabecera_detectada": "/usr/bin/env pwsh",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_comfyui.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_comfyui.ps1",
+      "tipo": "ps1",
+      "lineas": 78,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_hermes.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_hermes.ps1",
+      "tipo": "ps1",
+      "lineas": 121,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_ias.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_ias.ps1",
+      "tipo": "ps1",
+      "lineas": 278,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida",
+        "Referencia rota: (bajo",
+        "Referencia rota: (solo"
+      ],
+      "referencias_rotas": [
+        "(bajo",
+        "(solo"
+      ],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_invokeai.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_invokeai.ps1",
+      "tipo": "ps1",
+      "lineas": 73,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_ollama.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_ollama.ps1",
+      "tipo": "ps1",
+      "lineas": 71,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_pipeline.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_pipeline.ps1",
+      "tipo": "ps1",
+      "lineas": 73,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_telegram_bot.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_telegram_bot.ps1",
+      "tipo": "ps1",
+      "lineas": 82,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "pwsh.profile.resource.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\pwsh.profile.resource.ps1",
+      "tipo": "ps1",
+      "lineas": 392,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "RegisterManifest.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\RegisterManifest.ps1",
+      "tipo": "ps1",
+      "lineas": 310,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "RegisterMicrosoftUpdate.ps1",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\RegisterMicrosoftUpdate.ps1",
+      "tipo": "ps1",
+      "lineas": 283,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": false,
+      "cabecera_detectada": "",
+      "modo_estricto": false,
+      "issues": [
+        "Sin shebang ni cabecera valida"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "ias.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\ias.bat",
+      "tipo": "bat",
+      "lineas": 297,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [
+        "Referencia rota: openhuman-core",
+        "Variable sin definir: $AG_RESULT",
+        "Variable sin definir: $BOLD",
+        "Variable sin definir: $CYAN",
+        "Variable sin definir: $DIM",
+        "Variable sin definir: $DISTRO",
+        "... y 14 variables mas"
+      ],
+      "referencias_rotas": [
+        "openhuman-core"
+      ],
+      "variables_sin_definir": [
+        "AG_RESULT",
+        "BOLD",
+        "CYAN",
+        "DIM",
+        "DISTRO",
+        "ESC",
+        "GREEN",
+        "NC",
+        "PG_RESULT",
+        "RED",
+        "SVC_RESULT",
+        "TEMP",
+        "TG_RESULT",
+        "TMPFILE",
+        "YELLOW",
+        "label",
+        "path",
+        "port",
+        "svc"
+      ]
+    },
+    {
+      "nombre": "ias_desktop.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\ias_desktop.bat",
+      "tipo": "bat",
+      "lineas": 27,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "IAS_Launcher.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\IAS_Launcher.bat",
+      "tipo": "bat",
+      "lineas": 191,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [
+        "Variable sin definir: $BROWSER",
+        "Variable sin definir: $SystemRoot",
+        "Variable sin definir: $choice"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "BROWSER",
+        "SystemRoot",
+        "choice"
+      ]
+    },
+    {
+      "nombre": "launch_agatha.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_agatha.bat",
+      "tipo": "bat",
+      "lineas": 64,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [
+        "Variable sin definir: $opcion"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "opcion"
+      ]
+    },
+    {
+      "nombre": "launch_buffy_telegram.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_buffy_telegram.bat",
+      "tipo": "bat",
+      "lineas": 85,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [
+        "Variable sin definir: $DISTRO",
+        "Variable sin definir: $LOG_FILE",
+        "Variable sin definir: $SESSION",
+        "Variable sin definir: $SIMMOON_DIR",
+        "Variable sin definir: $errorlevel"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "DISTRO",
+        "LOG_FILE",
+        "SESSION",
+        "SIMMOON_DIR",
+        "errorlevel"
+      ]
+    },
+    {
+      "nombre": "launch_dashboard.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_dashboard.bat",
+      "tipo": "bat",
+      "lineas": 19,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_hermes_dashboard.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_hermes_dashboard.bat",
+      "tipo": "bat",
+      "lineas": 20,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_telegram_bot.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_telegram_bot.bat",
+      "tipo": "bat",
+      "lineas": 19,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "launch_voice_bridge.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\launch_voice_bridge.bat",
+      "tipo": "bat",
+      "lineas": 21,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "open_openhuman_releases.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\open_openhuman_releases.bat",
+      "tipo": "bat",
+      "lineas": 25,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [],
+      "referencias_rotas": [],
+      "variables_sin_definir": []
+    },
+    {
+      "nombre": "SIMMOON_Launch.bat",
+      "ruta": "C:\\Program Files\\PowerShell\\7\\SIMMOON_Launch.bat",
+      "tipo": "bat",
+      "lineas": 44,
+      "tiene_shebang": false,
+      "shebang": "",
+      "cabecera_valida": true,
+      "cabecera_detectada": "@echo off",
+      "modo_estricto": false,
+      "issues": [
+        "Variable sin definir: $DISTRO",
+        "Variable sin definir: $VIEWER"
+      ],
+      "referencias_rotas": [],
+      "variables_sin_definir": [
+        "DISTRO",
+        "VIEWER"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+```python
+import json
+import time
+from typing import Any, Callable, Dict, List, Optional, Tuple
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class TaskQueue:
+    def __init__(self, max_retries: int = 3, retry_delay: float = 1.0, persist_path: Optional[str] = None):
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.persist_path = persist_path
+        self.tasks: List[Dict[str, Any]] = []
+        self.load_tasks()
+
+    def add_task(self, name: str, fn: Callable, args: Optional[Tuple] = None, kwargs: Optional[Dict] = None):
+        task = {
+            "name": name,
+            "fn": fn,
+            "args": args or (),
+            "kwargs": kwargs or {},
+            "status": "pending",
+            "creation_time": time.time(),
+            "last_execution_time": None
+        }
+        self.tasks.append(task)
+        self.save_tasks()
+
+    def run_all(self):
+        try:
+            for task in self.tasks:
+                if task["status"] == "pending":
+                    self.run_one(self.tasks.index(task))
+        except KeyboardInterrupt:
+            logger.info("Run interrupted by user.")
+        finally:
+            self.save_tasks()
+
+    def run_one(self, task_id: int):
+        task = self.tasks[task_id]
+        retries = 0
+        while retries <= self.max_retries:
+            try:
+                start_time = time.time()
+                result = task["fn"](*task["args"], **task["kwargs"])
+                task["status"] = "success"
+                task["last_execution_time"] = time.time()
+                logger.info(f"Task '{task['name']}' completed successfully.")
+                break
+            except Exception as e:
+                retries += 1
+                if retries > self.max_retries:
+                    task["status"] = "failed"
+                    task["last_execution_time"] = time.time()
+                    logger.error(f"Task '{task['name']}' failed after {self.max_retries} retries: {e}")
+                else:
+                    time.sleep(self.retry_delay)
+        self.save_tasks()
+
+    def get_status(self, task_id: int) -> str:
+        return self.tasks[task_id]["status"]
+
+    def summary(self) -> Dict[str, Any]:
+        total = len(self.tasks)
+        completed = sum(1 for t in self.tasks if t["status"] == "success")
+        failed = sum(1 for t in self.tasks if t["status"] == "failed")
+        pending = sum(1 for t in self.tasks if t["status"] == "pending")
+        total_time = sum(t.get("last_execution_time", 0) - t["creation_time"] for t in self.tasks)
+        return {
+            "total": total,
+            "completed": completed,
+            "failed": failed,
+            "pending": pending,
+            "total_time": total_time
+        }
+
+    def load_tasks(self):
+        if self.persist_path:
+            try:
+                with open(self.persist_path, 'r') as f:
+                    self.tasks = json.load(f)
+            except FileNotFoundError:
+                logger.info("No existing tasks file found.")
+                self.tasks = []
+
+    def save_tasks(self):
+        if self.persist_path:
+            with open(self.persist_path, 'w') as f:
+                json.dump(self.tasks, f)
+
+# Ejemplo de uso
+def example_task(x: int) -> int:
+    return x * 2
+
+queue = TaskQueue(max_retries=2, retry_delay=0.5, persist_path="tasks.json")
+queue.add_task("Task1", example_task, args=(10,))
+queue.add_task("Task2", example_task, args=(20,))
+queue.run_all()
+print(queue.summary())
+```
+
+RESUMEN: Implementé una clase `TaskQueue` con todas las características solicitadas, incluyendo manejo de tareas pendientes, ejecución con reintentos, persistencia en JSON, y manejo de interrupciones.

@@ -1,0 +1,11 @@
+{
+  "project_name": "SIMMOON - Lunar Simulation Game Asset Factory",
+  "project_description": "Generacion automatizada de sprites pixel-art para juegos estilo SimCity 2000 con IA (ComfyUI, InvokeAI, Diffusers)",
+  "allowed_dirs": [
+    "C:\\Program Files\\PowerShell\\7\\Simmoon_arc"
+  ],
+  "dangerously_skip_permissions": true,
+  "permission_mode": "acceptEdits",
+  "effort": "high",
+  "system_prompt": "Eres Claude Code, sub-agente de Buffy (DeepSeek) en el proyecto SIMMOON. Buffy es la orquestadora principal que te delega tareas especificas. Trabajas de forma autonoma. Prefieres leer archivos y entender el contexto antes de modificar. Siempre resumes lo que hiciste al final. El usuario prefiere espanol."
+}

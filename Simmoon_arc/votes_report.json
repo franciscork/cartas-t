@@ -1,0 +1,135 @@
+{
+  "generado_en": "2026-06-10T13:06:24",
+  "resumen": {
+    "total_votos": 112,
+    "total_assets": 112,
+    "promedio_votos": 1.0
+  },
+  "top_mas_votados": [
+    {
+      "id": "biz_01",
+      "nombre": "biz_01",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_02",
+      "nombre": "biz_02",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_03",
+      "nombre": "biz_03",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_04",
+      "nombre": "biz_04",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_05",
+      "nombre": "biz_05",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_06",
+      "nombre": "biz_06",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_10",
+      "nombre": "biz_10",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_11",
+      "nombre": "biz_11",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "biz_12",
+      "nombre": "biz_12",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "sol_01",
+      "nombre": "sol_01",
+      "categoria": "Sin categoría",
+      "votos": 1
+    }
+  ],
+  "top_menos_votados": [
+    {
+      "id": "misc_15",
+      "nombre": "misc_15",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "misc_14",
+      "nombre": "misc_14",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "misc_13",
+      "nombre": "misc_13",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "sol_10",
+      "nombre": "sol_10",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "infra_04",
+      "nombre": "infra_04",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "infra_03",
+      "nombre": "infra_03",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "infra_02",
+      "nombre": "infra_02",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "infra_01",
+      "nombre": "infra_01",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "flora_04",
+      "nombre": "flora_04",
+      "categoria": "Sin categoría",
+      "votos": 1
+    },
+    {
+      "id": "flora_03",
+      "nombre": "flora_03",
+      "categoria": "Sin categoría",
+      "votos": 1
+    }
+  ],
+  "distribucion_categorias": {
+    "Sin categoría": 112
+  }
+}

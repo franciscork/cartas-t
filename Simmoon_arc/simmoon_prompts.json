@@ -1,0 +1,1646 @@
+{
+  "project": "SIMMOON - Lunar Colony Simulation Game",
+  "style_guide": "Professional 2.5D isometric game sprite (2:1 dimetric projection, 26.565° angle). Appears 3D while being 2D. Clean hard-edged pixel art, sharp black outlines, flat cel-shading with 2-3 tone depth (highlight/mid/shadow), single square tile footprint per building, no perspective distortion, orthographic camera, seamless tileable base, AAA indie game asset quality, style of SimCity 2000 + Factorio + Oxygen Not Included.",
+  "negative_prompt_base": "blurry, photorealistic, watermark, text, real life, detailed texture, complex scene, multiple buildings, gradient, soft lighting, 3D render, perspective, fisheye, lens distortion, bloom, motion blur, depth of field, noisy, dithering, anti-aliasing, photographic, anime, cartoon",
+  "categories": {
+    "businesses": {
+      "output_dir": "businesses",
+      "prompts": [
+        {
+          "id": "biz_01",
+          "name": "Lunar Mining Office",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar mining corporate office, cubic blocky structure with corrugated metal walls and small geodesic dome roof, illuminated mining pickaxe sign on facade, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette steel gray lunar blue warm amber lights, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "office",
+            "mining"
+          ]
+        },
+        {
+          "id": "biz_02",
+          "name": "Lunar Trading Post",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar trading post marketplace, open-front structure with striped canvas awning, wooden crates and glowing goods displays, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette warm ochre copper teal accents, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "trade",
+            "market"
+          ]
+        },
+        {
+          "id": "biz_03",
+          "name": "Lunar Hotel",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar luxury hotel tower, 3-story stepped block with rows of glowing window rectangles, entrance canopy with red carpet, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette white pearl cool blue warm interior glow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "hotel",
+            "tourism"
+          ]
+        },
+        {
+          "id": "biz_04",
+          "name": "Lunar Restaurant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar fine dining restaurant, compact building with large panoramic glass front, table and chairs silhouette inside, neon fork-knife sign above door, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette warm brick red gold interior glow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "restaurant",
+            "food"
+          ]
+        },
+        {
+          "id": "biz_05",
+          "name": "Research Laboratory",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar advanced research laboratory, rectangular white block with radio telescope dish on roof, glowing blue data stripe around building, antenna array, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette sterile white science blue warning yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "research",
+            "science"
+          ]
+        },
+        {
+          "id": "biz_06",
+          "name": "Medical Center",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar medical center hospital, white cross-shaped building plan with red cross symbol on facade, helipad marking on flat roof, ambulance bay, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette sterile white emergency red cool blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "medical",
+            "hospital"
+          ]
+        },
+        {
+          "id": "biz_07",
+          "name": "Spaceport Terminal",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar spaceport passenger terminal, wide building with control tower rising from center, large arched embarkation doors, runway lights, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette concrete gray aviation blue warning orange, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "spaceport",
+            "transport"
+          ]
+        },
+        {
+          "id": "biz_08",
+          "name": "Manufacturing Plant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar heavy manufacturing plant, massive rectangular industrial block with tall smokestack venting white steam, conveyor belt loading entrance, warning stripes, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette industrial gray rust orange hazard yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "factory",
+            "industry"
+          ]
+        },
+        {
+          "id": "biz_09",
+          "name": "Entertainment Club",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar nightclub entertainment venue, small angular building with glowing neon magenta and cyan stripes, slanted asymmetric roof, bright entrance with bouncer silhouette, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette dark purple neon pink electric cyan, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "entertainment",
+            "nightlife"
+          ]
+        },
+        {
+          "id": "biz_10",
+          "name": "Lunar Bank",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar financial bank, imposing rectangular brutalist building with massive security columns at entrance, gold vault door visible, gold accent trim, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette granite gray security gold dark blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "bank",
+            "finance"
+          ]
+        },
+        {
+          "id": "biz_11",
+          "name": "Lunar Shop",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar general store shop, compact rectangular building with oversized display window showing colorful merchandise, hanging signboard above door, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette cream white bright product colors, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "shop",
+            "retail"
+          ]
+        },
+        {
+          "id": "biz_12",
+          "name": "Lunar Warehouse",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar logistics warehouse, large simple rectangular box building with massive segmented roll-up door, small office window section, loading dock with ramp, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette corrugated metal gray brown, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "warehouse",
+            "storage"
+          ]
+        }
+      ]
+    },
+    "vehicles": {
+      "output_dir": "vehicles",
+      "prompts": [
+        {
+          "id": "veh_01",
+          "name": "Lunar Rover",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar exploration rover buggy, side 3/4 view, six chunky wheels with visible treads, open cockpit with astronaut silhouette, solar panel array folded on back, antenna mast, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette white chassis lunar gray solar blue, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "rover",
+            "exploration"
+          ]
+        },
+        {
+          "id": "veh_02",
+          "name": "Mining Truck",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar heavy mining haul truck, side 3/4 view, enormous dump bed filled with glowing ore chunks, rugged cab with reinforced windows, massive wheels, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette hazard yellow dark gray ore glow orange, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "mining",
+            "truck"
+          ]
+        },
+        {
+          "id": "veh_03",
+          "name": "Passenger Shuttle",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar passenger transport shuttle bus, side 3/4 view, elongated sleek capsule shape with rows of dark oval windows, rounded aerodynamic nose, landing skids, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette white commuter blue accent stripe, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "shuttle",
+            "transport"
+          ]
+        },
+        {
+          "id": "veh_04",
+          "name": "Cargo Hauler",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar cargo container hauler, side 3/4 view, flatbed tractor with massive rectangular shipping container on back, cab-over-engine design, heavy duty suspension, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette industrial gray container red, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "cargo",
+            "truck"
+          ]
+        },
+        {
+          "id": "veh_05",
+          "name": "Emergency Vehicle",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar emergency ambulance rover, side 3/4 view, boxy armored vehicle with flashing red and blue light bar on roof, red cross symbol on side, medical equipment visible through windows, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette emergency white red blue, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "emergency",
+            "ambulance"
+          ]
+        },
+        {
+          "id": "veh_06",
+          "name": "Construction Excavator",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar construction excavator mech, side 3/4 view, tracked base with rotating cab, long hydraulic articulated arm ending in scoop bucket, warning stripes, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette construction orange safety yellow dark gray, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "construction",
+            "excavator"
+          ]
+        },
+        {
+          "id": "veh_07",
+          "name": "Hover Bike",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar anti-gravity hover bike, side 3/4 view, sleek low aerodynamic motorcycle shape with glowing blue anti-gravity repulsors underneath, rider in spacesuit silhouette, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette midnight blue electric blue white, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "bike",
+            "hover"
+          ]
+        },
+        {
+          "id": "veh_08",
+          "name": "Moon Bus",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar public transit bus, side 3/4 view, large rectangular passenger module with many square windows, front airlock door, route display on front, tracked undercarriage, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette transit blue white safety yellow, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "bus",
+            "public"
+          ]
+        },
+        {
+          "id": "veh_09",
+          "name": "Supply Drone",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar cargo delivery quadcopter drone, top-down 3/4 view, compact X-frame with four rotors and blue glow, rectangular cargo box clipped underneath, sensor array on top, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette white delivery green rotor blue, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "drone",
+            "delivery"
+          ]
+        },
+        {
+          "id": "veh_10",
+          "name": "Lunar Tank",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar defense patrol tank, side 3/4 view, low wide armored tracked hull with angular reactive armor plates, rotating turret with dual cannons, sensor mast, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette military dark green gunmetal red insignia, AAA pixel art, Factorio vehicle style",
+          "negative_prompt": "",
+          "tags": [
+            "vehicle",
+            "military",
+            "tank"
+          ]
+        }
+      ]
+    },
+    "greenhouses": {
+      "output_dir": "greenhouses",
+      "prompts": [
+        {
+          "id": "gh_01",
+          "name": "Small Dome Greenhouse",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, small lunar greenhouse dome, hemispherical glass dome with hexagonal frame panels, lush green plants visible inside with warm grow-lights, circular metal base platform, airlock hatch, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette glass green warm amber interior, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "small",
+            "dome"
+          ]
+        },
+        {
+          "id": "gh_02",
+          "name": "Large Greenhouse",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, large industrial lunar greenhouse, elongated rectangular structure with peaked glass roof, rows of crops visible through transparent panels, irrigation pipes along sides, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette silver frame vibrant green crops, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "large",
+            "industrial"
+          ]
+        },
+        {
+          "id": "gh_03",
+          "name": "Vertical Farm",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar vertical farm tower, tall narrow multi-tiered structure with rotating plant trays visible on each level, grow lights glowing pink, central service elevator shaft, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette dark frame plant green grow pink, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "vertical",
+            "tower"
+          ]
+        },
+        {
+          "id": "gh_04",
+          "name": "Hydroponics Lab",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar hydroponics laboratory, low wide building with transparent roof showing rows of blue water channels and floating plant roots, nutrient tanks at sides, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette water blue plant green lab white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "hydroponics",
+            "lab"
+          ]
+        },
+        {
+          "id": "gh_05",
+          "name": "Aquaponics Bay",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar aquaponics facility, rectangular building with large side water tanks showing fish silhouettes, plant grow beds on roof, connecting pipes, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette water blue fish silver plant green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "aquaponics",
+            "fish"
+          ]
+        },
+        {
+          "id": "gh_06",
+          "name": "Herb Garden Dome",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar herb garden dome, small cozy glass dome with aromatic herbs and hanging plants, warm golden interior glow, wooden planter boxes, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette herb green warm gold glass clear, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "herbs",
+            "small"
+          ]
+        },
+        {
+          "id": "gh_07",
+          "name": "Tree Nursery",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar tree nursery, tall cylindrical glass enclosure with small young trees in pots arranged in rows, open mesh roof section, water mist visible, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette bark brown leaf green mist white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "greenhouse",
+            "trees",
+            "nursery"
+          ]
+        }
+      ]
+    },
+    "solar_energy": {
+      "output_dir": "solar_energy",
+      "prompts": [
+        {
+          "id": "sol_01",
+          "name": "Solar Panel Array",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar solar panel array field, multiple angled blue photovoltaic panels on triangular metal A-frame mounts, small junction box at end, cables running between, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette panel blue frame silver cable black, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "solar",
+            "panels",
+            "array"
+          ]
+        },
+        {
+          "id": "sol_02",
+          "name": "Solar Power Station",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar solar power station control building, compact block with solar panel wings extending on both sides, power inverter cabinets, warning fence, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette white building panel blue hazard yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "solar",
+            "station",
+            "power"
+          ]
+        },
+        {
+          "id": "sol_03",
+          "name": "Nuclear Reactor",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar nuclear fission reactor, massive concrete containment dome with yellow radiation trefoil symbol, small cylindrical cooling tower beside with steam wisps, security fence, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette concrete gray warning yellow steam white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "nuclear",
+            "reactor",
+            "power"
+          ]
+        },
+        {
+          "id": "sol_04",
+          "name": "Battery Storage",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar grid-scale battery storage facility, row of six large cylindrical white battery units with blue LED charge indicators, small control shed, power cables, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette white cylinders blue LED gray concrete, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "battery",
+            "storage",
+            "energy"
+          ]
+        },
+        {
+          "id": "sol_05",
+          "name": "Wind Turbine",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar atmospheric wind turbine, tall thin white tower with three slender aerodynamic blades at top, small equipment shed at base, guy wires, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette white tower blade gray sky blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "wind",
+            "turbine",
+            "energy"
+          ]
+        },
+        {
+          "id": "sol_06",
+          "name": "Geothermal Plant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar geothermal energy plant, low industrial building with thick insulated steam pipes rising from drilled well, pressure gauges, steam wisps, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette pipe silver steam white gauge red, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "geothermal",
+            "plant",
+            "energy"
+          ]
+        },
+        {
+          "id": "sol_07",
+          "name": "Helium-3 Reactor",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar helium-3 fusion reactor, futuristic toroidal tokamak-style building with glowing blue magnetic containment ring visible through window, sleek white housing, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette white housing fusion blue glow warning, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "fusion",
+            "helium3",
+            "reactor"
+          ]
+        },
+        {
+          "id": "sol_08",
+          "name": "Power Substation",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar electrical power substation, transformer yard with large oil-filled transformers, ceramic insulator stacks, high-voltage bus bars, chain-link fence perimeter, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette metal gray insulator brown fence silver, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "substation",
+            "power",
+            "grid"
+          ]
+        },
+        {
+          "id": "sol_10",
+          "name": "Fusion Power Plant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar fusion power plant, massive toroidal tokamak building with glowing blue magnetic rings visible through reinforced windows, sleek white housing with blue trim, warning stripes, multiple power conduits radiating outward, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette white housing fusion blue glow warning yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "energy",
+            "fusion"
+          ]
+        }
+      ]
+    },
+    "lunar_map": {
+      "output_dir": "lunar_map",
+      "prompts": [
+        {
+          "id": "map_01",
+          "name": "Colony Overview Map",
+          "prompt": "professional 2.5D isometric game map tile, top-down view, lunar colony overview strategic map, cratered gray surface with grid overlay, building zones marked as colored blocks, roads as white lines, legend symbols, clean hard-edged pixel art, limited palette moon gray zone colors white grid, SimCity 2000 map style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "overview",
+            "colony"
+          ]
+        },
+        {
+          "id": "map_02",
+          "name": "Surface Tile Set",
+          "prompt": "professional 2.5D isometric game terrain tile, seamless top-down lunar regolith ground texture, scattered small gray rocks and pebbles, subtle craterlet pits, flat building-ready surface, clean hard-edged pixel art, limited palette regolith gray rock shadow, SimCity 2000 terrain style",
+          "negative_prompt": "",
+          "tags": [
+            "terrain",
+            "tile",
+            "surface"
+          ]
+        },
+        {
+          "id": "map_03",
+          "name": "Crater Zone",
+          "prompt": "professional 2.5D isometric game terrain tile, top-down view, large lunar impact crater zone, circular depression with terraced shadowed walls and bright rim, flat crater floor, clean hard-edged pixel art, limited palette crater shadow dark floor light rim bright, SimCity 2000 terrain style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "crater",
+            "terrain"
+          ]
+        },
+        {
+          "id": "map_04",
+          "name": "Mare Plains",
+          "prompt": "professional 2.5D isometric game terrain tile, top-down view, lunar mare plains flat basalt terrain, smooth dark gray surface suitable for building, subtle lava flow ripple patterns, clean hard-edged pixel art, limited palette mare dark basalt gray ripple texture, SimCity 2000 terrain style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "plains",
+            "mare"
+          ]
+        },
+        {
+          "id": "map_05",
+          "name": "Mountain Region",
+          "prompt": "professional 2.5D isometric game terrain tile, top-down view, lunar highland mountain region, rugged peaks and ridges with elevation shadowing, rocky valleys between, impassable terrain, clean hard-edged pixel art, limited palette mountain light shadow dark ridge gray, SimCity 2000 terrain style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "mountains",
+            "highland"
+          ]
+        },
+        {
+          "id": "map_06",
+          "name": "Polar Region",
+          "prompt": "professional 2.5D isometric game terrain tile, top-down view, lunar polar region, permanently shadowed crater walls with bright white water ice deposits, high contrast light and dark, clean hard-edged pixel art, limited palette shadow black ice white polar gray, SimCity 2000 terrain style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "polar",
+            "ice"
+          ]
+        },
+        {
+          "id": "map_07",
+          "name": "Earth View",
+          "prompt": "professional 2.5D isometric game background tile, earth seen from lunar surface, blue and white marble planet rising above black horizon, stars in sky, clean hard-edged pixel art, limited palette earth blue white horizon black star white, SimCity 2000 sky style",
+          "negative_prompt": "",
+          "tags": [
+            "background",
+            "earth",
+            "view"
+          ]
+        },
+        {
+          "id": "map_08",
+          "name": "Colony Sprawl",
+          "prompt": "professional 2.5D isometric game map tile, top-down view, lunar colony urban sprawl pattern, dense cluster of tiny building dots connected by road grid, landing pads, parks as dark spots, clean hard-edged pixel art, limited palette building gray road white park green, SimCity 2000 city view style",
+          "negative_prompt": "",
+          "tags": [
+            "map",
+            "city",
+            "sprawl"
+          ]
+        }
+      ]
+    },
+    "buildings_misc": {
+      "output_dir": "buildings_misc",
+      "prompts": [
+        {
+          "id": "misc_01",
+          "name": "Living Quarters Dome",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar residential habitat dome, medium geodesic dome with small square windows glowing warm yellow, airlock entrance with ramp, satellite dish beside, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette dome silver warm home glow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "residential",
+            "housing"
+          ]
+        },
+        {
+          "id": "misc_02",
+          "name": "Water Processing Plant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar water reclamation plant, rectangular industrial building with large cylindrical storage tanks beside, pipes connecting, blue water glow visible through tank windows, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette industrial gray tank silver water blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "water",
+            "utility"
+          ]
+        },
+        {
+          "id": "misc_03",
+          "name": "Atmosphere Processor",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar atmosphere processing plant, low wide building with massive round air intake vents on roof, exhaust stacks with faint vapor, filter units, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette vent gray vapor white filter green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "atmosphere",
+            "life-support"
+          ]
+        },
+        {
+          "id": "misc_04",
+          "name": "Communication Tower",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar communications relay tower, tall lattice tower with multiple parabolic dishes and phased array panels at different heights, small equipment shelter at base, red aircraft warning lights, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette tower gray dish white light red, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "communication",
+            "tower"
+          ]
+        },
+        {
+          "id": "misc_05",
+          "name": "Space Elevator Base",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar space elevator anchor base, massive square platform with central cable anchor pillar rising upward, heavy counterweight structure, industrial machinery, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette platform dark gray cable silver machinery orange, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "elevator",
+            "megastructure"
+          ]
+        },
+        {
+          "id": "misc_06",
+          "name": "Recycling Center",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar materials recycling center, industrial building with sorting conveyor belts and compaction crusher visible, recycling symbol on wall, material bins, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette industrial gray green recycle symbol, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "recycling",
+            "eco"
+          ]
+        },
+        {
+          "id": "misc_07",
+          "name": "School Academy",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar education school academy, rectangular building with large classroom windows, small space playground with low-gravity structures beside, colorful flags, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette school white colorful accents playground bright, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "school",
+            "education"
+          ]
+        },
+        {
+          "id": "misc_08",
+          "name": "Park Recreation Dome",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar recreation park dome, large transparent dome with green trees grass and small pond visible inside, walking paths, bench silhouettes, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette glass clear park green water blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "park",
+            "recreation"
+          ]
+        },
+        {
+          "id": "misc_09",
+          "name": "Waste Management",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar waste management facility, industrial building with open-top waste pits covered by nets, processing vats, odor scrubber stacks, warning signs, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette industrial gray waste brown scrubber green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "waste",
+            "utility"
+          ]
+        },
+        {
+          "id": "misc_10",
+          "name": "Fire Station",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar fire rescue station, bright red building with three large garage doors for rover vehicles, watch tower with searchlight, fire emblem, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette emergency red white silver, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "fire",
+            "emergency"
+          ]
+        },
+        {
+          "id": "misc_11",
+          "name": "Police Station",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar security police station, sturdy blue building with shield emblem, holding cell windows with bars, small parking area with patrol rover, watch tower, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette police blue white silver, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "police",
+            "security"
+          ]
+        },
+        {
+          "id": "misc_12",
+          "name": "Launch Pad",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar rocket launch pad, octagonal concrete pad with small two-stage rocket on launch mount, service gantry arm extending to rocket, fuel lines, flame trench, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette concrete gray rocket white fuel orange, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "launch",
+            "spaceport"
+          ]
+        }
+      ]
+    },
+    "lunar_sites": {
+      "output_dir": "lunar_sites",
+      "prompts": [
+        {
+          "id": "site_01",
+          "name": "Mining Excavation Site",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar open-pit mining excavation site, terraced crater walls with heavy machinery operating, ore haulers on spiral road, processing plant at edge, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette regolith gray machinery yellow ore orange, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "mining",
+            "excavation"
+          ]
+        },
+        {
+          "id": "site_02",
+          "name": "Research Laboratory Campus",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar research laboratory campus, multiple interconnected white dome buildings with tube walkways, satellite dishes and antenna farm, blue glow from windows, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette lab white science blue glow, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "research",
+            "laboratory"
+          ]
+        },
+        {
+          "id": "site_03",
+          "name": "Lunar Hotel Resort",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar luxury hotel resort complex, multi-tiered building with glass dome observatory on roof, terrace pool area, panoramic Earth view windows, warm interior lighting, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette luxury white gold warm glow blue, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "hotel",
+            "resort"
+          ]
+        },
+        {
+          "id": "site_04",
+          "name": "Spaceport Launch Complex",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar spaceport launch complex, multiple hexagonal landing pads with spacecraft parked, central control tower, fuel tanks and gantry cranes, perimeter fence, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette pad gray craft white fuel orange, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "spaceport",
+            "launch"
+          ]
+        },
+        {
+          "id": "site_05",
+          "name": "Warehouse Storage District",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar warehouse storage district, grid of identical large rectangular warehouses with container stacks between, transport rovers loading cargo, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette warehouse gray container colors rover white, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "warehouse",
+            "storage"
+          ]
+        },
+        {
+          "id": "site_06",
+          "name": "Greenhouse Agriculture Zone",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar agriculture zone, multiple greenhouse domes of varying sizes connected by paths, farm vehicles, irrigation equipment, crops visible through glass, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dome green crop vibrant vehicle yellow, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "greenhouse",
+            "agriculture"
+          ]
+        },
+        {
+          "id": "site_07",
+          "name": "Solar Energy Farm",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar solar energy farm zone, vast grid of angled solar panels stretching to horizon, central substation building, power lines, mountain backdrop, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette panel blue silver mountain gray, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "solar",
+            "energy"
+          ]
+        },
+        {
+          "id": "site_08",
+          "name": "Residential Colony Sector",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar residential colony sector, cluster of habitat domes with connecting pressurized walkways, small gardens between, playground, warm lights from windows, community feel, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dome silver home warm glow path gray, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "residential",
+            "colony"
+          ]
+        },
+        {
+          "id": "site_09",
+          "name": "Entertainment Plaza",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar entertainment plaza district, open square with neon-lit nightclub building, outdoor holographic stage, restaurant terraces, crowd silhouettes, vibrant atmosphere, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette plaza gray neon pink cyan purple, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "entertainment",
+            "plaza"
+          ]
+        },
+        {
+          "id": "site_10",
+          "name": "Medical Center Complex",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar medical center complex, main hospital building with helipad and red cross, ambulance bay with emergency vehicles, research wings, medical supply depot, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette white red emergency blue, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "medical",
+            "hospital"
+          ]
+        },
+        {
+          "id": "site_11",
+          "name": "Nuclear Power Plant",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar nuclear power plant complex, massive reactor containment dome, twin cooling towers with steam, high voltage switchyard with transformers, security perimeter, warning signs, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dome gray steam white warning yellow, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "nuclear",
+            "power"
+          ]
+        },
+        {
+          "id": "site_12",
+          "name": "Communications Hub",
+          "prompt": "professional 2.5D isometric game scene sprite, dimetric projection 2:1 ratio, lunar communications hub, array of giant satellite dishes pointed at Earth, tall phased-array antenna towers, signal processing center building, data cables, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dish white tower gray signal blue, AAA pixel art, SimCity 2000 zone style",
+          "negative_prompt": "",
+          "tags": [
+            "site",
+            "communications",
+            "hub"
+          ]
+        }
+      ]
+    },
+    "ui_elements": {
+      "output_dir": "ui_elements",
+      "prompts": [
+        {
+          "id": "ui_01",
+          "name": "Oxygen Icon",
+          "prompt": "professional pixel art game UI icon, O2 oxygen molecule symbol in blue circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette oxygen blue white, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "oxygen",
+            "resource"
+          ]
+        },
+        {
+          "id": "ui_02",
+          "name": "Water Icon",
+          "prompt": "professional pixel art game UI icon, water droplet H2O symbol in light blue circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette water cyan white, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "water",
+            "resource"
+          ]
+        },
+        {
+          "id": "ui_03",
+          "name": "Energy Icon",
+          "prompt": "professional pixel art game UI icon, lightning bolt energy power symbol in yellow circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette energy yellow gold, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "energy",
+            "resource"
+          ]
+        },
+        {
+          "id": "ui_04",
+          "name": "Minerals Icon",
+          "prompt": "professional pixel art game UI icon, crystal gem mineral symbol in purple circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette mineral purple magenta, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "minerals",
+            "resource"
+          ]
+        },
+        {
+          "id": "ui_05",
+          "name": "Food Icon",
+          "prompt": "professional pixel art game UI icon, plant leaf agriculture food symbol in green circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette food green lime, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "food",
+            "resource"
+          ]
+        },
+        {
+          "id": "ui_06",
+          "name": "Credits Icon",
+          "prompt": "professional pixel art game UI icon, gold coin currency credit symbol in golden circle, crisp 32x32 style, sharp black outline, flat cel-shaded with 2-tone depth, clean readable, limited palette gold yellow bright, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "icon",
+            "credits",
+            "currency"
+          ]
+        },
+        {
+          "id": "ui_07",
+          "name": "Building Menu Panel",
+          "prompt": "professional pixel art game UI panel, building construction menu interface, dark metallic rectangular panel with grid of 12 empty building slot squares, category tabs on top, resource cost numbers, crisp pixel art, limited palette dark gray slot light selection highlight blue, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "ui",
+            "menu",
+            "panel"
+          ]
+        },
+        {
+          "id": "ui_08",
+          "name": "Mini Map Frame",
+          "prompt": "professional pixel art game UI frame, minimap border frame, square dark metallic border with decorative corner rivets and tech details, empty center for map, crisp pixel art, limited palette frame dark gray rivet silver, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "ui",
+            "minimap",
+            "frame"
+          ]
+        },
+        {
+          "id": "ui_09",
+          "name": "Alert Notification",
+          "prompt": "professional pixel art game UI popup, alert warning notification panel, rectangular red and yellow panel with warning triangle symbol and exclamation mark, urgent styling, crisp pixel art, limited palette warning red yellow black, SimCity 2000 HUD style",
+          "negative_prompt": "",
+          "tags": [
+            "ui",
+            "notification",
+            "alert"
+          ]
+        }
+      ]
+    },
+    "roads": {
+      "output_dir": "roads",
+      "prompts": [
+        {
+          "id": "road_01",
+          "name": "Straight Road",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, straight lunar road segment, gray regolith surface with white lane markings, small reflectors, clean edges for seamless tiling, sharp black outline, flat cel-shaded, single square tile footprint, limited palette road gray marking white, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "straight",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_02",
+          "name": "Curved Road",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, curved lunar road bend quarter-circle, gray regolith surface with white dashed lane markings following curve, clean edges for seamless tiling, sharp black outline, flat cel-shaded, single square tile footprint, limited palette road gray marking white, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "curve",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_03",
+          "name": "T Junction",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, T-junction road intersection, gray regolith surface with white lane markings splitting three ways, stop line markings, clean edges, sharp black outline, flat cel-shaded, single square tile footprint, limited palette road gray marking white, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "junction",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_04",
+          "name": "Crossroad Intersection",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, four-way crossroad intersection, gray regolith surface with white lane markings crossing perpendicularly, center island, clean edges, sharp black outline, flat cel-shaded, single square tile footprint, limited palette road gray marking white island yellow, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "crossroad",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_05",
+          "name": "Tunnel Entrance",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, lunar underground tunnel entrance, road leading into dark arched tunnel mouth carved into regolith wall, warning lights, barrier gate, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette tunnel black road gray warning red, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "tunnel",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_06",
+          "name": "Bridge",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, lunar elevated bridge segment, road surface on metal truss structure with support pillars, railings on sides, clean edges for seamless tiling, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette bridge gray support dark truss white, AAA pixel art, SimCity 2000 road style",
+          "negative_prompt": "",
+          "tags": [
+            "road",
+            "bridge",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_07",
+          "name": "Rail Track",
+          "prompt": "professional 2.5D isometric game road tile sprite, dimetric projection 2:1 ratio, lunar magnetic rail track segment, two parallel metal rails with magnetic levitation strips between, sleepers, clean edges for seamless tiling, sharp black outline, flat cel-shaded, single square tile footprint, limited palette rail silver sleeper dark track bed gray, AAA pixel art, SimCity 2000 rail style",
+          "negative_prompt": "",
+          "tags": [
+            "rail",
+            "track",
+            "transport"
+          ]
+        },
+        {
+          "id": "road_08",
+          "name": "Rail Station Platform",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar maglev train station platform, covered platform with waiting shelter, benches, rail track beside, departure board, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette platform gray shelter white rail silver, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "rail",
+            "station",
+            "transport"
+          ]
+        }
+      ]
+    },
+    "decorations": {
+      "output_dir": "decorations",
+      "prompts": [
+        {
+          "id": "dec_01",
+          "name": "Lunar Rock Formation",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, natural lunar rock boulder formation, irregular gray boulders and stones clustered together, cratered surface texture, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette rock gray shadow dark, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "rock",
+            "natural"
+          ]
+        },
+        {
+          "id": "dec_02",
+          "name": "Flag Pole Earth",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, lunar flag pole with Earth flag, tall thin pole with rectangular flag waving, base platform, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette pole gray flag blue green white, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "flag",
+            "earth"
+          ]
+        },
+        {
+          "id": "dec_03",
+          "name": "Street Lamp",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, lunar colony street lamp, tall thin pole with glowing circular lamp head on top, solar panel cap, warm yellow light glow, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette pole gray lamp warm yellow solar blue, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "lamp",
+            "light"
+          ]
+        },
+        {
+          "id": "dec_04",
+          "name": "Park Bench",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, lunar colony park bench, simple metal bench with backrest, small potted plant beside, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette bench gray plant green pot brown, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "bench",
+            "park"
+          ]
+        },
+        {
+          "id": "dec_05",
+          "name": "Monument Statue",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, lunar colony monument statue, tall stone pedestal with abstract astronaut figure reaching upward, plaque on base, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette stone gray statue silver plaque gold, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "monument",
+            "statue"
+          ]
+        },
+        {
+          "id": "dec_06",
+          "name": "Satellite Debris",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, crashed satellite debris, broken satellite dish and twisted metal panels scattered on ground, sparking wires, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette debris gray spark orange wire red, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "debris",
+            "satellite"
+          ]
+        },
+        {
+          "id": "dec_07",
+          "name": "Solar Beacon",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, lunar navigation beacon, short cylindrical tower with rotating light on top, solar panels on sides, warning stripe, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette tower gray light red solar blue stripe yellow, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "beacon",
+            "navigation"
+          ]
+        },
+        {
+          "id": "dec_08",
+          "name": "Cargo Container Stack",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, stack of shipping cargo containers, three colorful rectangular containers stacked in pyramid, markings and labels, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette container red blue yellow marking white, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "decoration",
+            "container",
+            "cargo"
+          ]
+        }
+      ]
+    },
+    "characters": {
+      "output_dir": "characters",
+      "prompts": [
+        {
+          "id": "char_01",
+          "name": "Astronaut Worker",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar astronaut construction worker, full body front 3/4 view, white spacesuit with orange safety vest, tool belt, helmet with reflective visor, standing pose, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette suit white vest orange visor gold, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "astronaut",
+            "worker"
+          ]
+        },
+        {
+          "id": "char_02",
+          "name": "Scientist",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar scientist researcher, full body front 3/4 view, white lab coat over blue suit, holding tablet device, glasses, confident pose, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette coat white suit blue tablet glow, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "scientist",
+            "researcher"
+          ]
+        },
+        {
+          "id": "char_03",
+          "name": "Security Guard",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar colony security guard, full body front 3/4 view, dark armored suit with blue police light on shoulder, helmet with visor, baton on belt, alert stance, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette armor dark blue light red visor silver, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "security",
+            "guard"
+          ]
+        },
+        {
+          "id": "char_04",
+          "name": "Miner",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar miner operator, full body front 3/4 view, heavy reinforced orange mining suit with helmet lamp, dirty boots, pickaxe over shoulder, sturdy pose, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette suit orange lamp yellow boot dark, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "miner",
+            "worker"
+          ]
+        },
+        {
+          "id": "char_05",
+          "name": "Medical Officer",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar medical officer doctor, full body front 3/4 view, white medical uniform with red cross armband, medical scanner in hand, calm professional pose, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette uniform white cross red scanner blue, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "medical",
+            "doctor"
+          ]
+        },
+        {
+          "id": "char_06",
+          "name": "Pilot",
+          "prompt": "professional 2.5D isometric game character sprite, dimetric projection 2:1 ratio, lunar spacecraft pilot, full body front 3/4 view, sleek blue flight suit with mission patches, aviator helmet under arm, confident pose, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette flight blue patch color helmet white, AAA pixel art, Oxygen Not Included character style",
+          "negative_prompt": "",
+          "tags": [
+            "character",
+            "pilot",
+            "astronaut"
+          ]
+        }
+      ]
+    },
+    "lunar_flora": {
+      "output_dir": "lunar_flora",
+      "prompts": [
+        {
+          "id": "flora_01",
+          "name": "Crystal Fungus",
+          "prompt": "professional 2.5D isometric game flora sprite, dimetric projection 2:1 ratio, alien lunar crystal fungus, cluster of translucent glowing blue crystal stalks with bulbous caps, bioluminescent veins, growing from rock crevice, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette crystal cyan glow blue vein purple, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "flora",
+            "fungus",
+            "crystal"
+          ]
+        },
+        {
+          "id": "flora_02",
+          "name": "Lunar Moss",
+          "prompt": "professional 2.5D isometric game flora sprite, dimetric projection 2:1 ratio, engineered lunar moss patch, dense low-lying carpet of dark green moss with tiny silver reflective hairs, growing on regolith, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette moss green hair silver regolith gray, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "flora",
+            "moss",
+            "plant"
+          ]
+        },
+        {
+          "id": "flora_03",
+          "name": "Tube Plant",
+          "prompt": "professional 2.5D isometric game flora sprite, dimetric projection 2:1 ratio, alien lunar tube plant, tall hollow cylindrical stalks with spiraling ridges, cluster of three different heights, spore pods at tips, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette stalk beige ridge brown spore red, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "flora",
+            "plant",
+            "alien"
+          ]
+        },
+        {
+          "id": "flora_04",
+          "name": "Glow Flower",
+          "prompt": "professional 2.5D isometric game flora sprite, dimetric projection 2:1 ratio, engineered lunar glow flower, single large bloom with radiating petals and bright yellow bioluminescent center, thin stem with two leaves, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette petal white center glow yellow stem green, AAA pixel art, SimCity 2000 decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "flora",
+            "flower",
+            "glow"
+          ]
+        }
+      ]
+    },
+    "infrastructure": {
+      "output_dir": "infrastructure",
+      "prompts": [
+        {
+          "id": "infra_01",
+          "name": "Pressure Pipe",
+          "prompt": "professional 2.5D isometric game infrastructure sprite, dimetric projection 2:1 ratio, lunar pressurized atmosphere pipe segment, thick insulated cylindrical pipe with coupling flanges and pressure gauge, steam wisps at joint, clean edges for seamless tiling, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette pipe silver insulation white gauge green, AAA pixel art, Factorio pipe style",
+          "negative_prompt": "",
+          "tags": [
+            "infrastructure",
+            "pipe",
+            "atmosphere"
+          ]
+        },
+        {
+          "id": "infra_02",
+          "name": "Power Cable",
+          "prompt": "professional 2.5D isometric game infrastructure sprite, dimetric projection 2:1 ratio, lunar high-voltage power cable on pylons, thick cable running between short posts with ceramic insulators, warning markers, clean edges for seamless tiling, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette cable black post gray insulator brown, AAA pixel art, Factorio power style",
+          "negative_prompt": "",
+          "tags": [
+            "infrastructure",
+            "power",
+            "cable"
+          ]
+        },
+        {
+          "id": "infra_03",
+          "name": "Water Pipeline",
+          "prompt": "professional 2.5D isometric game infrastructure sprite, dimetric projection 2:1 ratio, lunar water supply pipeline, blue painted cylindrical pipe with valve wheel and flow meter, clean edges for seamless tiling, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette pipe blue valve red meter white, AAA pixel art, Factorio pipe style",
+          "negative_prompt": "",
+          "tags": [
+            "infrastructure",
+            "water",
+            "pipeline"
+          ]
+        },
+        {
+          "id": "infra_04",
+          "name": "Transport Tube",
+          "prompt": "professional 2.5D isometric game infrastructure sprite, dimetric projection 2:1 ratio, lunar passenger transport tube, transparent cylindrical tunnel with capsule pod visible inside, support rings, clean edges for seamless tiling, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, limited palette tube clear pod white support gray, AAA pixel art, Factorio transport style",
+          "negative_prompt": "",
+          "tags": [
+            "infrastructure",
+            "transport",
+            "tube"
+          ]
+        }
+      ]
+    },
+    "government": {
+      "output_dir": "government",
+      "prompts": [
+        {
+          "id": "gov_01",
+          "name": "Commissioner Office",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar government commissioner office, imposing rectangular building with classical column facade, large communication dish array on roof, flag poles with Earth and colony flags, broad steps leading to entrance, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette government white gold trim flag blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "government",
+            "administration"
+          ]
+        },
+        {
+          "id": "gov_02",
+          "name": "Lunar Operations Center",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar operations control center, wide low building with multiple circular radar dishes on roof, large holographic globe display visible through glass walls, command center design, security checkpoint entrance, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette concrete gray hologram blue radar white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "operations",
+            "command"
+          ]
+        }
+      ]
+    },
+    "housing": {
+      "output_dir": "housing",
+      "prompts": [
+        {
+          "id": "hou_01",
+          "name": "Basic Habitat Module",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar basic habitat module, compact cylindrical capsule with rounded ends, small oval windows glowing warm yellow, simple airlock door, solar panel strip on top, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette capsule white window glow yellow strip blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "housing",
+            "habitat"
+          ]
+        },
+        {
+          "id": "hou_02",
+          "name": "Residential Complex",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar residential complex, two connected dome structures with pressurized walkway between, multiple glowing windows on each dome, small garden area with lunar plants, community antenna, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dome silver windows warm yellow garden green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "residential",
+            "complex"
+          ]
+        },
+        {
+          "id": "hou_03",
+          "name": "Luxury Dome",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar luxury habitat dome, large geodesic glass dome with golden geodesic frame, multi-level interior visible, rooftop observation deck with telescope, panoramic view windows, glowing warm interior lights, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette glass clear frame gold interior warm, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "luxury",
+            "dome"
+          ]
+        },
+        {
+          "id": "hou_04",
+          "name": "Underground District",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar underground residential district, surface entrance structure with stairs going down into illuminated tunnel, cluster of small skylight domes on surface level, ventilation shafts, subtle green glow from subterranean gardens, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette surface gray tunnel warm light garden green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "underground",
+            "district"
+          ]
+        }
+      ]
+    },
+    "life_support": {
+      "output_dir": "life_support",
+      "prompts": [
+        {
+          "id": "life_01",
+          "name": "Water Extractor",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar regolith water extractor, industrial rectangular building with large drill rig extending into ground, blue water storage tanks on side, steam venting from processing pipes, bright blue glow from extracted water, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette drilling rig gray tank blue steam white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "water",
+            "extraction"
+          ]
+        },
+        {
+          "id": "life_02",
+          "name": "Electrolysis Plant",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar electrolysis processing plant, low wide building with rows of cylindrical electrolysis tanks, pipes carrying oxygen and hydrogen to separate storage spheres, warning signs, green indicator lights, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette tank silver pipe green sphere white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "electrolysis",
+            "processing"
+          ]
+        },
+        {
+          "id": "life_03",
+          "name": "Regolith Cistern",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar regolith storage cistern, large open-top concrete basin with reinforced walls, covered with tension fabric roof, conveyor belt feeding crushed regolith into hopper, small control booth, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette concrete gray fabric white regolith tan, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "cistern",
+            "storage"
+          ]
+        }
+      ]
+    },
+    "industry": {
+      "output_dir": "industry",
+      "prompts": [
+        {
+          "id": "ind_01",
+          "name": "Regolith Smelter",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar regolith smelting foundry, massive industrial building with twin smokestacks emitting filtered steam, huge furnace door on front with orange glow, conveyor belts feeding raw material and removing processed blocks, warning stripes, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette industrial gray furnace orange steam white warning yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "smelter",
+            "foundry"
+          ]
+        },
+        {
+          "id": "ind_02",
+          "name": "3D Printing Factory",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar 3D printing manufacturing facility, sleek modern building with large garage door, robotic 3D printer arm visible through window, spools of filament material stacked outside, blue digital display on facade showing printing progress, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette building white printer blue filament spool green, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "factory",
+            "3d-printing"
+          ]
+        },
+        {
+          "id": "ind_03",
+          "name": "Helium-3 Lab",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar helium-3 processing laboratory, futuristic white building with blue glowing containment chambers visible, large cryogenic storage spheres beside main structure, clean room exterior, scientific warning symbols, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette lab white cryo blue warning yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "helium",
+            "laboratory"
+          ]
+        },
+        {
+          "id": "ind_04",
+          "name": "Export Harbor",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar export space harbor, large elevated launch platform with electromagnetic rail system, cargo container loading area, small control tower, orbital cargo pods being prepared, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette platform gray rail blue cargo container orange, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "export",
+            "harbor"
+          ]
+        }
+      ]
+    },
+    "transport": {
+      "output_dir": "transport",
+      "prompts": [
+        {
+          "id": "tra_01",
+          "name": "Rover Garage",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar rover maintenance garage, wide rectangular building with three roll-up bay doors, rover silhouette visible inside, repair equipment and tools on walls, gas pumps beside building, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette garage silver door orange rover white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "garage",
+            "rovers"
+          ]
+        },
+        {
+          "id": "tra_02",
+          "name": "Vacuum Tube Station",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar vacuum tube transit station, small sleek station module attached to transparent tube, pod capsule waiting inside tube, platform with ticket machine, glowing blue propulsion track, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette station white tube clear track blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "transport",
+            "tube"
+          ]
+        }
+      ]
+    },
+    "civic": {
+      "output_dir": "civic",
+      "prompts": [
+        {
+          "id": "civ_01",
+          "name": "EVA Training Center",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar EVA training facility, large domed building with transparent section revealing indoor training area with mock terrain, spacesuit locker room visible, airlock training simulator, climbing wall, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette dome white interior blue spacesuit orange, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "training",
+            "EVA"
+          ]
+        },
+        {
+          "id": "civ_02",
+          "name": "Crater Memorial",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar crater memorial cemetery, natural crater rim with polished black stone monuments, eternal flame hologram at center, walkway paths, small garden of lunar moss, Earth visible as permanent fixture in sky, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette stone dark green moss eternal flame blue, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "memorial",
+            "cemetery"
+          ]
+        }
+      ]
+    },
+    "risk_management": {
+      "output_dir": "risk_management",
+      "prompts": [
+        {
+          "id": "rsk_01",
+          "name": "Pressurization Brigade",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar emergency pressurization station, compact response building with large air canisters stacked on side, emergency rover bay, bright red and white color scheme, pressure gauges on exterior, warning lights, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette emergency red canister silver gauge white, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "emergency",
+            "pressurization"
+          ]
+        },
+        {
+          "id": "rsk_02",
+          "name": "Solar Radiation Control",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar solar radiation monitoring station, low bunker-like building with large sensor array on roof tracking sun, retractable radiation shield panels, underground shelter entrance visible, warning signs, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette bunker gray sensor white shield silver warning yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "radiation",
+            "monitoring"
+          ]
+        },
+        {
+          "id": "rsk_03",
+          "name": "Evacuation Center",
+          "prompt": "professional 2.5D isometric game building sprite, dimetric projection 2:1 ratio, lunar emergency evacuation shelter, large reinforced bunker entrance carved into regolith, heavy blast doors open, underground safe zone visible below, emergency beacon tower on top, evacuation route signs, sharp black outline, flat cel-shaded with 3-tone depth, clean readable silhouette, limited palette bunker dark gray door steel beacon red sign yellow, AAA pixel art, SimCity 2000 style",
+          "negative_prompt": "",
+          "tags": [
+            "building",
+            "evacuation",
+            "shelter"
+          ]
+        }
+      ]
+    },
+    "anomalies": {
+      "output_dir": "anomalies",
+      "prompts": [
+        {
+          "id": "anom_01",
+          "name": "Meteorite Crater",
+          "prompt": "professional 2.5D isometric game terrain decoration sprite, dimetric projection 2:1 ratio, fresh lunar meteorite impact crater, circular depression with raised ejecta rim, central smoking fragment still glowing orange-hot, fractured regolith radiating outward, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette regolith gray ejecta rim dark impact glow orange, AAA pixel art, SimCity 2000 terrain decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "anomaly",
+            "crater",
+            "impact"
+          ]
+        },
+        {
+          "id": "anom_02",
+          "name": "Alien Artifact",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, mysterious alien artifact on lunar surface, smooth obsidian-black monolith with glowing azure symbols that pulse slowly, geometric proportions, smaller debris fragments scattered around base, subtle energy distortion effect, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette monolith black symbol glow blue debris dark, AAA pixel art, distinct sci-fi mystery style",
+          "negative_prompt": "",
+          "tags": [
+            "anomaly",
+            "alien",
+            "artifact"
+          ]
+        },
+        {
+          "id": "anom_03",
+          "name": "Lava Tube Entrance",
+          "prompt": "professional 2.5D isometric game terrain decoration sprite, dimetric projection 2:1 ratio, lunar lava tube cave entrance, wide dark irregular opening in regolith with natural arched ceiling, warm geothermal glow emanating from depths, worn path leading inside, small crystal formations visible at entrance, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette entrance dark rock gray geothermal warm glow crystal cyan, AAA pixel art, SimCity 2000 terrain decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "anomaly",
+            "cave",
+            "lava-tube"
+          ]
+        },
+        {
+          "id": "anom_04",
+          "name": "Ice Deposit",
+          "prompt": "professional 2.5D isometric game terrain decoration sprite, dimetric projection 2:1 ratio, lunar water ice deposit in permanently shadowed crater, bright white crystalline ice exposed at surface, blue-white sheen, dark shadowed crater walls surrounding, tiny frost crystals catching faint light, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette ice white crystal blue sheen shadow dark, AAA pixel art, SimCity 2000 terrain decoration style",
+          "negative_prompt": "",
+          "tags": [
+            "anomaly",
+            "ice",
+            "water"
+          ]
+        },
+        {
+          "id": "anom_05",
+          "name": "Ancient Ruins",
+          "prompt": "professional 2.5D isometric game decoration sprite, dimetric projection 2:1 ratio, crumbling ancient lunar ruins, collapsed stone pillars and broken archways half-buried in regolith, weathered alien basalt blocks with faded geometric carvings, scattered debris, aged and worn appearance, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette stone dark gray carving faded pillar beige debris brown, AAA pixel art, ancient ruins style",
+          "negative_prompt": "",
+          "tags": [
+            "anomaly",
+            "ruins",
+            "ancient"
+          ]
+        }
+      ]
+    },
+    "robots": {
+      "output_dir": "robots",
+      "prompts": [
+        {
+          "id": "rob_01",
+          "name": "Cleaning Drone",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, autonomous lunar cleaning maintenance drone, small flat cylindrical body with soft scrub brushes underneath, two short antennae with blinking green status lights, compact utility attachment, slow purposeful stance, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette body white brush gray light green glow accent blue, AAA pixel art, WALL-E robot style",
+          "negative_prompt": "",
+          "tags": [
+            "robot",
+            "drone",
+            "cleaning"
+          ]
+        },
+        {
+          "id": "rob_02",
+          "name": "Construction Mech",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar heavy construction mech walker, large bipedal machine with reverse-jointed legs, cylindrical body with reinforced glass cockpit, two articulated arms with claw and welding torch, hazard stripes on limbs, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette mech body orange cockpit glass blue limb hazard yellow, AAA pixel art, mecha construction style",
+          "negative_prompt": "",
+          "tags": [
+            "robot",
+            "construction",
+            "mech"
+          ]
+        },
+        {
+          "id": "rob_03",
+          "name": "Repair Spider",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar repair spider-bot, compact multi-legged spider-like chassis with eight slender articulated limbs, central sensor cluster with single glowing red optic, tool arm with precision welder and scanner extending from front, compact storage bay on top, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette chassis dark gray limb silver optic red tool arm orange, AAA pixel art, sci-fi repair drone style",
+          "negative_prompt": "",
+          "tags": [
+            "robot",
+            "repair",
+            "spider"
+          ]
+        },
+        {
+          "id": "rob_04",
+          "name": "Payload Transporter",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar autonomous cargo transport robot, rectangular flatbed chassis with four large rugged wheels, stack of cargo containers strapped on back, GPS antenna, front headlights, logistic label markings, robust industrial design, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette chassis gray cargo container blue label white light yellow, AAA pixel art, logistic robot style",
+          "negative_prompt": "",
+          "tags": [
+            "robot",
+            "transport",
+            "cargo"
+          ]
+        },
+        {
+          "id": "rob_05",
+          "name": "Security Sentinel",
+          "prompt": "professional 2.5D isometric game vehicle sprite, dimetric projection 2:1 ratio, lunar security patrol sentinel robot, tall humanoid-ish torso on quadruped base, angular armored plating, rotating head with blue optical sensor strip, built-in weapon pod on shoulder, blue and silver color scheme, authoritative stance, sharp black outline, flat cel-shaded with 3-tone depth, single square tile footprint, clean readable silhouette, limited palette armor blue accent silver sensor strip cyan weapon pod red, AAA pixel art, security robot style",
+          "negative_prompt": "",
+          "tags": [
+            "robot",
+            "security",
+            "sentinel"
+          ]
+        }
+      ]
+    }
+  }
+}

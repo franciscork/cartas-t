@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON - Lunar Colony Asset Viewer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a12;
+    --bg2: #12121e;
+    --bg3: #1a1a2e;
+    --card: #1e1e32;
+    --card-hover: #2a2a44;
+    --border: #2a2a44;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --accent: #6c5ce7;
+    --accent2: #00cec9;
+    --accent3: #fd79a8;
+    --glow: rgba(108, 92, 231, 0.3);
+    --orange: #fdcb6e;
+  --green: #00b894;
+  --red: #ff7675;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Stars Background */
+  .stars {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #eee, transparent),
+      radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,.8), transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,.6), transparent),
+      radial-gradient(1px 1px at 160px 30px, #ddd, transparent),
+      radial-gradient(1.5px 1.5px at 200px 100px, #eee, transparent),
+      radial-gradient(1px 1px at 250px 50px, rgba(255,255,255,.7), transparent),
+      radial-gradient(1px 1px at 300px 120px, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 350px 80px, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 400px 40px, #ddd, transparent),
+      radial-gradient(1px 1px at 10px 200px, #eee, transparent),
+      radial-gradient(1px 1px at 70px 180px, rgba(255,255,255,.8), transparent),
+      radial-gradient(1.5px 1.5px at 120px 220px, #fff, transparent),
+      radial-gradient(1px 1px at 180px 150px, rgba(255,255,255,.6), transparent),
+      radial-gradient(1px 1px at 230px 190px, #ddd, transparent),
+      radial-gradient(1px 1px at 280px 250px, #eee, transparent),
+      radial-gradient(1.5px 1.5px at 330px 170px, rgba(255,255,255,.7), transparent),
+      radial-gradient(1px 1px at 380px 210px, #fff, transparent),
+      radial-gradient(1px 1px at 420px 140px, rgba(255,255,255,.5), transparent);
+    background-size: 450px 300px;
+    background-repeat: repeat;
+  }
+
+  /* Header */
+  .header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(180deg, rgba(108,92,231,0.1) 0%, transparent 100%);
+  }
+
+  .header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.5em;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    letter-spacing: 4px;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from { filter: drop-shadow(0 0 10px var(--glow)); }
+    to { filter: drop-shadow(0 0 25px var(--glow)); }
+  }
+
+  .header .subtitle {
+    font-size: 1.2em;
+    color: var(--text2);
+    margin-top: 10px;
+    letter-spacing: 2px;
+  }
+
+  .header .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+    padding: 15px 25px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-width: 100px;
+  }
+
+  .stat .num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .stat .label {
+    font-size: 0.8em;
+    color: var(--text2);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Toggle */
+  .view-toggle {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .view-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--text2);
+  }
+
+  .toggle-track {
+    width: 52px;
+    height: 28px;
+    background: var(--bg3);
+    border-radius: 14px;
+    position: relative;
+    border: 1px solid var(--border);
+    transition: 0.3s;
+  }
+
+  .toggle-track .thumb {
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
+  }
+
+  #viewToggle:checked + .toggle-track .thumb { left: 26px; }
+  #viewToggle:checked + .toggle-track { border-color: var(--accent); }
+  #viewToggle { display: none; }
+
+  /* Category Nav */
+  .category-nav {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 20px 30px;
+  }
+
+  .category-nav button {
+    font-family: 'Inter', sans-serif;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: 25px;
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.85em;
+    font-weight: 500;
+  }
+
+  .category-nav button:hover {
+    background: var(--card-hover);
+    color: var(--text);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .category-nav button.active {
+    background: linear-gradient(135deg, var(--accent), #8b7cf7);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 15px var(--glow);
+  }
+
+  /* Category Section */
+  .category-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    display: none;
+  }
+
+  .category-section.visible { display: block; }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .category-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5em;
+    color: var(--text);
+  }
+
+  .category-header .count {
+    font-size: 0.9em;
+    color: var(--text2);
+    background: var(--bg3);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .category-header .icon {
+    font-size: 2em;
+  }
+
+  /* Grid */
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .asset-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .asset-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 30px var(--glow);
+    background: var(--card-hover);
+  }
+
+  .asset-card .img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .asset-card .img-wrap img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    transition: transform 0.3s;
+  }
+
+  .asset-card:hover .img-wrap img {
+    transform: scale(1.08);
+  }
+
+  .asset-card .img-wrap .pixel-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.65em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .asset-card .info {
+    padding: 10px 12px;
+  }
+
+  .asset-card .info .name {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .asset-card .info .id {
+    font-size: 0.7em;
+    color: var(--text2);
+    margin-top: 2px;
+    font-family: monospace;
+  }
+
+  .vote-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .vote-bar .star {
+    font-size: 1.1em;
+    cursor: pointer;
+    color: var(--text2);
+    transition: color 0.15s, transform 0.1s;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .vote-bar .star:hover,
+  .vote-bar .star.active {
+    color: var(--orange);
+    transform: scale(1.2);
+  }
+
+  .vote-bar .vote-status {
+    margin-left: auto;
+    font-size: 0.75em;
+    color: var(--text2);
+    font-weight: 600;
+  }
+
+  .vote-bar .vote-status span {
+    color: var(--orange);
+    font-size: 1.1em;
+  }
+
+  @keyframes votePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); color: var(--orange); }
+    100% { transform: scale(1); }
+  }
+
+  .vote-bar .star.vote-pop {
+    animation: votePop 0.35s ease;
+  }
+
+  .filter-bar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 auto 20px;
+    max-width: 1400px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar button {
+    font-family: 'Inter', sans-serif;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.8em;
+    font-weight: 500;
+  }
+
+  .filter-bar button:hover {
+    background: var(--card-hover);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .filter-bar button.active {
+    background: var(--accent);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 15px var(--glow);
+  }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .lightbox.open { display: flex; }
+
+  .lightbox .content {
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lightbox .content img {
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 12px;
+    image-rendering: pixelated;
+    box-shadow: 0 0 60px rgba(108,92,231,0.3);
+  }
+
+  .lightbox .content .caption {
+    margin-top: 16px;
+    text-align: center;
+  }
+
+  .lightbox .content .caption .title {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .lightbox .content .caption .sub {
+    font-size: 0.9em;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .lightbox .close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: var(--text2);
+    font-size: 2.5em;
+    cursor: pointer;
+    transition: 0.3s;
+    background: none;
+    border: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .lightbox .close:hover { color: var(--text); transform: rotate(90deg); }
+
+  .lightbox .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 2em;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox .nav-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+  }
+
+  .lightbox .nav-btn.prev { left: 20px; }
+  .lightbox .nav-btn.next { right: 20px; }
+
+  /* Comparison View */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .comparison-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .comparison-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 8px 30px var(--glow);
+  }
+
+  .comparison-card .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .comparison-card .pair .img-wrap {
+    background: var(--bg);
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .comparison-card .pair .img-wrap img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .comparison-card .pair .img-wrap .badge {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: var(--text2);
+    font-size: 0.6em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .comparison-card .info {
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .comparison-card .info .name {
+    font-size: 0.85em;
+    font-weight: 600;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header h1 { font-size: 2em; }
+    .header .stats { gap: 12px; }
+    .stat { padding: 10px 15px; min-width: 70px; }
+    .stat .num { font-size: 1.3em; }
+    .asset-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .comparison-grid { grid-template-columns: 1fr; }
+    .category-nav button { font-size: 0.75em; padding: 8px 14px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: var(--text2);
+  }
+
+  .loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <h1>☾ SIMMOON</h1>    <p class="subtitle">Lunar Colony — Asset Gallery · Generated with ComfyUI · 7 runs · 112 assets</p>
+  <div class="stats" id="stats">
+    <div class="stat"><div class="num" id="totalImages">—</div><div class="label">Assets</div></div>
+    <div class="stat"><div class="num" id="totalCategories">—</div><div class="label">Categorías</div></div>
+    <div class="stat"><div class="num" id="totalRuns">—</div><div class="label">Runs</div></div>
+    <div class="stat"><div class="num" id="totalPixel">—</div><div class="label">Pixel Art</div></div>
+  </div>
+</header>
+
+<!-- TOGGLE -->
+<div class="view-toggle">
+  <label>            <span>Gallery</span>
+    <input type="checkbox" id="viewToggle">
+    <div class="toggle-track"><div class="thumb"></div></div>
+    <span>Comparar</span>
+  </label>
+</div>
+
+<!-- RUN SELECTOR -->
+<div class="view-toggle" style="gap:20px;">
+  <label style="gap:8px;">
+    <span style="font-size:0.85em;color:var(--text2);">Tanda:</span>
+    <select id="runSelect" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:0.85em;cursor:pointer;"></select>
+  </label>
+  <label style="gap:8px;display:none;" id="compareRunLabel">
+    <span style="font-size:0.85em;color:var(--text2);">vs:</span>
+    <select id="compareRunSelect" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:0.85em;cursor:pointer;"></select>
+  </label>
+  <label style="gap:8px;">
+    <span style="font-size:0.85em;color:var(--text2);">🔍</span>
+    <input type="text" id="searchInput" placeholder="Buscar asset..." style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:0.85em;width:180px;">
+  </label>
+</div>
+
+<!-- CATEGORY NAV -->
+<nav class="category-nav" id="categoryNav"></nav>
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="filterBar"></div>
+
+<!-- CATEGORIES -->
+<div id="galleryContainer"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="close" id="lbClose">✕</button>
+  <button class="nav-btn prev" id="lbPrev">‹</button>
+  <button class="nav-btn next" id="lbNext">›</button>
+  <div class="content">
+    <img id="lbImage" src="" alt="">
+    <div class="caption">
+      <div class="title" id="lbTitle"></div>
+      <div class="sub" id="lbSub"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Config local (no versionada) -->
+<script src="vote_config.js"></script>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────
+
+// ─── VOTING SYSTEM ─────────────────────────────────────────────────────
+// Persist votes in localStorage. Structure: { [assetKey]: { myVote: 1-5 } }
+const VOTE_KEY = 'simmoon_votes_v1';
+const VOTE_API = window.location.protocol === 'file:' ? 'http://localhost:9099/api/votes' : '/api/votes';
+// NOTE: La API key se carga desde vote_config.js (local, no versionado)
+const VOTE_API_KEY = window.VOTE_API_KEY || 'dev_placeholder_change_me';
+
+// Hybrid vote storage: localStorage (offline-first) + API (persistent)
+function loadVotes() {
+  try { return JSON.parse(localStorage.getItem(VOTE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveVotes(v) {
+  localStorage.setItem(VOTE_KEY, JSON.stringify(v));
+  // Also persist to API asynchronously
+  syncVotesToApi(v);
+}
+let votes = loadVotes();
+
+// Sync local votes to PostgreSQL API (fire-and-forget)
+function syncVotesToApi(votes) {
+  const sessionId = localStorage.getItem('simmoon_session') || `web_${Date.now()}`;
+  localStorage.setItem('simmoon_session', sessionId);
+  for (const [key, data] of Object.entries(votes)) {
+    if (!data || !data.myVote) continue;
+    const assetId = key.split('::')[1];
+    fetch(VOTE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': VOTE_API_KEY },
+      body: JSON.stringify({ asset_id: assetId, vote_value: data.myVote, session_id: sessionId })
+    }).catch(() => {/* offline */});
+  }
+}
+
+// Load votes from API on startup (merges with localStorage)
+function loadVotesFromApi() {
+  fetch(VOTE_API)
+    .then(r => r.json())
+    .then(apiVotes => {
+      const sessionId = localStorage.getItem('simmoon_session') || '';
+      let changed = false;
+      for (const v of apiVotes) {
+        // Find which category this asset belongs to
+        let catKey = '';
+        for (const [ck, cat] of Object.entries(CATEGORIES)) {
+          if (cat.ids.includes(v.asset_id)) { catKey = ck; break; }
+        }
+        if (!catKey) continue;
+        
+        const key = getAssetKey(catKey, v.asset_id);
+        // Merge API vote into local votes (localStorage takes priority)
+        if (!votes[key] || !votes[key].myVote) {
+          votes[key] = { myVote: v.vote_value, ts: Date.now(), from_api: true };
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveVotes(votes);
+        render();
+      }
+    })
+    .catch(() => {/* API not available, using localStorage */});
+}
+
+function getAssetKey(catKey, id) { return `${catKey}::${id}`; }
+
+function renderStars(catKey, id, voteText) {
+  const key = getAssetKey(catKey, id);
+  const myVote = (votes[key] && votes[key].myVote) || 0;
+  let html = '';
+  for (let s = 1; s <= 5; s++) {
+    const cls = s <= myVote ? 'active' : '';
+    html += `<span class="star ${cls}" data-cat="${catKey}" data-id="${id}" data-star="${s}">★</span>`;
+  }
+  html += `<span class="vote-status">${voteText}</span>`;
+  return html;
+}
+
+function setVote(catKey, id, star) {
+  const key = getAssetKey(catKey, id);
+  // If clicking the same star again, un-vote
+  const prev = votes[key] && votes[key].myVote;
+  if (prev === star) {
+    delete votes[key];
+  } else {
+    votes[key] = { myVote: star, ts: Date.now() };
+  }
+  saveVotes(votes);
+  updateVoteUI(catKey, id, star);
+}
+
+function updateVoteUI(catKey, id, clickedStar) {
+  const key = getAssetKey(catKey, id);
+  const myVote = (votes[key] && votes[key].myVote) || 0;
+  const voteText = myVote ? `<span>★</span> ${myVote}/5` : 'Sin votar';
+  // Find all vote-bars for this asset (grid + comparison may show the same asset)
+  const bars = document.querySelectorAll(`.vote-bar[data-cat="${catKey}"][data-id="${id}"]`);
+  bars.forEach(bar => {
+    // Update each star's active state
+    bar.querySelectorAll('.star').forEach(el => {
+      const s = parseInt(el.dataset.star);
+      if (s <= myVote) {
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+      // Pop animation on the clicked star
+      if (clickedStar && s === clickedStar) {
+        el.classList.remove('vote-pop');
+        // Force reflow so the animation restarts
+        void el.offsetWidth;
+        el.classList.add('vote-pop');
+      }
+    });
+    // Update vote-status text
+    const statusEl = bar.querySelector('.vote-status');
+    if (statusEl) {
+      statusEl.innerHTML = voteText;
+    }
+  });
+}
+
+// ─── DATA ────────────────────────────────────────────────────────────────
+
+/*
+ * GENERATION RUNS
+ * ===============
+ * Each entry represents a different model/generation run.
+ * The `suffix` must match the --suffix value used when calling:
+ *   python generate_comfyui.py --suffix <suffix> [other args]
+ *
+ * To add a new run:
+ *   1. Add an entry to this RUNS array: { key, label, suffix }
+ *   2. Generate the images with:
+ *      python generate_comfyui.py --suffix <key> [--checkpoint ...] [--lora ...]
+ *   3. Reload viewer.html — the new run appears in the selector automatically.
+ *
+ * Example: to add a "ReV Animated" checkpoint run:
+ *   RUNS.push({ key: 'rev_animated', label: 'ReV Animated', suffix: 'rev_animated_' });
+ *   # Terminal:
+ *   python generate_comfyui.py --suffix rev_animated --checkpoint revAnimated_v122.safetensors
+ *
+ * NOTE: The `key` must be a short alphanumeric ID (no spaces).
+ *       The `suffix` must end with `_` so filenames stay readable.
+ *       The `label` is what appears in the dropdown selector.
+ */
+const RUNS = [
+  { key: 'default',             label: 'Default (v1-5 base)',           suffix: '' },
+  { key: 'dreamshaper_v8',      label: 'DreamShaper v8 + Isometric LoRA', suffix: 'dreamshaper_v8_' },
+  { key: 'dreamshaper_v8_nolora', label: 'DreamShaper v8 (sin LoRA)',    suffix: 'dreamshaper_v8_nolora_' },
+  { key: 'pixelart',            label: 'Pixel Art + PIXHELL LoRA',       suffix: 'pixelart_' },
+  { key: 'pixelart_nolora',     label: 'Pixel Art (sin LoRA)',           suffix: 'pixelart_nolora_' },
+  { key: 'rev_animated',       label: 'ReV Animated v1.2.2',             suffix: 'rev_animated_' },
+  { key: 'counterfeit_v30',    label: 'Counterfeit-V3.0',                  suffix: 'counterfeit_v30_' },
+  { key: 'invokeai',          label: 'InvokeAI (v1-5)',                    suffix: '' },
+  { key: 'overnight_v1',      label: 'Overnight v1 (DreamShaper + Isometric)', suffix: 'overnight_v1_' },
+  { key: 'invokeai_v1',       label: 'InvokeAI v1 (DreamShaper 8)',          suffix: 'invokeai_v1_' },
+];
+
+/*
+ * HOW TO GENERATE A NEW RUN
+ * =========================
+ *   1. Add a new entry to RUNS above (copy-paste a line and change key/label/suffix).
+ *   2. Run the generation with:
+ *      cd Simmoon_arc
+ *      python generate_comfyui.py --suffix <key> [options]
+ *
+ *   Examples for the pre-configured runs above:
+ *   -----------------------------------------------------------
+ *   DreamShaper v8 + Isometric LoRA  (ya generado):
+ *     python generate_comfyui.py --suffix dreamshaper_v8
+ *
+ *   DreamShaper v8 sin LoRA:
+ *     python generate_comfyui.py --suffix dreamshaper_v8_nolora --no-loras
+ *
+ *   Pixel Art + PIXHELL LoRA  (ya generado):
+ *     python generate_comfyui.py --suffix pixelart --checkpoint pixelArtSpriteDiffusion_safetensors.safetensors --lora pixhell_15.safetensors:1.0:1.0
+ *
+ *   Pixel Art sin LoRA:
+ *     python generate_comfyui.py --suffix pixelart_nolora --checkpoint pixelArtSpriteDiffusion_safetensors.safetensors --no-loras
+ *
+ *   ReV Animated v1.2.2  (ya descargado y generado):
+ *     python generate_comfyui.py --suffix rev_animated --checkpoint revAnimated_v122.safetensors --no-loras
+ *
+ *   ReV Animated + Isometric LoRA  (prueba en businesses):
+ *     python generate_comfyui.py --suffix rev_aniso --checkpoint revAnimated_v122.safetensors --lora isometric_world_01.safetensors:0.8:0.8 --categories businesses
+ *
+ *   ReV Animated + PIXHELL LoRA  (prueba en businesses):
+ *     python generate_comfyui.py --suffix rev_pixel --checkpoint revAnimated_v122.safetensors --lora pixhell_15.safetensors:1.0:1.0 --categories businesses
+ *
+ *   Counterfeit-V3.0  (prueba en businesses):
+ *     python generate_comfyui.py --suffix counterfeit_v30 --checkpoint counterfeit_v30.safetensors --no-loras --categories businesses
+ *
+ *   Con un checkpoint nuevo:
+ *     1. Descargar el .safetensors a ~/ComfyUI/models/checkpoints/
+ *     2. Agregar a RUNS:
+ *        { key: 'mi_modelo', label: 'Mi Modelo', suffix: 'mi_modelo_' },
+ *     3. Generar:
+ *        python generate_comfyui.py --suffix mi_modelo --checkpoint mi_modelo.safetensors [--lora ...]
+ */
+
+let currentRun = RUNS[0].key;
+let compareRun = RUNS.length > 1 ? RUNS[1].key : RUNS[0].key;
+
+// Populate run selectors
+function initRunSelectors() {
+  const sel = document.getElementById('runSelect');
+  const sel2 = document.getElementById('compareRunSelect');
+  sel.innerHTML = ''; sel2.innerHTML = '';
+  for (const run of RUNS) {
+    const opt = document.createElement('option');
+    opt.value = run.key; opt.textContent = run.label;
+    sel.appendChild(opt);
+    const opt2 = document.createElement('option');
+    opt2.value = run.key; opt2.textContent = run.label;
+    sel2.appendChild(opt2);
+  }
+  sel.value = currentRun;
+  sel2.value = compareRun;
+}
+
+const CATEGORIES = {
+  businesses: { icon: '🏢', label: 'Businesses', dir: 'businesses', count: 12, ids: [
+    'biz_01_lunar_mining_office', 'biz_02_lunar_trading_post', 'biz_03_lunar_hotel',
+    'biz_04_lunar_restaurant', 'biz_05_research_laboratory', 'biz_06_medical_center',
+    'biz_07_spaceport_terminal', 'biz_08_manufacturing_plant', 'biz_09_entertainment_club',
+    'biz_10_lunar_bank', 'biz_11_lunar_shop', 'biz_12_lunar_warehouse'
+  ]},
+  vehicles: { icon: '🚗', label: 'Vehicles', dir: 'vehicles', count: 10, ids: [
+    'veh_01_lunar_rover', 'veh_02_mining_truck', 'veh_03_passenger_shuttle',
+    'veh_04_cargo_hauler', 'veh_05_emergency_vehicle', 'veh_06_construction_excavator',
+    'veh_07_hover_bike', 'veh_08_moon_bus', 'veh_09_supply_drone', 'veh_10_lunar_tank'
+  ]},
+  greenhouses: { icon: '🌿', label: 'Greenhouses', dir: 'greenhouses', count: 7, ids: [
+    'gh_01_small_dome_greenhouse', 'gh_02_large_greenhouse', 'gh_03_vertical_farm',
+    'gh_04_hydroponics_lab', 'gh_05_aquaponics_bay', 'gh_06_herb_garden_dome', 'gh_07_tree_nursery'
+  ]},
+  solar_energy: { icon: '☀️', label: 'Solar Energy', dir: 'solar_energy', count: 9, ids: [
+    'sol_01_solar_panel_array', 'sol_02_solar_power_station', 'sol_03_nuclear_reactor',
+    'sol_04_battery_storage', 'sol_05_wind_turbine', 'sol_06_geothermal_plant',
+    'sol_07_helium_3_reactor', 'sol_08_power_substation', 'sol_10_fusion_power_plant'
+  ]},
+  lunar_map: { icon: '🗺️', label: 'Lunar Map', dir: 'lunar_map', count: 8, ids: [
+    'map_01_colony_overview_map', 'map_02_surface_tile_set', 'map_03_crater_zone',
+    'map_04_mare_plains', 'map_05_mountain_region', 'map_06_polar_region',
+    'map_07_earth_view', 'map_08_colony_sprawl'
+  ]},
+  buildings_misc: { icon: '🏠', label: 'Buildings Misc', dir: 'buildings_misc', count: 15, ids: [
+    'misc_01_living_quarters_dome', 'misc_02_water_processing_plant', 'misc_03_atmosphere_processor',
+    'misc_04_communication_tower', 'misc_05_space_elevator_base', 'misc_06_recycling_center',
+    'misc_07_school_academy', 'misc_08_park_recreation_dome', 'misc_09_waste_management',
+    'misc_10_fire_station', 'misc_11_police_station', 'misc_12_launch_pad',
+    'misc_13_lunar_command_center', 'misc_14_lunar_cargo_hub', 'misc_15_lunar_botanica_dome'
+  ]},
+  ui_elements: { icon: '🎮', label: 'UI Elements', dir: 'ui_elements', count: 9, ids: [
+    'ui_01_oxygen_icon', 'ui_02_water_icon', 'ui_03_energy_icon', 'ui_04_minerals_icon',
+    'ui_05_food_icon', 'ui_06_credits_icon', 'ui_07_building_menu_panel',
+    'ui_08_mini_map_frame', 'ui_09_alert_notification'
+  ]},
+  lunar_sites: { icon: '🛰️', label: 'Lunar Sites', dir: 'lunar_sites', count: 12, ids: [
+    'site_01_mining_excavation_site', 'site_02_research_laboratory_campus', 'site_03_lunar_hotel_resort',
+    'site_04_spaceport_launch_complex', 'site_05_warehouse_storage_district', 'site_06_greenhouse_agriculture_zone',
+    'site_07_solar_energy_farm', 'site_08_residential_colony_sector', 'site_09_entertainment_plaza',
+    'site_10_medical_center_complex', 'site_11_nuclear_power_plant', 'site_12_communications_hub'
+  ]},
+  roads: { icon: '🛣️', label: 'Roads', dir: 'roads', count: 8, ids: [
+    'road_01_straight_road', 'road_02_curved_road', 'road_03_t_junction', 'road_04_crossroad_intersection',
+    'road_05_tunnel_entrance', 'road_06_bridge', 'road_07_rail_track', 'road_08_rail_station_platform'
+  ]},
+  decorations: { icon: '🎨', label: 'Decorations', dir: 'decorations', count: 8, ids: [
+    'dec_01_lunar_rock_formation', 'dec_02_flag_pole_earth', 'dec_03_street_lamp',
+    'dec_04_park_bench', 'dec_05_monument_statue', 'dec_06_satellite_debris',
+    'dec_07_solar_beacon', 'dec_08_cargo_container_stack'
+  ]},
+  characters: { icon: '👨‍🚀', label: 'Characters', dir: 'characters', count: 6, ids: [
+    'char_01_astronaut_worker', 'char_02_scientist', 'char_03_security_guard',
+    'char_04_miner', 'char_05_medical_officer', 'char_06_pilot'
+  ]},
+  lunar_flora: { icon: '🌱', label: 'Lunar Flora', dir: 'lunar_flora', count: 4, ids: [
+    'flora_01_crystal_fungus', 'flora_02_lunar_moss', 'flora_03_tube_plant', 'flora_04_glow_flower'
+  ]},
+  infrastructure: { icon: '🔧', label: 'Infrastructure', dir: 'infrastructure', count: 4, ids: [
+    'infra_01_pressure_pipe', 'infra_02_power_cable', 'infra_03_water_pipeline', 'infra_04_transport_tube'
+  ]}
+};
+
+function imgPath(cat, id, pixel, runKey) {
+  const run = RUNS.find(r => r.key === runKey) || RUNS[0];
+  const dir = pixel ? cat.dir + '_pixel' : cat.dir;
+  const suffix = pixel ? '_pixel' : '';
+  return `${dir}/${run.suffix}${id}${suffix}.png`;
+}
+
+function getRunLabel(key) {
+  const run = RUNS.find(r => r.key === key);
+  return run ? run.label : key;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────
+
+let currentCategory = 'businesses';
+let lightboxItems = [];
+let lightboxIndex = 0;
+let isComparison = false;
+let currentFilter = 'all'; // 'all' | 'rated' | 'unrated' | 'best'
+
+// ─── RENDER ──────────────────────────────────────────────────────────────
+
+function render() {
+  const container = document.getElementById('galleryContainer');
+  const nav = document.getElementById('categoryNav');
+  container.innerHTML = '';
+  nav.innerHTML = '';
+
+  // Stats
+  let totalImgs = 0, totalCats = 0, totalPixel = 0;
+  for (const [key, cat] of Object.entries(CATEGORIES)) {
+    totalCats++;
+    totalImgs += cat.count;
+    totalPixel += cat.count;
+  }
+  const totalRuns = RUNS.length;
+  document.getElementById('totalImages').textContent = totalImgs;
+  document.getElementById('totalCategories').textContent = totalCats;
+  document.getElementById('totalRuns').textContent = totalRuns;
+  document.getElementById('totalPixel').textContent = totalPixel;
+  document.title = `SIMMOON · ${totalImgs} Assets · ${totalRuns} Runs · ComfyUI`;
+
+  // Filter bar
+  const filterBar = document.getElementById('filterBar');
+  filterBar.innerHTML = '';
+  const filters = [
+    { key: 'all', label: '📋 Todas' },
+    { key: 'rated', label: '⭐ Votadas' },
+    { key: 'unrated', label: '🗳️ Sin votar' },
+    { key: 'best', label: '🏆 Mejor puntuadas' }
+  ];
+  for (const f of filters) {
+    const btn = document.createElement('button');
+    btn.className = currentFilter === f.key ? 'active' : '';
+    btn.textContent = f.label;
+    btn.onclick = () => { currentFilter = f.key; render(); };
+    filterBar.appendChild(btn);
+  }
+
+  // Nav buttons
+  for (const [key, cat] of Object.entries(CATEGORIES)) {
+    const btn = document.createElement('button');
+    btn.className = key === currentCategory ? 'active' : '';
+    btn.textContent = `${cat.icon} ${cat.label}`;
+    btn.onclick = () => { currentCategory = key; render(); };
+    nav.appendChild(btn);
+  }
+
+  // Sections
+  for (const [key, cat] of Object.entries(CATEGORIES)) {
+    const section = document.createElement('div');
+    section.className = `category-section ${key === currentCategory ? 'visible' : ''}`;
+    section.id = `section-${key}`;
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'category-header';
+    hdr.innerHTML = `<span class="icon">${cat.icon}</span><h2>${cat.label}</h2><span class="count">${cat.count} assets</span>`;
+    section.appendChild(hdr);
+
+    // Apply filter to ids
+    let visibleIds = cat.ids;
+    if (currentFilter === 'rated') {
+      visibleIds = cat.ids.filter(id => { const v = votes[getAssetKey(key, id)]; return v && v.myVote > 0; });
+    } else if (currentFilter === 'unrated') {
+      visibleIds = cat.ids.filter(id => { const v = votes[getAssetKey(key, id)]; return !v || !v.myVote; });
+    } else if (currentFilter === 'best') {
+      visibleIds = cat.ids.filter(id => { const v = votes[getAssetKey(key, id)]; return v && v.myVote >= 4; });
+    }
+    // Apply search filter
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    if (searchTerm) {
+      visibleIds = visibleIds.filter(id => {
+        const name = id.replace(/^[a-z]+_\\d+_/, '').replace(/_/g, ' ');
+        return id.toLowerCase().includes(searchTerm) || name.includes(searchTerm);
+      });
+    }
+
+    if (visibleIds.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'loading';
+      empty.style.padding = '40px';
+      empty.innerHTML = `<p style="color:var(--text2)">No hay assets que coincidan con el filtro "${currentFilter}" en esta categoría.</p>`;
+      section.appendChild(empty);
+      container.appendChild(section);
+      continue;
+    }
+
+    if (!isComparison) {
+      // Grid view - shows assets from the selected run
+      const grid = document.createElement('div');
+      grid.className = 'asset-grid';
+      visibleIds.forEach(id => {
+        const name = id.replace(/^[a-z]+_\d+_/, '').replace(/_/g, ' ');
+        const v = votes[getAssetKey(key, id)];
+        const myVote = (v && v.myVote) || 0;
+        const voteText = myVote ? `<span>★</span> ${myVote}/5` : 'Sin votar';
+        const card = document.createElement('div');
+        card.className = 'asset-card';
+        const runLabel = getRunLabel(currentRun);
+        card.innerHTML = `
+          <div class="img-wrap">
+            <img src="${imgPath(cat, id, false, currentRun)}" alt="${name}" loading="lazy" onerror="this.style.display='none'">
+            <span class="pixel-badge">${runLabel}</span>
+          </div>
+          <div class="info">
+            <div class="name">${name}</div>
+            <div class="id">${id}</div>
+            <div class="vote-bar" data-cat="${key}" data-id="${id}">${renderStars(key, id, voteText)}</div>
+          </div>`;
+        card.querySelectorAll('.star').forEach(s => {
+          s.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setVote(s.dataset.cat, s.dataset.id, parseInt(s.dataset.star));
+          });
+        });
+        card.onclick = () => openLightbox(cat, id, false, currentRun);
+        grid.appendChild(card);
+      });
+      section.appendChild(grid);
+    } else {
+      // Comparison view - shows two runs side by side
+      const compGrid = document.createElement('div');
+      compGrid.className = 'comparison-grid';
+      visibleIds.forEach(id => {
+        const name = id.replace(/^[a-z]+_\d+_/, '').replace(/_/g, ' ');
+        const v = votes[getAssetKey(key, id)];
+        const myVote = (v && v.myVote) || 0;
+        const voteText = myVote ? `<span>★</span> ${myVote}/5` : 'Sin votar';
+        const card = document.createElement('div');
+        card.className = 'comparison-card';
+        const run1Label = getRunLabel(currentRun);
+        const run2Label = getRunLabel(compareRun);
+        card.innerHTML = `
+          <div class="pair">
+            <div class="img-wrap">
+              <img src="${imgPath(cat, id, false, currentRun)}" alt="${name}" loading="lazy" onerror="this.style.display='none'">
+              <div class="badge">${run1Label}</div>
+            </div>
+            <div class="img-wrap">
+              <img src="${imgPath(cat, id, false, compareRun)}" alt="${name}" loading="lazy" onerror="this.style.display='none'">
+              <div class="badge">${run2Label}</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="name">${name}</div>
+            <div class="vote-bar" style="justify-content:center;border-top:none;margin-top:4px;padding-top:4px;" data-cat="${key}" data-id="${id}">${renderStars(key, id, voteText)}</div>
+          </div>`;
+        card.querySelectorAll('.star').forEach(s => {
+          s.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setVote(s.dataset.cat, s.dataset.id, parseInt(s.dataset.star));
+          });
+        });
+        card.onclick = () => openLightbox(cat, id, false, currentRun);
+        compGrid.appendChild(card);
+      });
+      section.appendChild(compGrid);
+    }
+
+    container.appendChild(section);
+  }
+}
+
+// ─── LIGHTBOX ────────────────────────────────────────────────────────────
+
+function openLightbox(cat, id, pixel, runKey) {
+  const items = [];
+  for (const cid of cat.ids) {
+    const name = cid.replace(/^[a-z]+_\d+_/, '').replace(/_/g, ' ');
+    items.push({ id: cid, name, cat });
+  }
+  lightboxItems = items;
+  lightboxIndex = items.findIndex(i => i.id === id);
+  showLightboxItem();
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function showLightboxItem() {
+  const item = lightboxItems[lightboxIndex];
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lbImage');
+  const title = document.getElementById('lbTitle');
+  const sub = document.getElementById('lbSub');
+
+  img.src = imgPath(item.cat, item.id, false, currentRun);
+  img.onerror = () => { img.src = imgPath(item.cat, item.id, true, currentRun); };
+  title.textContent = item.name.charAt(0).toUpperCase() + item.name.slice(1);
+  sub.textContent = `${item.cat.label} · ${item.id} · ${getRunLabel(currentRun)}`;
+}
+
+document.getElementById('lbClose').onclick = () => document.getElementById('lightbox').classList.remove('open');
+document.getElementById('lbPrev').onclick = () => { if (lightboxIndex > 0) { lightboxIndex--; showLightboxItem(); }};
+document.getElementById('lbNext').onclick = () => { if (lightboxIndex < lightboxItems.length - 1) { lightboxIndex++; showLightboxItem(); }};
+
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('lightbox');
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'Escape') lb.classList.remove('open');
+  if (e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
+  if (e.key === 'ArrowRight') document.getElementById('lbNext').click();
+});
+
+// Toggle view
+document.getElementById('viewToggle').addEventListener('change', e => {
+  isComparison = e.target.checked;
+  document.getElementById('compareRunLabel').style.display = isComparison ? '' : 'none';
+  render();
+});
+
+// Run selector events
+document.getElementById('runSelect').addEventListener('change', e => {
+  currentRun = e.target.value;
+  render();
+});
+
+document.getElementById('compareRunSelect').addEventListener('change', e => {
+  compareRun = e.target.value;
+  render();
+});
+
+// Search input (debounced)
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => render(), 200);
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────
+initRunSelectors();
+render();
+// Load votes from API asynchronously (best-effort)
+setTimeout(loadVotesFromApi, 1000);
+</script>
+</body>
+</html>

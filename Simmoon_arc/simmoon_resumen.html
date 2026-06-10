@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌙 SIMMOON — Resumen del Sistema</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #12122a;
+    --surface2: #1a1a3a;
+    --border: #2a2a5a;
+    --text: #d0d0e0;
+    --text-dim: #8080a0;
+    --gold: #ffd050;
+    --green: #50e0a0;
+    --red: #e05050;
+    --cyan: #50d0e0;
+    --purple: #a070ff;
+    --blue: #5090ff;
+    --orange: #ffa050;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #0a0a2a 0%, #1a0a3a 50%, #0a0a2a 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(80, 50, 255, 0.05) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+  .header h1 {
+    font-size: 2.8em;
+    background: linear-gradient(135deg, var(--gold), var(--orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 1.1em;
+    position: relative;
+  }
+  .header .date {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-top: 12px;
+    position: relative;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--purple); }
+  .card h2 {
+    color: var(--gold);
+    font-size: 1.4em;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h3 {
+    color: var(--cyan);
+    font-size: 1.1em;
+    margin: 16px 0 8px;
+  }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .arch-layer {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .arch-layer .layer-title {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .arch-layer .layer-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .arch-layer .layer-items {
+    font-size: 0.85em;
+    color: var(--text-dim);
+  }
+  .arch-layer .layer-items span {
+    display: inline-block;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 2px;
+    font-size: 0.9em;
+  }
+  .arch-win { border-color: #4080ff; }
+  .arch-win .layer-name { color: #4080ff; }
+  .arch-wsl { border-color: #e050e0; }
+  .arch-wsl .layer-name { color: #e050e0; }
+  .arch-ubuntu { border-color: #e06030; }
+  .arch-ubuntu .layer-name { color: #e06030; }
+  .arch-service { border-color: #30c060; }
+  .arch-service .layer-name { color: #30c060; }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85em;
+    text-align: center;
+    min-width: 80px;
+  }
+  .flow-box .port {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.75em;
+    margin-top: 2px;
+  }
+  .flow-arrow {
+    color: var(--text-dim);
+    font-size: 1.2em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td { color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .rank-1 { color: var(--gold); font-weight: bold; }
+  .rank-2 { color: #c0c0c0; font-weight: bold; }
+  .rank-3 { color: #cd7f32; font-weight: bold; }
+  .good { color: var(--green); }
+  .bad { color: var(--red); }
+  .warn { color: var(--orange); }
+
+  .bar-container {
+    background: var(--surface2);
+    border-radius: 6px;
+    height: 20px;
+    margin: 4px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #000;
+  }
+  .bar-gold { background: linear-gradient(90deg, #ffd050, #ffa030); }
+  .bar-silver { background: linear-gradient(90deg, #c0c0c0, #a0a0a0); }
+  .bar-bronze { background: linear-gradient(90deg, #cd7f32, #a06020); }
+  .bar-blue { background: linear-gradient(90deg, #5090ff, #3070d0); }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+  }
+  .tag-green { background: rgba(80,224,160,0.15); color: var(--green); }
+  .tag-red { background: rgba(224,80,80,0.15); color: var(--red); }
+  .tag-yellow { background: rgba(255,208,80,0.15); color: var(--gold); }
+  .tag-blue { background: rgba(80,144,255,0.15); color: var(--blue); }
+  .tag-purple { background: rgba(160,112,255,0.15); color: var(--purple); }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .service-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .service-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green { background: var(--green); box-shadow: 0 0 8px rgba(80,224,160,0.4); }
+  .dot-red { background: var(--red); box-shadow: 0 0 8px rgba(224,80,80,0.4); }
+  .dot-yellow { background: var(--gold); box-shadow: 0 0 8px rgba(255,208,80,0.3); }
+  .service-item .name { font-weight: 600; font-size: 0.9em; }
+  .service-item .detail { font-size: 0.8em; color: var(--text-dim); }
+
+  .code-block {
+    background: #080818;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85em;
+    overflow-x: auto;
+    margin: 8px 0;
+    color: var(--text);
+  }
+  .code-block .comment { color: #606080; }
+  .code-block .keyword { color: var(--purple); }
+  .code-block .string { color: var(--green); }
+  .code-block .number { color: var(--orange); }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-box .value {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--gold);
+  }
+  .stat-box .label {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .agent-map {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    margin: 12px 0;
+  }
+  .agent-node {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 24px;
+    text-align: center;
+    min-width: 160px;
+    position: relative;
+  }
+  .agent-node.primary { border-color: var(--gold); }
+  .agent-node.secondary { border-color: var(--blue); }
+  .agent-node.tertiary { border-color: var(--green); }
+  .agent-node .a-name { font-weight: bold; font-size: 1em; }
+  .agent-node .a-desc { font-size: 0.8em; color: var(--text-dim); }
+  .agent-arrow-down { color: var(--text-dim); font-size: 1.2em; }
+
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-dim);
+    font-size: 0.85em;
+  }
+  .footer a { color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .header h1 { font-size: 1.8em; }
+    .arch-grid { grid-template-columns: 1fr; }
+    .service-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>☾ SIMMOON</h1>
+  <div class="subtitle">Constructor de Colonia Lunar · SimCity en la Luna 2030</div>
+  <div class="date">📅 Generado: 2026-06-10 · Sistema: Windows 11 + WSL2 Ubuntu</div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-box"><div class="value">14</div><div class="label">Modelos Ollama</div></div>
+  <div class="stat-box"><div class="value">5</div><div class="label">Benchmarkeados</div></div>
+  <div class="stat-box"><div class="value">25</div><div class="label">Ejecuciones Test</div></div>
+  <div class="stat-box"><div class="value">44m</div><div class="label">Duración Benchmark</div></div>
+  <div class="stat-box"><div class="value">~5,800</div><div class="label">Líneas juego_simmoon</div></div>
+  <div class="stat-box"><div class="value">80+</div><div class="label">Tipos de Edificio</div></div>
+  <div class="stat-box"><div class="value">6</div><div class="label">Recursos del Juego</div></div>
+  <div class="stat-box"><div class="value">1,536</div><div class="label">Assets Pixel-Art</div></div>
+</div>
+
+<div class="card">
+  <h2>🏗️ Arquitectura del Sistema: Win11 + WSL2 + Ubuntu</h2>
+
+  <div class="arch-grid">
+    <div class="arch-layer arch-win">
+      <div class="layer-title">Capa 1 · Windows 11</div>
+      <div class="layer-name">🪟 SO Host</div>
+      <div class="layer-items">
+        <span>🎮 SIMMOON (Pygame)</span>
+        <span>🦙 Buffy Ollama CLI</span>
+        <span>🌉 Jarvis Bridge</span>
+        <span>📊 Dashboard :5000</span>
+        <span>🗳️ Vote API :9099</span>
+        <span>🐍 Python 3.11</span>
+        <span>🔧 Codebuff AI</span>
+      </div>
+    </div>
+
+    <div class="arch-layer" style="border-color:#606080;">
+      <div class="layer-title">⬇️ Bridge ⬇️</div>
+      <div class="layer-name">🔗 WSL Interop</div>
+      <div class="layer-items">
+        <span>wsl -d Ubuntu</span>
+        <span>Puertos locales</span>
+        <span>TCP loopback</span>
+      </div>
+    </div>
+
+    <div class="arch-layer arch-wsl">
+      <div class="layer-title">Capa 2 · WSL2</div>
+      <div class="layer-name">🐧 Virtualización</div>
+      <div class="layer-items">
+        <span>Ubuntu 24.04</span>
+        <span>NVIDIA CUDA 12.4</span>
+        <span>RTX 4070 12GB</span>
+      </div>
+    </div>
+
+    <div class="arch-layer arch-ubuntu">
+      <div class="layer-title">Capa 3 · Ubuntu</div>
+      <div class="layer-name">🐍 Python CUDA</div>
+      <div class="layer-items">
+        <span>🦙 Ollama :11434</span>
+        <span>🎨 ComfyUI :8188</span>
+        <span>🎨 InvokeAI :9090</span>
+        <span>🗄️ PostgreSQL :5432</span>
+        <span>Diffusers ~4.3s/img</span>
+        <span>torch 2.6+cu124</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>🔌 Servicios y Puertos</h3>
+  <div class="service-grid">
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">Ollama</div><div class="detail">:11434 · WSL2 · LLMs locales</div></div></div>
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">ComfyUI</div><div class="detail">:8188 · WSL2 · Generación imágenes</div></div></div>
+    <div class="service-item"><div class="dot dot-yellow"></div><div><div class="name">InvokeAI</div><div class="detail">:9090 · WSL2 · Backend alternativo</div></div></div>
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">PostgreSQL</div><div class="detail">:5432 · WSL2 · DB simmoon</div></div></div>
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">Vote API</div><div class="detail">:9099 · Win · Votación assets</div></div></div>
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">Dashboard</div><div class="detail">:5000 · Win · Monitoreo Flask</div></div></div>
+    <div class="service-item"><div class="dot dot-green"></div><div><div class="name">Codebuff AI</div><div class="detail">CLI · Win · Orquestador principal</div></div></div>
+    <div class="service-item"><div class="dot dot-yellow"></div><div><div class="name">Hermes Agent</div><div class="detail">CLI · WSL2 · Tool calling</div></div></div>
+  </div>
+
+  <h3>🔄 Pipeline de Generación de Assets</h3>
+  <div class="flow-diagram">
+    <div class="flow-box" style="border-color:#ffd050;">📝 Prompts<div class="port">simmoon_prompts.json</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#50d0e0;">🎨 ComfyUI<div class="port">:8188</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#50e0a0;">🖼️ Pixel Art<div class="port">simmoon_pixelator.py</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#a070ff;">🗄️ PostgreSQL<div class="port">:5432</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#ffa050;">🎮 SIMMOON Game<div class="port">Pygame</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🤖 Ecosistema de Agentes</h2>
+
+  <div class="agent-map">
+    <div class="agent-node primary">
+      <div class="a-name">🦙 Buffy (Codebuff AI)</div>
+      <div class="a-desc">Orquestadora principal · DeepSeek v4 · búsqueda + edición + benchmark</div>
+    </div>
+    <div class="agent-arrow-down">⬇️ delega ⬇️</div>
+    <div class="agent-node secondary" style="min-width:auto; max-width:700px;">
+      <div class="a-name" style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px;">
+        <span style="background:rgba(80,144,255,0.15); padding:4px 10px; border-radius:6px;">🧠 qwen2.5-coder:14b</span>
+        <span style="background:rgba(160,112,255,0.15); padding:4px 10px; border-radius:6px;">⚡ deepseek-r1:7b</span>
+        <span style="background:rgba(255,208,80,0.15); padding:4px 10px; border-radius:6px;">🤖 gemma4:latest</span>
+        <span style="background:rgba(80,224,160,0.15); padding:4px 10px; border-radius:6px;">🔧 qwen3.5:4b</span>
+        <span style="background:rgba(224,80,80,0.15); padding:4px 10px; border-radius:6px;">📦 qwen3:14b</span>
+      </div>
+      <div class="a-desc">Sub-agentes · Modelos Ollama para tareas de código</div>
+    </div>
+    <div class="agent-arrow-down">⬇️</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+      <div class="agent-node tertiary">
+        <div class="a-name">🌉 Jarvis Bridge</div>
+        <div class="a-desc">Puente JSON para agentes externos</div>
+      </div>
+      <div class="agent-node tertiary">
+        <div class="a-name">🔮 Hermes Bridge</div>
+        <div class="a-desc">Conexión Hermes Agent</div>
+      </div>
+      <div class="agent-node tertiary">
+        <div class="a-name">📝 Agatha Actas</div>
+        <div class="a-desc">Reportes · Telegram</div>
+      </div>
+      <div class="agent-node tertiary">
+        <div class="a-name">🤖 SIMMOON Agent</div>
+        <div class="a-desc">Director arte IA</div>
+      </div>
+      <div class="agent-node tertiary">
+        <div class="a-name">📱 Telegram Bot</div>
+        <div class="a-desc">Interfaz remota</div>
+      </div>
+      <div class="agent-node tertiary">
+        <div class="a-name">🧠 Agent Memory</div>
+        <div class="a-desc">Memoria compartida</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>🔗 Conexiones entre Agentes</h3>
+  <table>
+    <tr><th>Agente</th><th>Se conecta a</th><th>Protocolo</th><th>Estado</th></tr>
+    <tr><td><strong>Buffy</strong> (Codebuff)</td><td>Ollama API · Sub-agentes</td><td>:11434 HTTP</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Buffy Ollama CLI</strong></td><td>Ollama via claude_code_bridge</td><td>:11434 Messages API</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Jarvis Bridge</strong></td><td>GeneratorFactory · ComfyUI · Diffusers</td><td>CLI / JSON</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Hermes Bridge</strong></td><td>Hermes Agent via WSL2</td><td>WSL subprocess</td><td><span class="tag tag-yellow">🟡 Condicional</span></td></tr>
+    <tr><td><strong>Agatha Actas</strong></td><td>PostgreSQL · Telegram</td><td>:5432 SQL</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Telegram Bot</strong></td><td>Telegram API · Ollama · Buffy</td><td>HTTPS polling</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Agent Memory</strong></td><td>PostgreSQL (agent_memory)</td><td>:5432 SQL</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>SIMMOON Agent</strong></td><td>Ollama · Generator</td><td>:11434 Chat API</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+    <tr><td><strong>Vote API</strong></td><td>PostgreSQL · Viewer.html</td><td>:9099 REST</td><td><span class="tag tag-green">✅ Activo</span></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>🦙 Ollama — Modelos Locales</h2>
+  <p style="color:var(--text-dim); margin-bottom:12px;">
+    Ollama corriendo en <strong>WSL2 Ubuntu</strong> (puerto <code>:11434</code>).
+    14 modelos instalados, accesibles desde Windows via <code>claude_code_bridge.py</code>.
+  </p>
+
+  <div class="code-block">
+    <span class="comment"># Comando rápido (alias)</span>
+    cc <span class="string">"tu tarea de codigo"</span>
+    cc --models
+    cc --model qwen2.5-coder:14b <span class="string">"refactoriza esto"</span>
+    cc -f juego_simmoon.py <span class="string">"explica que hace"</span>
+  </div>
+
+  <table>
+    <tr><th>Modelo</th><th>Tamaño</th><th>Uso Recomendado</th><th>Benchmark</th></tr>
+    <tr>
+      <td><strong>qwen2.5-coder:14b</strong></td><td>14B</td>
+      <td><span class="tag tag-green">🏆 Código producción · Refactors</span></td>
+      <td><span class="good">🥇 78.9 pts</span></td>
+    </tr>
+    <tr>
+      <td><strong>deepseek-r1:7b</strong></td><td>7B</td>
+      <td><span class="tag tag-yellow">⚡ Prototipado rápido</span></td>
+      <td><span class="good">🥈 63.9 pts</span></td>
+    </tr>
+    <tr>
+      <td><strong>gemma4:latest</strong></td><td>~9B</td>
+      <td><span class="tag tag-yellow">🧪 Experimentación</span></td>
+      <td><span class="good">🥉 49.2 pts</span></td>
+    </tr>
+    <tr><td><strong>qwen3.5:4b</strong></td><td>4B</td><td><span class="tag tag-yellow">Tareas simples</span></td><td>47.5 pts</td></tr>
+    <tr><td><strong>qwen3:14b</strong></td><td>14B</td><td><span class="tag tag-red">Inconsistente</span></td><td>40.6 pts</td></tr>
+    <tr><td><strong>Otros (9 modelos)</strong></td><td>0.8B-12B</td><td><span class="tag tag-blue">Varios propósitos</span></td><td>—</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>📊 Benchmark: 5 Modelos × 5 Tareas</h2>
+  <p style="color:var(--text-dim); margin-bottom:12px;">
+    25 ejecuciones · 44.2 minutos · Misma tarea, mismo prompt para todos
+  </p>
+
+  <h3>🏆 Ranking General</h3>
+  <table>
+    <tr><th>#</th><th>Modelo</th><th>Puntos</th><th>⏱ Promedio</th><th>✅ Tareas</th><th>💻 Sintaxis</th><th>📋 Reqs</th></tr>
+    <tr>
+      <td><span class="rank-1">🥇</span></td>
+      <td><strong>qwen2.5-coder:14b</strong></td>
+      <td><span class="good"><strong>78.9</strong></span></td>
+      <td>191.1s</td>
+      <td><span class="good">5/5</span></td>
+      <td><span class="good">4/5 ✅</span></td>
+      <td>94%</td>
+    </tr>
+    <tr>
+      <td><span class="rank-2">🥈</span></td>
+      <td><strong>deepseek-r1:7b</strong></td>
+      <td><span class="good"><strong>63.9</strong></span></td>
+      <td><span class="good">109.9s 🚀</span></td>
+      <td><span class="good">5/5</span></td>
+      <td><span class="bad">1/5 ❌</span></td>
+      <td>94%</td>
+    </tr>
+    <tr>
+      <td><span class="rank-3">🥉</span></td>
+      <td><strong>gemma4:latest</strong></td>
+      <td><strong>49.2</strong></td>
+      <td>259.1s</td>
+      <td><span class="warn">3/5</span></td>
+      <td><span class="bad">2/5</span></td>
+      <td>56%</td>
+    </tr>
+    <tr><td>4.</td><td>qwen3.5:4b</td><td>47.5</td><td>194.3s</td><td><span class="warn">3/5</span></td><td><span class="bad">2/5</span></td><td>45%</td></tr>
+    <tr><td>5.</td><td>qwen3:14b</td><td>40.6</td><td>262.1s</td><td><span class="bad">2/5</span></td><td><span class="bad">2/5</span></td><td>37%</td></tr>
+  </table>
+
+  <h3>📊 Puntajes Visuales</h3>
+  <div style="margin:8px 0;">
+    <div style="display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:2px;">
+      <span>qwen2.5-coder:14b</span><span class="good">78.9 pts</span>
+    </div>
+    <div class="bar-container"><div class="bar-fill bar-gold" style="width:78.9%;">78.9</div></div>
+  </div>
+  <div style="margin:8px 0;">
+    <div style="display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:2px;">
+      <span>deepseek-r1:7b</span><span class="good">63.9 pts</span>
+    </div>
+    <div class="bar-container"><div class="bar-fill bar-silver" style="width:63.9%;">63.9</div></div>
+  </div>
+  <div style="margin:8px 0;">
+    <div style="display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:2px;">
+      <span>gemma4:latest</span><span>49.2 pts</span>
+    </div>
+    <div class="bar-container"><div class="bar-fill bar-bronze" style="width:49.2%;">49.2</div></div>
+  </div>
+  <div style="margin:8px 0;">
+    <div style="display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:2px;">
+      <span>qwen3.5:4b</span><span>47.5 pts</span>
+    </div>
+    <div class="bar-container"><div class="bar-fill bar-blue" style="width:47.5%;">47.5</div></div>
+  </div>
+  <div style="margin:8px 0;">
+    <div style="display:flex; justify-content:space-between; font-size:0.85em; margin-bottom:2px;">
+      <span>qwen3:14b</span><span>40.6 pts</span>
+    </div>
+    <div class="bar-container"><div class="bar-fill" style="width:40.6%; background:linear-gradient(90deg,#606080,#404060);">40.6</div></div>
+  </div>
+
+  <h3>🔬 Hallazgos Clave</h3>
+  <table>
+    <tr><th>Métrica</th><th>Ganador</th><th>Valor</th></tr>
+    <tr><td>Más tareas completadas</td><td><span class="good">qwen2.5-coder:14b</span></td><td>5/5 ✅</td></tr>
+    <tr><td>Más rápido</td><td><span class="good">deepseek-r1:7b</span></td><td>109.9s promedio 🚀</td></tr>
+    <tr><td>Mejor sintaxis</td><td><span class="good">qwen2.5-coder:14b</span></td><td>4/5 sintaxis válida</td></tr>
+    <tr><td>Más requisitos cumplidos</td><td><span class="good">qwen2.5-coder:14b + deepseek-r1:7b</span></td><td>94% promedio</td></tr>
+    <tr><td>Mejor en refactor</td><td><span class="good">qwen2.5-coder:14b</span></td><td>117s, sintaxis perfecta</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>🎮 SIMMOON — El Juego</h2>
+  <p style="color:var(--text-dim); margin-bottom:12px;">
+    Constructor de colonia lunar en Pygame · 40×40 grid isométrico · 7 biomas · 80+ edificios · 6 recursos
+  </p>
+  <table>
+    <tr><th>Componente</th><th>Descripción</th><th>Archivo</th></tr>
+    <tr><td>🎮 Motor</td><td>Pygame 2.6+ · 2.5D isométrico · 60 FPS · 1280×720</td><td><code>juego_simmoon.py</code></td></tr>
+    <tr><td>🏔️ Terreno</td><td>7 biomas lunares procedurales · FBM noise + cráteres</td><td><code>simmoon_terrain.py</code></td></tr>
+    <tr><td>⚙️ Mecánicas</td><td>Turnos · eventos · logros · save/load · ciclo día/noche</td><td><code>simmoon_mecanicas.py</code></td></tr>
+    <tr><td>🏗️ Edificios</td><td>80+ tipos · públicos (directo) y privados (auto-settlement)</td><td><code>juego_simmoon.py</code></td></tr>
+    <tr><td>💰 Recursos</td><td>💵 Créditos · ⚡ Energía · 🫁 Oxígeno · 💧 Agua · 💨 Presión · 😊 Felicidad</td><td><code>juego_simmoon.py</code></td></tr>
+    <tr><td>🗳️ Votación</td><td>API REST :9099 · desbloquea edificios por votación</td><td><code>vote_api.py</code></td></tr>
+    <tr><td>🔈 Sonido</td><td>Síntesis procedural con math + struct</td><td><code>juego_simmoon.py</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>🧠 Claude Code · Bridges · Conexiones</h2>
+  <p style="color:var(--text-dim); margin-bottom:12px;">
+    Claude se integra via <code>claude_code_bridge.py</code> que implementa 
+    <code>OllamaAnthropicClient</code> — interfaz Anthropic Messages API con backend Ollama local.
+  </p>
+
+  <h3>📡 Flujo de Conexión</h3>
+  <div class="flow-diagram">
+    <div class="flow-box" style="border-color:#ffd050;">💬 Tú<div class="port">prompt</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#a070ff;">🦙 Buffy<div class="port">buffy_ollama.py</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#50d0e0;">🌉 claude_code_bridge<div class="port">Messages API</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#50e0a0;">🦙 Ollama<div class="port">WSL2 :11434</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#ffa050;">🧠 Modelo LLM<div class="port">qwen2.5-coder</div></div>
+  </div>
+
+  <h3>🔧 Comandos Útiles</h3>
+  <div class="code-block">
+    <span class="comment"># Alias rápido</span>
+    cc <span class="string">"Explica que hace esta funcion"</span>
+    cc --models
+    cc --model qwen2.5-coder:14b <span class="string">"Refactoriza"</span>
+    cc -f juego_simmoon.py <span class="string">"Haz resumen"</span>
+    cc --interactive
+
+    <span class="comment"># Benchmark</span>
+    python benchmark_models.py
+    python benchmark_models.py --quick --models qwen2.5-coder:14b
+    python benchmark_models.py --parallel 3
+
+    <span class="comment"># Estado del sistema</span>
+    python jarvis_bridge.py status
+    python simmoon_agent.py --advise
+    python agatha_actas.py --synthesis --days 3
+    python buffy_boot.py
+  </div>
+</div>
+
+<div class="card">
+  <h2>📁 Archivos Clave</h2>
+  <table>
+    <tr><th>Archivo</th><th>Propósito</th></tr>
+    <tr><td><code>juego_simmoon.py</code></td><td>🎮 Juego principal (~5,800 líneas, 180K chars)</td></tr>
+    <tr><td><code>simmoon_terrain.py</code></td><td>🏔️ Terreno procedural lunar</td></tr>
+    <tr><td><code>simmoon_mecanicas.py</code></td><td>⚙️ Save/load, eventos, logros</td></tr>
+    <tr><td><code>buffy_ollama.py</code></td><td>🦙 CLI Ollama con argparse</td></tr>
+    <tr><td><code>cc.cmd</code></td><td>📋 Alias Windows: <code>cc "prompt"</code></td></tr>
+    <tr><td><code>benchmark_models.py</code></td><td>📊 Benchmark automático N modelos × M tareas</td></tr>
+    <tr><td><code>benchmark_results/</code></td><td>📁 Reportes: BENCHMARK_SUMMARY.md, report.json</td></tr>
+    <tr><td><code>claude_code_bridge.py</code></td><td>🌉 Cliente Messages API para Ollama</td></tr>
+    <tr><td><code>jarvis_bridge.py</code></td><td>🌉 Puerto JSON para agentes externos</td></tr>
+    <tr><td><code>hermes_bridge.py</code></td><td>🔮 Conexión Hermes Agent (Nous Research)</td></tr>
+    <tr><td><code>simmoon_agent.py</code></td><td>🤖 Director arte IA</td></tr>
+    <tr><td><code>simmoon_pipeline.py</code></td><td>🔗 Pipeline: Prompts → ComfyUI → Pixel → DB</td></tr>
+    <tr><td><code>agatha_actas.py</code></td><td>📝 Reportes periódicos del proyecto</td></tr>
+    <tr><td><code>agent_memory.py</code></td><td>🧠 Memoria compartida entre agentes</td></tr>
+    <tr><td><code>telegram_bot.py</code></td><td>📱 Bot de Telegram</td></tr>
+    <tr><td><code>config.json</code></td><td>⚙️ Config backends (ComfyUI, InvokeAI, HF, Leonardo)</td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  <p>☾ SIMMOON — Proyecto de simulación de colonia lunar · Generado por Buffy (Codebuff AI)</p>
+  <p>📍 <code>C:\Program Files\PowerShell\7\Simmoon_arc</code> → escritorio</p>
+  <p>📅 2026-06-10</p>
+</div>
+
+</div>
+</body>
+</html>

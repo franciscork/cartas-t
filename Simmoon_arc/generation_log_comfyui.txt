@@ -1,0 +1,344 @@
+SIMMOON ComfyUI Generator
+Total prompts to generate: 78
+ComfyUI endpoint: http://127.0.0.1:8188
+Checkpoint: v1-5-pruned-emaonly.safetensors
+--------------------------------------------------
+
+📁 Category: businesses (12 items)
+   Output: /home/docus/Simmoon_arc/businesses
+  Queueing: biz_01_lunar_mining_office (seed=662131908)
+  Prompt ID: 747b9bb4-6b4b-4937-b91c-a693906f1c18
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_01_lunar_mining_office.png
+  Queueing: biz_02_lunar_trading_post (seed=699358118)
+  Prompt ID: 6dba1490-380e-43b2-b5d0-a2c17a4f35ac
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_02_lunar_trading_post.png
+  Queueing: biz_03_lunar_hotel (seed=4277007356)
+  Prompt ID: 345f6281-494e-4fbc-bd8c-2921110a57dc
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_03_lunar_hotel.png
+  Queueing: biz_04_lunar_restaurant (seed=2977795257)
+  Prompt ID: 36819339-2030-4be2-8e57-87eee4575963
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_04_lunar_restaurant.png
+  Queueing: biz_05_research_laboratory (seed=963035135)
+  Prompt ID: 241d9ada-9e84-48d0-b381-8a3ef7ed81e8
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_05_research_laboratory.png
+  Queueing: biz_06_medical_center (seed=3541473354)
+  Prompt ID: 5e55cf60-a6d4-40ae-b438-c677993e650e
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_06_medical_center.png
+  Queueing: biz_07_spaceport_terminal (seed=3078419308)
+  Prompt ID: 7e5a2d2d-8119-49e7-95bc-21a6668e7733
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_07_spaceport_terminal.png
+  Queueing: biz_08_manufacturing_plant (seed=2021990140)
+  Prompt ID: f1427dfb-9424-40e3-8267-0ced2bb352d8
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_08_manufacturing_plant.png
+  Queueing: biz_09_entertainment_club (seed=1393425641)
+  Prompt ID: f2ce99cd-85eb-4678-bafa-12982e38d34d
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_09_entertainment_club.png
+  Queueing: biz_10_lunar_bank (seed=2487830639)
+  Prompt ID: cc88e2ac-12f9-4961-a0ac-11622b832639
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_10_lunar_bank.png
+  Queueing: biz_11_lunar_shop (seed=3770609290)
+  Prompt ID: 175b5624-72aa-4eb5-9f5e-8d22d26b9a91
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_11_lunar_shop.png
+  Queueing: biz_12_lunar_warehouse (seed=3907000551)
+  Prompt ID: 79b700c2-d959-4e17-9ee6-ea138e7956d3
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/businesses/biz_12_lunar_warehouse.png
+
+📁 Category: vehicles (10 items)
+   Output: /home/docus/Simmoon_arc/vehicles
+  Queueing: veh_01_lunar_rover (seed=3805067433)
+  Prompt ID: 628dab5b-b4b1-420b-8a84-af19253aef3a
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_01_lunar_rover.png
+  Queueing: veh_02_mining_truck (seed=2282994439)
+  Prompt ID: 5eea8702-637a-42c1-904b-61e2dae27add
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_02_mining_truck.png
+  Queueing: veh_03_passenger_shuttle (seed=485373138)
+  Prompt ID: ddcc16d8-1b5f-4098-9404-03bc0ada7af6
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_03_passenger_shuttle.png
+  Queueing: veh_04_cargo_hauler (seed=481771017)
+  Prompt ID: 09666da7-6071-4564-aeda-69795695e32b
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_04_cargo_hauler.png
+  Queueing: veh_05_emergency_vehicle (seed=3469734451)
+  Prompt ID: 0d9bc795-1dc0-456e-aacf-182c03657e5e
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_05_emergency_vehicle.png
+  Queueing: veh_06_construction_excavator (seed=2617848933)
+  Prompt ID: f2ca0da2-3555-4932-b29c-9bd536263d1a
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_06_construction_excavator.png
+  Queueing: veh_07_hover_bike (seed=237332889)
+  Prompt ID: 4d1ed493-3aa1-4536-aec0-c0df2ca2713f
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_07_hover_bike.png
+  Queueing: veh_08_moon_bus (seed=2009229226)
+  Prompt ID: 9ce845fb-0c00-4f3e-924e-8e501f2beeb5
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_08_moon_bus.png
+  Queueing: veh_09_supply_drone (seed=2820893716)
+  Prompt ID: 9a6b25ed-31b7-4307-badf-4ebefdfbd146
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_09_supply_drone.png
+  Queueing: veh_10_lunar_tank (seed=3322882237)
+  Prompt ID: 02c32134-788c-4a78-bb17-f6bf8d8bb6cd
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/vehicles/veh_10_lunar_tank.png
+
+📁 Category: greenhouses (7 items)
+   Output: /home/docus/Simmoon_arc/greenhouses
+  Queueing: gh_01_small_dome_greenhouse (seed=668772884)
+  Prompt ID: 25e09c6b-4e85-45e9-8508-afc30eed48db
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_01_small_dome_greenhouse.png
+  Queueing: gh_02_large_greenhouse (seed=1268340565)
+  Prompt ID: 8f500766-34c2-4e3c-91ac-feb70a571f0b
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_02_large_greenhouse.png
+  Queueing: gh_03_vertical_farm (seed=4231302297)
+  Prompt ID: 0a7cafa1-1820-4bd3-92f6-215a54fc8471
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_03_vertical_farm.png
+  Queueing: gh_04_hydroponics_lab (seed=3012563505)
+  Prompt ID: 1f86941f-e8d1-4c8e-912c-d0dbbf978d52
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_04_hydroponics_lab.png
+  Queueing: gh_05_aquaponics_bay (seed=4069144617)
+  Prompt ID: 4c429611-b2d1-4bd8-ad06-b1499e49848b
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_05_aquaponics_bay.png
+  Queueing: gh_06_herb_garden_dome (seed=3785415011)
+  Prompt ID: c67cd2b7-e867-494a-902a-2fa5f3335036
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_06_herb_garden_dome.png
+  Queueing: gh_07_tree_nursery (seed=2416002754)
+  Prompt ID: 923a8e80-f987-4bff-9923-92638b9b8958
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/greenhouses/gh_07_tree_nursery.png
+
+📁 Category: solar_energy (8 items)
+   Output: /home/docus/Simmoon_arc/solar_energy
+  Queueing: sol_01_solar_panel_array (seed=3134139588)
+  Prompt ID: eb5f5100-5b94-41fd-93df-af799a9c8268
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_01_solar_panel_array.png
+  Queueing: sol_02_solar_power_station (seed=1921657727)
+  Prompt ID: 968a84a7-cbc8-4512-ba44-dfd9d78c08fd
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_02_solar_power_station.png
+  Queueing: sol_03_nuclear_reactor (seed=64918386)
+  Prompt ID: dc50f3ae-6030-4d11-9e17-5a1bf58dede2
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_03_nuclear_reactor.png
+  Queueing: sol_04_battery_storage (seed=2267658174)
+  Prompt ID: 92c9704d-725d-4dfa-9dd2-76c8912bd3d6
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_04_battery_storage.png
+  Queueing: sol_05_wind_turbine (seed=2918966335)
+  Prompt ID: b215510e-fe89-46d0-8e56-477b2284c016
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_05_wind_turbine.png
+  Queueing: sol_06_geothermal_plant (seed=1779155308)
+  Prompt ID: 01cc9163-f4ee-4345-a13d-471398310e08
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_06_geothermal_plant.png
+  Queueing: sol_07_helium_3_reactor (seed=3717494610)
+  Prompt ID: 24ba94fd-b064-4327-8efd-3f13a63cef54
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_07_helium_3_reactor.png
+  Queueing: sol_08_power_substation (seed=3705629617)
+  Prompt ID: a64d8a0f-4a1c-4897-8d04-bbb8a1c5c957
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/solar_energy/sol_08_power_substation.png
+
+📁 Category: lunar_map (8 items)
+   Output: /home/docus/Simmoon_arc/lunar_map
+  Queueing: map_01_colony_overview_map (seed=274298695)
+  Prompt ID: 2aaac7fe-c535-4616-8c07-a73d49027c30
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_01_colony_overview_map.png
+  Queueing: map_02_surface_tile_set (seed=2315401542)
+  Prompt ID: 69804fce-098c-4683-9002-0a02cc3b4df7
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_02_surface_tile_set.png
+  Queueing: map_03_crater_zone (seed=1462219287)
+  Prompt ID: bcc7ea5b-0c74-4f78-b1b0-84198bb30f62
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_03_crater_zone.png
+  Queueing: map_04_mare_plains (seed=959147137)
+  Prompt ID: 6773942f-6f97-4abd-9e5f-29b57f6b1fe7
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_04_mare_plains.png
+  Queueing: map_05_mountain_region (seed=4096875118)
+  Prompt ID: 6ad81db9-87e8-4dcc-99c7-051f942e44a0
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_05_mountain_region.png
+  Queueing: map_06_polar_region (seed=3555754313)
+  Prompt ID: efe5c810-b321-4892-b2b1-6d94f318e2d6
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_06_polar_region.png
+  Queueing: map_07_earth_view (seed=1874193974)
+  Prompt ID: d01fa113-331f-4916-8997-22cdc7944c98
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_07_earth_view.png
+  Queueing: map_08_colony_sprawl (seed=3645310223)
+  Prompt ID: 8fa6fb13-dede-4e55-8671-fbf0d6d1e1ba
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_map/map_08_colony_sprawl.png
+
+📁 Category: game_assets_misc (12 items)
+   Output: /home/docus/Simmoon_arc/buildings_misc
+  Queueing: misc_01_living_quarters_dome (seed=2278351138)
+  Prompt ID: f865354c-2baa-489f-b72e-341764d4c274
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_01_living_quarters_dome.png
+  Queueing: misc_02_water_processing_plant (seed=1289215952)
+  Prompt ID: a0209d62-206b-41e9-889e-07505a0073dd
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_02_water_processing_plant.png
+  Queueing: misc_03_atmosphere_processor (seed=3253489587)
+  Prompt ID: 2c7adc3f-f6d4-44e1-8f74-e778bef9e59c
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_03_atmosphere_processor.png
+  Queueing: misc_04_communication_tower (seed=4109058636)
+  Prompt ID: 2f102520-0efa-433b-bede-fbf5c7a721ae
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_04_communication_tower.png
+  Queueing: misc_05_space_elevator_base (seed=3331478091)
+  Prompt ID: 71b1c0db-9ee5-4bb8-b600-b51250cb4f89
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_05_space_elevator_base.png
+  Queueing: misc_06_recycling_center (seed=933172213)
+  Prompt ID: e68ec2a3-4676-4c87-a285-ac55affe9883
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_06_recycling_center.png
+  Queueing: misc_07_school_academy (seed=1215854489)
+  Prompt ID: 466a24e3-11a5-453a-b1e6-ef054018982f
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_07_school_academy.png
+  Queueing: misc_08_park_recreation_dome (seed=763637240)
+  Prompt ID: 03c5be06-7033-4e73-8610-73f23a3470d2
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_08_park_recreation_dome.png
+  Queueing: misc_09_waste_management (seed=493241273)
+  Prompt ID: 7e10e178-3b25-41c8-9063-e61a75a91be0
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_09_waste_management.png
+  Queueing: misc_10_fire_station (seed=3893373817)
+  Prompt ID: e6f48644-369d-4953-abf8-4499fc060e51
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_10_fire_station.png
+  Queueing: misc_11_police_station (seed=3545860146)
+  Prompt ID: 7ae02117-837b-45a6-af97-5208c16b3cb4
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_11_police_station.png
+  Queueing: misc_12_launch_pad (seed=1646661549)
+  Prompt ID: 59a25642-7597-4e77-bc45-f34c68868e75
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/buildings_misc/misc_12_launch_pad.png
+
+📁 Category: lunar_sites (12 items)
+   Output: /home/docus/Simmoon_arc/lunar_sites
+  Queueing: site_01_mining_excavation_site (seed=1166310323)
+  Prompt ID: e647cdf0-88a2-41cb-b30c-d4f140862d10
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_01_mining_excavation_site.png
+  Queueing: site_02_research_laboratory_campus (seed=3454303281)
+  Prompt ID: 8bd81614-3ac3-4330-a7b1-a9ba9f7f0895
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_02_research_laboratory_campus.png
+  Queueing: site_03_lunar_hotel_resort (seed=1844118532)
+  Prompt ID: 0fe1ee01-cd87-4e48-8d6f-37f0f2c687d5
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_03_lunar_hotel_resort.png
+  Queueing: site_04_spaceport_launch_complex (seed=531078617)
+  Prompt ID: 696b5943-ed76-4749-ae40-73840c18f377
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_04_spaceport_launch_complex.png
+  Queueing: site_05_warehouse_storage_district (seed=784158002)
+  Prompt ID: 5c4ac110-2a98-4bc6-93eb-02e1bdeb47ea
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_05_warehouse_storage_district.png
+  Queueing: site_06_greenhouse_agriculture_zone (seed=663446882)
+  Prompt ID: 9f038ae9-b7a6-411e-b22c-50070e593d79
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_06_greenhouse_agriculture_zone.png
+  Queueing: site_07_solar_energy_farm (seed=4177591391)
+  Prompt ID: f70c195b-7f22-4e57-9b59-a7d15cf19b9c
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_07_solar_energy_farm.png
+  Queueing: site_08_residential_colony_sector (seed=3167111005)
+  Prompt ID: 7a30dad4-6cfc-420a-9c2c-106548e3a656
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_08_residential_colony_sector.png
+  Queueing: site_09_entertainment_plaza (seed=3246360049)
+  Prompt ID: ef385dfa-a5eb-4748-a205-f8a7269acfd5
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_09_entertainment_plaza.png
+  Queueing: site_10_medical_center_complex (seed=1182182327)
+  Prompt ID: 2e60f62c-b8ba-48c1-bdfb-123ea8e3834f
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_10_medical_center_complex.png
+  Queueing: site_11_nuclear_power_plant (seed=3665519960)
+  Prompt ID: fc95abea-b96d-4ec8-a7df-06c8d72d4c5e
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_11_nuclear_power_plant.png
+  Queueing: site_12_communications_hub (seed=3523077463)
+  Prompt ID: be2b21c0-8b72-417f-9281-a8968791b031
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/lunar_sites/site_12_communications_hub.png
+
+📁 Category: ui_elements (9 items)
+   Output: /home/docus/Simmoon_arc/ui_elements
+  Queueing: ui_01_oxygen_icon (seed=3150036190)
+  Prompt ID: 503652b0-6ec2-472c-82a0-3e73059a20b1
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_01_oxygen_icon.png
+  Queueing: ui_02_water_icon (seed=1534272162)
+  Prompt ID: fca4efd8-100a-411e-8a86-482f39a8be4e
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_02_water_icon.png
+  Queueing: ui_03_energy_icon (seed=293950814)
+  Prompt ID: c9006817-ad57-4d8f-adc8-acf64d89ba4f
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_03_energy_icon.png
+  Queueing: ui_04_minerals_icon (seed=3871217777)
+  Prompt ID: 87851137-b108-4e1e-a693-1afa5a2f4846
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_04_minerals_icon.png
+  Queueing: ui_05_food_icon (seed=4205884220)
+  Prompt ID: e4501df4-387b-4181-89d0-f93434c88224
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_05_food_icon.png
+  Queueing: ui_06_credits_icon (seed=3487268674)
+  Prompt ID: fcdfef57-22a5-450d-8b3a-05353c06f285
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_06_credits_icon.png
+  Queueing: ui_07_building_menu_panel (seed=3273346592)
+  Prompt ID: f9df1c7f-aea7-485a-a93a-e1c15f37fef6
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_07_building_menu_panel.png
+  Queueing: ui_08_mini_map_frame (seed=888020725)
+  Prompt ID: 6f7d9d8d-be6b-4f85-aed2-cbbde146f4e2
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_08_mini_map_frame.png
+  Queueing: ui_09_alert_notification (seed=3187230543)
+  Prompt ID: bfeca016-8343-4cc9-8c22-d653b5a088e5
+  Outputs received: ['7']
+  Saved: /home/docus/Simmoon_arc/ui_elements/ui_09_alert_notification.png
+
+==================================================
+Generation complete: 78 generated, 0 failed
