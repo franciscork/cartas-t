@@ -66,7 +66,7 @@ def _wsl_has_binary(name: str) -> bool:
     """Check if a binary exists in WSL."""
     try:
         r = _wsl_cmd(f"command -v {name} 2>/dev/null && echo FOUND || echo NOT_FOUND", timeout=5)
-        return "FOUND" in r.stdout
+        return "NOT_FOUND" not in r.stdout and bool(r.stdout.strip())
     except Exception:
         return False
 

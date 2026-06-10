@@ -41,6 +41,7 @@ modules_to_patch = {
 patcher = patch.dict("sys.modules", modules_to_patch)
 patcher.start()
 
+import dashboard_collectors
 from dashboard_collectors import (
     _try_import, _http_healthy, _tmux_session_exists,
     _wsl_has_binary, _file_exists_in_wsl,
@@ -83,7 +84,7 @@ class TestHttpHealthy:
         """Should return True for 200 OK response."""
         mock_resp = MagicMock()
         mock_resp.status = 200
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
 
         assert _http_healthy("http://localhost:8080/health") is True
         mock_urlopen.assert_called_once_with("http://localhost:8080/health", timeout=3)
@@ -93,7 +94,7 @@ class TestHttpHealthy:
         """Should return True for redirects (3xx)."""
         mock_resp = MagicMock()
         mock_resp.status = 302
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
 
         assert _http_healthy("http://localhost:8080/old") is True
 
@@ -102,7 +103,7 @@ class TestHttpHealthy:
         """Should return False for 500 errors."""
         mock_resp = MagicMock()
         mock_resp.status = 500
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
 
         assert _http_healthy("http://localhost:8080/error") is False
 
@@ -127,7 +128,7 @@ class TestHttpHealthy:
         """Should pass custom timeout to urlopen."""
         mock_resp = MagicMock()
         mock_resp.status = 200
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
 
         assert _http_healthy("http://localhost:3000", timeout=5) is True
         mock_urlopen.assert_called_once_with("http://localhost:3000", timeout=5)
@@ -138,32 +139,30 @@ class TestHttpHealthy:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestTmuxSessionExists:
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_session_exists(self, mock_wsl_cmd):
+    def test_session_exists(self):
         """Should return True when tmux has-session succeeds."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="YES\n", stderr=""
-        )
-        assert _tmux_session_exists("my-session") is True
-        # Verify the command includes the session name
-        cmd_arg = mock_wsl_cmd.call_args[0][0]
-        assert "my-session" in cmd_arg
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="YES\n", stderr="")) as mock_wsl_cmd:
+            assert _tmux_session_exists("my-session") is True
+            # Verify the command includes the session name
+            cmd_arg = mock_wsl_cmd.call_args[0][0]
+            assert "my-session" in cmd_arg
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_session_not_exists(self, mock_wsl_cmd):
+    def test_session_not_exists(self):
         """Should return False when tmux has-session fails."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="NO\n", stderr=""
-        )
-        assert _tmux_session_exists("nonexistent-session") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="NO\n", stderr="")):
+            assert _tmux_session_exists("nonexistent-session") is False
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_wsl_cmd_fails(self, mock_wsl_cmd):
+    def test_wsl_cmd_fails(self):
         """Should return False when _wsl_cmd raises an exception."""
-        mock_wsl_cmd.side_effect = Exception("WSL not available")
-        assert _tmux_session_exists("any-session") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+            mock_wsl_cmd.side_effect = Exception("WSL not available")
+            assert _tmux_session_exists("any-session") is False
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -171,30 +170,28 @@ class TestTmuxSessionExists:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestWslHasBinary:
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_binary_exists(self, mock_wsl_cmd):
+    def test_binary_exists(self):
         """Should return True when command -v finds the binary."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="FOUND\n", stderr=""
-        )
-        assert _wsl_has_binary("python3") is True
-        assert "python3" in mock_wsl_cmd.call_args[0][0]
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="FOUND\n", stderr="")) as mock_wsl_cmd:
+            assert _wsl_has_binary("python3") is True
+            assert "python3" in mock_wsl_cmd.call_args[0][0]
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_binary_not_found(self, mock_wsl_cmd):
+    def test_binary_not_found(self):
         """Should return False when command -v doesn't find the binary."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="NOT_FOUND\n", stderr=""
-        )
-        assert _wsl_has_binary("nonexistent_tool") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="NOT_FOUND\n", stderr="")):
+            assert _wsl_has_binary("nonexistent_tool") is False
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_binary_error(self, mock_wsl_cmd):
+    def test_binary_error(self):
         """Should return False when _wsl_cmd fails."""
-        mock_wsl_cmd.side_effect = Exception("error")
-        assert _wsl_has_binary("any_binary") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+            mock_wsl_cmd.side_effect = Exception("error")
+            assert _wsl_has_binary("any_binary") is False
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -202,30 +199,28 @@ class TestWslHasBinary:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestFileExistsInWsl:
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_file_exists(self, mock_wsl_cmd):
+    def test_file_exists(self):
         """Should return True when test -f succeeds."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="YES\n", stderr=""
-        )
-        assert _file_exists_in_wsl("/home/user/file.txt") is True
-        assert "file.txt" in mock_wsl_cmd.call_args[0][0]
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="YES\n", stderr="")) as mock_wsl_cmd:
+            assert _file_exists_in_wsl("/home/user/file.txt") is True
+            assert "file.txt" in mock_wsl_cmd.call_args[0][0]
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_file_not_exists(self, mock_wsl_cmd):
+    def test_file_not_exists(self):
         """Should return False when test -f fails."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="NO\n", stderr=""
-        )
-        assert _file_exists_in_wsl("/nonexistent/path") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd',
+               return_value=subprocess.CompletedProcess(
+                   args=["bash", "-c", "..."], returncode=0,
+                   stdout="NO\n", stderr="")):
+            assert _file_exists_in_wsl("/nonexistent/path") is False
 
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_wsl_error(self, mock_wsl_cmd):
+    def test_wsl_error(self):
         """Should return False on exception."""
-        mock_wsl_cmd.side_effect = Exception("error")
-        assert _file_exists_in_wsl("/any/path") is False
+        with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+            mock_wsl_cmd.side_effect = Exception("error")
+            assert _file_exists_in_wsl("/any/path") is False
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -233,29 +228,29 @@ class TestFileExistsInWsl:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestCollectAgentStatus:
-    @patch("dashboard_collectors._tmux_session_exists")
-    @patch("dashboard_collectors._http_healthy")
-    @patch("dashboard_collectors._try_import")
-    @patch("dashboard_collectors._wsl_has_binary")
-    @patch("dashboard_collectors._file_exists_in_wsl")
-    @patch("dashboard_collectors.collect_obsidian_status")
-    @patch("dashboard_collectors.collect_claude_status")
-    @patch("dashboard_collectors._MONITOR_OK", False)
-    def test_basic_structure(self, mock_claude, mock_obsidian,
-                              mock_file_wsl, mock_bin, mock_import,
-                              mock_http, mock_tmux):
+    def test_basic_structure(self):
         """Should return a dict with expected top-level keys."""
-        # All mocks return False by default (agents offline)
-        mock_tmux.return_value = False
-        mock_http.return_value = False
-        mock_import.return_value = False
-        mock_bin.return_value = False
-        mock_file_wsl.return_value = False
-        mock_obsidian.return_value = {"available": False}
-        mock_claude.return_value = {"available": False}
+        with \
+            patch("dashboard_collectors._tmux_session_exists") as mock_tmux, \
+            patch("dashboard_collectors._http_healthy") as mock_http, \
+            patch("dashboard_collectors._try_import") as mock_import, \
+            patch("dashboard_collectors._wsl_has_binary") as mock_bin, \
+            patch("dashboard_collectors._file_exists_in_wsl") as mock_file_wsl, \
+            patch("dashboard_collectors.collect_obsidian_status") as mock_obsidian, \
+            patch("dashboard_collectors.collect_claude_status") as mock_claude, \
+            patch.object(dashboard_collectors, "_MONITOR_OK", False), \
+            patch("pathlib.Path.exists", return_value=False), \
+            patch("shutil.which", return_value=None):
 
+            mock_tmux.return_value = False
+            mock_http.return_value = False
+            mock_import.return_value = False
+            mock_bin.return_value = False
+            mock_file_wsl.return_value = False
+            mock_obsidian.return_value = {"available": False}
+            mock_claude.return_value = {"available": False}
 
-        result = collect_agent_status()
+            result = collect_agent_status()
 
         assert isinstance(result, dict)
         assert "timestamp" in result
@@ -271,28 +266,30 @@ class TestCollectAgentStatus:
         assert len(result["agents"]) == 15
         assert result["total_running"] == 0  # all mocked to False
 
-    @patch("dashboard_collectors._tmux_session_exists")
-    @patch("dashboard_collectors._http_healthy")
-    @patch("dashboard_collectors._try_import")
-    @patch("dashboard_collectors._wsl_has_binary")
-    @patch("dashboard_collectors._file_exists_in_wsl")
-    @patch("dashboard_collectors.collect_obsidian_status")
-    @patch("dashboard_collectors.collect_claude_status")
-    @patch("dashboard_collectors._MONITOR_OK", False)
-    def test_agent_names_present(self, mock_claude, mock_obsidian,
-                                  mock_file_wsl, mock_bin, mock_import,
-                                  mock_http, mock_tmux):
+    def test_agent_names_present(self):
         """Should include all 15 agents with name, icon, and running fields."""
-        mock_tmux.return_value = False
-        mock_http.return_value = False
-        mock_import.return_value = False
-        mock_bin.return_value = False
-        mock_file_wsl.return_value = False
-        mock_obsidian.return_value = {"available": False}
-        mock_claude.return_value = {"available": False}
+        with \
+            patch("dashboard_collectors._tmux_session_exists") as mock_tmux, \
+            patch("dashboard_collectors._http_healthy") as mock_http, \
+            patch("dashboard_collectors._try_import") as mock_import, \
+            patch("dashboard_collectors._wsl_has_binary") as mock_bin, \
+            patch("dashboard_collectors._file_exists_in_wsl") as mock_file_wsl, \
+            patch("dashboard_collectors.collect_obsidian_status") as mock_obsidian, \
+            patch("dashboard_collectors.collect_claude_status") as mock_claude, \
+            patch.object(dashboard_collectors, "_MONITOR_OK", False), \
+            patch("pathlib.Path.exists", return_value=False), \
+            patch("shutil.which", return_value=None):
 
+            mock_tmux.return_value = False
+            mock_http.return_value = False
+            mock_import.return_value = False
+            mock_bin.return_value = False
+            mock_file_wsl.return_value = False
+            mock_obsidian.return_value = {"available": False}
+            mock_claude.return_value = {"available": False}
 
-        result = collect_agent_status()
+            result = collect_agent_status()
+
         expected_names = [
             "Telegram Bot", "Hermes Agent", "Hermes Bridge",
             "OpenHuman", "OpenHuman Desktop",
@@ -311,49 +308,57 @@ class TestCollectAgentStatus:
             assert "method" in agent
             assert "desc" in agent
 
-    @patch("dashboard_collectors._tmux_session_exists")
-    @patch("dashboard_collectors._http_healthy")
-    @patch("dashboard_collectors._try_import")
-    @patch("dashboard_collectors._wsl_has_binary")
-    @patch("dashboard_collectors._file_exists_in_wsl")
-    @patch("dashboard_collectors.collect_obsidian_status")
-    @patch("dashboard_collectors.collect_claude_status")
-    @patch("dashboard_collectors._MONITOR_OK", True)
-    @patch("dashboard_collectors.check_services")
-    def test_with_ollama_healthy(self, mock_check_svc, mock_claude, mock_obsidian,
-                                  mock_file_wsl, mock_bin, mock_import,
-                                  mock_http, mock_tmux):
-        """Should detect Ollama as healthy when HTTP to :11434 succeeds."""
-        def http_side_effect(url, timeout=3):
-            if "11434" in url:
-                return True
-            return False
+    def test_with_ollama_healthy(self):
+        """Should detect Ollama as healthy when HTTP to :11434 succeeds.
 
-        mock_http.side_effect = http_side_effect
-        mock_tmux.return_value = False
-        mock_import.return_value = False
-        mock_bin.return_value = False
-        mock_file_wsl.return_value = False
-        mock_obsidian.return_value = {"available": False, "mode": "N/A"}
-        mock_claude.return_value = {"available": False}
+        Strategy: Don't patch _http_healthy directly (it's tricky because
+        _http_healthy is a local function in dashboard_collectors that gets
+        patched by @patch decorators unreliably in some test runners).
+        Instead, patch urllib.request.urlopen to return a valid response for
+        Ollama's health endpoint, and let _http_healthy run its real code.
+        """
+        with \
+            patch.object(dashboard_collectors, '_tmux_session_exists', return_value=False), \
+            patch.object(dashboard_collectors, '_try_import', return_value=False), \
+            patch.object(dashboard_collectors, '_wsl_has_binary', return_value=False), \
+            patch.object(dashboard_collectors, '_file_exists_in_wsl', return_value=False), \
+            patch.object(dashboard_collectors, 'collect_obsidian_status',
+                return_value={"available": False, "mode": "N/A"}), \
+            patch.object(dashboard_collectors, 'collect_claude_status',
+                return_value={"available": False}), \
+            patch.object(dashboard_collectors, '_wsl_cmd',
+                return_value=subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="NOT_FOUND\n", stderr="")), \
+            patch.object(dashboard_collectors, "_MONITOR_OK", True), \
+            patch("dashboard_collectors.check_services"), \
+            patch("pathlib.Path.exists", return_value=False), \
+            patch("shutil.which", return_value=None):
 
+            # Patch urlopen so _http_healthy sees status 200 for Ollama port
+            orig_urlopen = __import__("urllib.request", fromlist=["urlopen"]).urlopen
 
-        # Patch urllib.request.urlopen for ollama models listing
-        with patch("urllib.request.urlopen") as mock_urlopen:
-            mock_resp = MagicMock()
-            mock_resp.read.return_value = json.dumps({
-                "models": [{"name": "qwen2.5-coder:14b", "size": 7 * 1024**3,
-                            "details": {"family": "qwen", "parameter_size": "14B"}}]
-            }).encode()
-            mock_resp.__enter__.return_value = mock_resp
-            mock_urlopen.return_value = mock_resp
+            def urlopen_side(url, timeout=None, **kwargs):
+                resp = MagicMock()
+                resp.status = 200
+                if "/api/tags" in str(url):
+                    # Model listing
+                    resp.read.return_value = json.dumps({
+                        "models": [{"name": "qwen2.5-coder:14b", "size": 7 * 1024**3,
+                                    "details": {"family": "qwen", "parameter_size": "14B"}}]
+                    }).encode()
+                    resp.__enter__.return_value = resp
+                else:
+                    resp.read.return_value = b"ok"
+                    resp.__enter__.return_value = resp
+                return resp
 
-            result = collect_agent_status()
+            with patch("urllib.request.urlopen", side_effect=urlopen_side):
+                result = collect_agent_status()
 
         assert result["ollama_healthy"] is True
         assert len(result["ollama_models"]) == 1
-        assert result["ollama_models"][0]["name"] == "qwen2.5-coder:14b"
-        assert result["ollama_models"][0]["size_gb"] == 7.0
+        # collect_agent_status() extracts model names into a list of strings
+        assert result["ollama_models"][0] == "qwen2.5-coder:14b"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -388,14 +393,20 @@ class TestCollectEnvironment:
         assert "last_generation" in result
         assert "active_models" in result
 
-    @patch("dashboard_collectors._wsl_cmd")
-    @patch("dashboard_collectors.check_cpu_temp")
-    def test_empty_results(self, mock_cpu_temp, mock_wsl_cmd):
+    def test_empty_results(self):
         """Should handle WSL failure gracefully."""
-        mock_wsl_cmd.side_effect = Exception("WSL not available")
-        mock_cpu_temp.side_effect = Exception("No sensors")
+        with \
+            patch.object(dashboard_collectors, 'check_cpu_temp') as mock_cpu_temp, \
+            patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd, \
+            patch("pathlib.Path.is_dir") as mock_is_dir, \
+            patch("pathlib.Path.glob") as mock_glob:
 
-        result = collect_environment()
+            mock_wsl_cmd.side_effect = Exception("WSL not available")
+            mock_cpu_temp.side_effect = Exception("No sensors")
+            mock_is_dir.return_value = False
+            mock_glob.return_value = []
+
+            result = collect_environment()
 
         assert result["uptime"] == "N/A"
         assert result["cpu_temp_c"] is None
@@ -403,25 +414,24 @@ class TestCollectEnvironment:
         assert result["total_categories"] == 0
         assert result["last_generation"] is None
 
-    @patch("dashboard_collectors._wsl_cmd")
-    @patch("dashboard_collectors.check_cpu_temp")
-    def test_with_assets(self, mock_cpu_temp, mock_wsl_cmd):
+    def test_with_assets(self):
         """Should count assets from category directories."""
-        mock_wsl_cmd.return_value = subprocess.CompletedProcess(
-            args=["bash", "-c", "..."], returncode=0,
-            stdout="up 1 day\n", stderr=""
-        )
-        mock_cpu_temp.return_value = 60.0
+        with \
+            patch.object(dashboard_collectors, 'check_cpu_temp') as mock_cpu_temp, \
+            patch.object(dashboard_collectors, '_wsl_cmd',
+                return_value=subprocess.CompletedProcess(
+                    args=["bash", "-c", "..."], returncode=0,
+                    stdout="up 1 day\n", stderr="")), \
+            patch("pathlib.Path.is_dir") as mock_is_dir, \
+            patch("pathlib.Path.glob") as mock_glob:
 
-        # Mock directory structure
-        with patch("pathlib.Path.is_dir") as mock_is_dir:
+            mock_cpu_temp.return_value = 60.0
             mock_is_dir.return_value = True
-            with patch("pathlib.Path.glob") as mock_glob:
-                mock_glob.side_effect = lambda pattern: [
-                    Path(f"test_{i}.png") for i in range(3)
-                ] if ".png" in pattern else []
+            mock_glob.side_effect = lambda pattern: [
+                Path(f"test_{i}.png") for i in range(3)
+            ] if ".png" in pattern else []
 
-                result = collect_environment()
+            result = collect_environment()
 
         assert result["asset_count"] >= 0  # at least counted something
         assert result["cpu_temp_c"] == 60.0
@@ -546,33 +556,30 @@ class TestCollectObsidianStatus:
         assert "by_type" in result
         assert "diarias" in result
 
-    @patch("obsidian_memory.ObsidianRestClient.is_available", return_value=False)
-    @patch("builtins.open", new_callable=mock_open,
-           read_data=json.dumps({"api_key": "test-key", "port": 27124, "https": True}))
-    @patch("dashboard_collectors.SCRIPT_DIR", Path("/fake/project"))
-    def test_with_rest_config_file_not_available(self, mock_file):
+    def test_with_rest_config_file_not_available(self):
         """Should try REST API, fall back to FS when REST not available."""
-        with patch("pathlib.Path.exists") as mock_exists:
-            # config exists
-            mock_exists.side_effect = lambda: True
-
-            result = collect_obsidian_status()
+        with patch("dashboard_collectors.SCRIPT_DIR", Path("/fake/project")):
+            with patch("builtins.open", new_callable=mock_open,
+                       read_data=json.dumps({"api_key": "test-key", "port": 27124, "https": True})):
+                with patch("obsidian_memory.ObsidianRestClient.is_available", return_value=False):
+                    with patch("pathlib.Path.exists") as mock_exists:
+                        mock_exists.side_effect = lambda: True
+                        result = collect_obsidian_status()
 
         # REST won't be available in test (no server), so falls back
         assert isinstance(result, dict)
         assert "available" in result
         assert "mode" in result
 
-    @patch("obsidian_memory.ObsidianRestClient.is_available", return_value=False)
-    @patch("builtins.open", new_callable=mock_open,
-           read_data=json.dumps({"api_key": "test-key", "port": 27124, "https": True}))
-    @patch("dashboard_collectors.SCRIPT_DIR", Path("/fake/project"))
-    def test_structure_keys(self, mock_file):
+    def test_structure_keys(self):
         """Should always return the expected keys regardless of mode."""
-        with patch("pathlib.Path.exists") as mock_exists:
-            mock_exists.side_effect = lambda: True
-
-            result = collect_obsidian_status()
+        with patch("dashboard_collectors.SCRIPT_DIR", Path("/fake/project")):
+            with patch("builtins.open", new_callable=mock_open,
+                       read_data=json.dumps({"api_key": "test-key", "port": 27124, "https": True})):
+                with patch("obsidian_memory.ObsidianRestClient.is_available", return_value=False):
+                    with patch("pathlib.Path.exists") as mock_exists:
+                        mock_exists.side_effect = lambda: True
+                        result = collect_obsidian_status()
 
         expected_keys = {"available", "vault_path", "vault_name", "mode",
                          "total_entries", "by_type", "diarias", "agent_name"}
@@ -584,12 +591,12 @@ class TestCollectObsidianStatus:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestCollectClaudeStatus:
-    @patch("dashboard_collectors._MONITOR_OK", False)
     def test_no_monitor_available(self):
         """Should try shutil.which even without monitor_sistema."""
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-            result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', False):
+            with patch("shutil.which") as mock_which:
+                mock_which.return_value = None
+                result = collect_claude_status()
 
         assert isinstance(result, dict)
         assert "available" in result
@@ -597,90 +604,78 @@ class TestCollectClaudeStatus:
         assert "auth_configured" in result
         assert "backend" in result
 
-    @patch("dashboard_collectors._MONITOR_OK", False)
     def test_binary_found(self):
         """Should detect Claude Code binary via shutil.which."""
-        with patch("shutil.which") as mock_which:
-            # First call returns None, then second finds 'claude.cmd'
-            mock_which.side_effect = [None, "C:\\Users\\test\\AppData\\Roaming\\npm\\claude.cmd"]
-
-            result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', False):
+            with patch("shutil.which") as mock_which:
+                mock_which.side_effect = [None, "C:\\Users\\test\\AppData\\Roaming\\npm\\claude.cmd"]
+                result = collect_claude_status()
 
         assert result["available"] is True
         assert result["binary_path"] == "C:\\Users\\test\\AppData\\Roaming\\npm\\claude.cmd"
         assert result["backend"] == "none"
 
-    @patch("dashboard_collectors._MONITOR_OK", False)
     def test_auth_configured(self):
         """Should detect ANTHROPIC_API_KEY env var."""
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-ant-xxx"}):
-                result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', False):
+            with patch("shutil.which") as mock_which:
+                mock_which.return_value = None
+                with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-ant-xxx"}):
+                    result = collect_claude_status()
 
         assert result["auth_configured"] is True
 
-    @patch("dashboard_collectors._MONITOR_OK", True)
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_native_ollama_mode(self, mock_wsl_cmd):
+    def test_native_ollama_mode(self):
         """Should detect native ollama launch claude support."""
-        # First call: ollama launch claude --help returns NATIVE_OK
-        # Second call: ollama list returns a cloud model
-        mock_wsl_cmd.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="NATIVE_OK\n", stderr=""),
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="minimax-m3:cloud\n", stderr=""),
-        ]
-
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-
-            result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', True):
+            with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+                mock_wsl_cmd.side_effect = [
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="NATIVE_OK\n", stderr=""),
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="minimax-m3:cloud\n", stderr=""),
+                ]
+                with patch("shutil.which") as mock_which:
+                    mock_which.return_value = None
+                    result = collect_claude_status()
 
         assert result["available"] is True
         assert result["native_ollama"] is True
         assert result["native_ollama_model"] == "minimax-m3:cloud"
         assert result["backend"] == "native_ollama"
 
-    @patch("dashboard_collectors._MONITOR_OK", True)
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_claude_binary_in_wsl(self, mock_wsl_cmd):
+    def test_claude_binary_in_wsl(self):
         """Should detect Claude Code CLI binary in WSL."""
-        # First call: ollama launch claude not available
-        # Second call: claude --version works
-        mock_wsl_cmd.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="NATIVE_NO\n", stderr=""),
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="Claude Code 0.2.45\n", stderr=""),
-        ]
-
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-
-            result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', True):
+            with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+                mock_wsl_cmd.side_effect = [
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="NATIVE_NO\n", stderr=""),
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="Claude Code 0.2.45\n", stderr=""),
+                ]
+                with patch("shutil.which") as mock_which:
+                    mock_which.return_value = None
+                    result = collect_claude_status()
 
         assert result["available"] is True
         assert "0.2.45" in result.get("version", "")
         assert result["binary_path"] == "WSL: /usr/local/bin/claude"
         assert result["backend"] == "claude_cli"
 
-    @patch("dashboard_collectors._MONITOR_OK", True)
-    @patch("dashboard_collectors._wsl_cmd")
-    def test_no_claude_available(self, mock_wsl_cmd):
+    def test_no_claude_available(self):
         """Should return available=False when nothing is detected."""
-        mock_wsl_cmd.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="NATIVE_NO\n", stderr=""),
-            subprocess.CompletedProcess(args=[], returncode=0,
-                                        stdout="NOT_FOUND\n", stderr=""),
-        ]
-
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-
-            result = collect_claude_status()
+        with patch.object(dashboard_collectors, '_MONITOR_OK', True):
+            with patch.object(dashboard_collectors, '_wsl_cmd') as mock_wsl_cmd:
+                mock_wsl_cmd.side_effect = [
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="NATIVE_NO\n", stderr=""),
+                    subprocess.CompletedProcess(args=[], returncode=0,
+                                                stdout="NOT_FOUND\n", stderr=""),
+                ]
+                with patch("shutil.which") as mock_which:
+                    mock_which.return_value = None
+                    result = collect_claude_status()
 
         assert result["available"] is False
         assert result["backend"] == "none"
