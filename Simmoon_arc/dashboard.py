@@ -353,11 +353,13 @@ def main():
         print("[WARN] monitor_sistema.py no encontrado — datos limitados")
 
     # Log startup event
+    debug_status = "ACTIVADO" if args.debug else "desactivado"
     if _LOG_OK:
-        syslog("Dashboard", "📊", f"Dashboard iniciado en http://{args.host}:{args.port}")
+        syslog("Dashboard", "📊", f"Dashboard iniciado en http://{args.host}:{args.port} | debug={debug_status}")
 
     print(f"\n  🚀 SIMMOON Dashboard de Control Agéntico")
     print(f"  http://{args.host}:{args.port}")
+    print(f"  Debug mode: {debug_status}")
     print(f"  Endpoints:")
     print(f"    /              — Dashboard web interactivo")
     print(f"    /api/health    — Salud del sistema (JSON)")
