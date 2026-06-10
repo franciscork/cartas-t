@@ -116,11 +116,12 @@ def _send_alert_telegram(text: str) -> bool:
             if tg_cfg_path.exists():
                 with open(tg_cfg_path, "r") as f:
                     tg_cfg = json.load(f)
-                token = tg_cfg.get("telegram_token", "8746645663:AAHMcgOwdYuG21GNHY7az6fr0Ir36FMRjqk")
+                token = tg_cfg.get("telegram_token", "")
             else:
-                token = "8746645663:AAHMcgOwdYuG21GNHY7az6fr0Ir36FMRjqk"
+                token = ""
 
         if not token:
+            print("  [WARN] monitor_sistema: No hay token de Telegram configurado. Alerta no enviada.", file=sys.stderr)
             return False
 
         api_url = f"https://api.telegram.org/bot{token}/sendMessage"

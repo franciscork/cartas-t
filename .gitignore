@@ -25,6 +25,12 @@ Simmoon_arc/obsidian_rest_config.json
 # API key de votación local
 Simmoon_arc/vote_config.js
 
+# Token de Telegram (contiene token real del bot)
+Simmoon_arc/telegram_config.json
+
+# Estado de conversación de Buffy Telegram (se regenera automáticamente)
+Simmoon_arc/buffy_telegram_state.json
+
 # ─── Logs ─────────────────────────────────────────────────
 Simmoon_arc/system_log.jsonl
 *.log

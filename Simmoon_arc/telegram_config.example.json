@@ -1,0 +1,8 @@
+{
+  "telegram_token": "TU_TOKEN_AQUI",
+  "bot_name": "Jeremi_Hermes_bot",
+  "allowed_users": [],
+  "ollama_model": "qwen2.5:3b",
+  "ollama_url": "http://127.0.0.1:11434",
+  "buffy_model": "qwen2.5:3b"
+}
