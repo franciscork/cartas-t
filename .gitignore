@@ -90,6 +90,10 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
+# ─── Archivos temporales de debugging ──────────────────
+_fix_*
+debug.txt
+
 # ─── Archivos de votos locales ──────────────────────────
 Simmoon_arc/votes.json
 
