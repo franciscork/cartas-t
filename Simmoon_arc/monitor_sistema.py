@@ -306,7 +306,12 @@ def check_gpu(require_gpu: bool = True) -> dict:
 # ── System Monitoring ─────────────────────────────────────────────────────
 
 def check_ram() -> dict:
-    """Check system RAM usage."""
+    """Check system RAM usage.
+
+    En WSL, consulta a Windows directamente vía PowerShell para obtener
+    la RAM real del host (ej. 32GB), ya que `free` dentro de WSL solo
+    reporta la asignación de WSL (~50% de la RAM total).
+    """
     result = {
         "total_gb": 0,
         "used_gb": 0,
@@ -314,12 +319,59 @@ def check_ram() -> dict:
         "available_gb": 0,
         "used_percent": 0,
     }
+
+    # ── En WSL: consultar RAM real desde Windows ──
+    # Usamos subprocess.run con lista (sin shell) para evitar que bash
+    # interprete los $variables del comando PowerShell.
+    if _is_wsl():
+        try:
+            proc = subprocess.run(
+                ["powershell.exe", "-NoProfile", "-Command",
+                 "$os=Get-CimInstance Win32_OperatingSystem; "
+                 "$t=[math]::Round($os.TotalVisibleMemorySize/1mb,1); "
+                 "$f=[math]::Round($os.FreePhysicalMemory/1mb,1); "
+                 "Write-Output \"$t $f\""],
+                capture_output=True, text=True, timeout=10
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                parts = proc.stdout.strip().split()
+                if len(parts) >= 2:
+                    total = float(parts[0])
+                    free = float(parts[1])
+                    if total > 0 and total < 1024:  # sanity check: <1024GB
+                        result["total_gb"] = total
+                        result["free_gb"] = free
+                        result["available_gb"] = free
+                        result["used_gb"] = round(total - free, 1)
+                        result["used_percent"] = round(
+                            result["used_gb"] / total * 100, 1
+                        )
+                        return result
+        except Exception:
+            pass
+
+        # Fallback: wmic desde WSL
+        try:
+            proc = _wsl_cmd(
+                'wmic computersystem get TotalPhysicalMemory 2>/dev/null | tail -1',
+                timeout=10
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                total_bytes = int(proc.stdout.strip())
+                if total_bytes > 0:
+                    result["total_gb"] = round(total_bytes / (1024**3), 1)
+        except Exception:
+            pass
+
+    # ── Fallback general: usar free (nativo Linux o WSL sin PowerShell) ──
     try:
         proc = _wsl_cmd("free -b | grep Mem", timeout=10)
         if proc.returncode == 0:
             parts = proc.stdout.split()
             if len(parts) >= 7:
-                result["total_gb"] = round(int(parts[1]) / (1024**3), 1)
+                # Solo sobreescribir si no tenemos datos de Windows
+                if result["total_gb"] == 0:
+                    result["total_gb"] = round(int(parts[1]) / (1024**3), 1)
                 result["used_gb"] = round(int(parts[2]) / (1024**3), 1)
                 result["free_gb"] = round(int(parts[3]) / (1024**3), 1)
                 result["available_gb"] = round(int(parts[6]) / (1024**3), 1)

@@ -31,6 +31,12 @@ Simmoon_arc/telegram_config.json
 # Estado de conversación de Buffy Telegram (se regenera automáticamente)
 Simmoon_arc/buffy_telegram_state.json
 
+# Base de datos runtime de HERA (cola de tareas SQLite)
+Simmoon_arc/hera_tasks.db
+
+# Estado de conversación del agente Telegram HERA (se regenera)
+Simmoon_arc/hera_telegram_state.json
+
 # ─── Logs ─────────────────────────────────────────────────
 Simmoon_arc/system_log.jsonl
 *.log
