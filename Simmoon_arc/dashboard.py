@@ -12,8 +12,6 @@ Uso:
 
 import argparse
 import json
-import os
-import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -36,14 +34,14 @@ from dashboard_collectors import (
     collect_agent_status, collect_environment,
     check_openhuman_health, collect_ollama_models,
     collect_obsidian_status, collect_claude_status,
-    _http_healthy, _tmux_session_exists, _wsl_cmd,
+    _http_healthy,
     _MONITOR_OK, check_gpu, check_ram, check_disk,
     check_services, check_cpu_temp, detect_alerts,
 )
 
 # ── System Logger ────────────────────────────────────────────────────────
 try:
-    from system_logger import log as syslog, get_recent as get_logs
+    from system_logger import log as syslog, get_recent as get_logs, log_exception
     _LOG_OK = True
 except ImportError:
     _LOG_OK = False
@@ -213,7 +211,8 @@ def index():
             svc["url"] = f"http://localhost:{svc['port']}"
         servicios.append(svc)
 
-    return render_template('dashboard.html',
+    try:
+        return render_template('dashboard.html',
         gpu=gpu, ram=ram, disk=disk, services=services,
         alerts=alerts, healthy=healthy,
         timestamp=datetime.now().strftime("%H:%M:%S"),
@@ -225,6 +224,11 @@ def index():
         obsidian=obsidian_data,
         claude=claude_data,
     )
+
+
+    except Exception as e:
+        log_exception("Dashboard", "📊", e, context="index() render")
+        raise
 
 
 @app.route("/api/health")
@@ -342,6 +346,7 @@ def main():
     parser = argparse.ArgumentParser(description="SIMMOON — Dashboard de Control Agéntico")
     parser.add_argument("--port", "-p", type=int, default=5000, help="Puerto (default: 5000)")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host (default: 127.0.0.1)")
+    parser.add_argument("--debug", action="store_true", default=False, help="Activar debug mode (hot-reload)")
     args = parser.parse_args()
 
     if not _MONITOR_OK:
@@ -364,7 +369,7 @@ def main():
     print(f"    /api/claude    — Estado Claude Code (JSON)")
     print(f"  Press Ctrl+C to stop\n")
 
-    app.run(host=args.host, port=args.port, debug=True)
+    app.run(host=args.host, port=args.port, debug=args.debug)
 
 
 if __name__ == "__main__":
