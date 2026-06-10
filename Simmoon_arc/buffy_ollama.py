@@ -239,7 +239,7 @@ def main():
   cc "Crea un test" -f app.py -c "Usa pytest"
   cc --models
   cc --interactive
-  cc --model qwen2.5-coder:14b "Hazme un resumen"
+  cc --model qwen25-64k "Hazme un resumen"
         """,
     )
 
@@ -249,8 +249,8 @@ def main():
                         help="Archivos relevantes para la tarea")
     parser.add_argument("-c", "--context", default="",
                         help="Contexto adicional sobre la tarea")
-    parser.add_argument("-m", "--model", default="qwen2.5-coder:14b",
-                        help="Modelo Ollama (default: qwen2.5-coder:14b)")
+    parser.add_argument("-m", "--model", default="qwen25-64k",
+                        help="Modelo Ollama (default: qwen25-64k)")
     parser.add_argument("--output-mode", choices=["smart", "raw"], default="smart",
                         help="Modo de salida (smart: truncado + resumen, raw: completo)")
     parser.add_argument("--timeout", type=int, default=300,
