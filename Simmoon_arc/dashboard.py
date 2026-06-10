@@ -298,6 +298,15 @@ def api_claude():
     return jsonify(collect_claude_status())
 
 
+@app.route("/viewer.html")
+def serve_viewer():
+    """Serve the asset gallery viewer."""
+    viewer_path = SCRIPT_DIR / "viewer.html"
+    if viewer_path.exists():
+        return viewer_path.read_text(encoding="utf-8"), 200, {"Content-Type": "text/html; charset=utf-8"}
+    return jsonify({"error": "viewer.html not found"}), 404
+
+
 @app.route("/api/dashboard")
 def api_dashboard():
     """JSON endpoint with all dashboard data (for JS refresh)."""
