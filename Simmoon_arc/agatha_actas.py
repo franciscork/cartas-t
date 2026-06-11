@@ -1494,15 +1494,10 @@ def main():
         if not cfg.get("chat_id"):
             print("[ERROR] No hay chat_id configurado. Ejecuta primero:")
             print("  python agatha_actas.py --setup")
-            sys.exit(1)
-        # Si no se paso --interval explicito, usar el del config
-        import argparse as _ag
-        _explicit_interval = any(a.startswith('--interval') or a.startswith('-i') for a in sys.argv if not a.startswith('-i='))
-        if _explicit_interval:
-            _interval = args.interval
-        else:
-            _interval = cfg.get("interval", DEFAULT_INTERVAL)
-        daemon_loop(_interval)
+            sys.exit(1)        # Usar intervalo del config si no se paso --interval explicitamente
+        if '--interval' not in sys.argv and not any(a.startswith('--interval=') for a in sys.argv):
+            args.interval = cfg.get("interval", DEFAULT_INTERVAL)
+        daemon_loop(args.interval)
         return
 
     if args.daily_summary:
