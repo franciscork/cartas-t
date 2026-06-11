@@ -297,7 +297,17 @@ def send_telegram(text: str, parse_mode: Optional[str] = "Markdown") -> bool:
     if result.get("ok"):
         return True
     else:
-        print(f"[ERROR] Telegram send failed: {result.get('error', 'unknown')}")
+        # If Markdown parsing fails, retry without parse_mode
+        error_desc = result.get("error", "")
+        if "parse" in error_desc.lower() and parse_mode is not None:
+            payload.pop("parse_mode", None)
+            result2 = _tg_request("sendMessage", payload)
+            if result2.get("ok"):
+                return True
+            else:
+                print(f"[ERROR] Telegram send failed (plain text): {result2.get('error', 'unknown')}")
+                return False
+        print(f"[ERROR] Telegram send failed: {error_desc}")
         return False
 
 
