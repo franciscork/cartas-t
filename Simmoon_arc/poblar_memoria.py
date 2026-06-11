@@ -11,8 +11,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.resolve()))
 from obsidian_memory import ObsidianMemory
+import json
 
-memory = ObsidianMemory(vault_path=str(Path.home() / "simmoon-memoria"), agent_name="Buffy", project="SIMMOON")
+# Intentar usar REST API; fallback a filesystem
+_rest_cfg_path = Path(__file__).parent / "obsidian_rest_config.json"
+_rest_kw = {"vault_path": str(Path.home() / "simmoon-memoria"), "agent_name": "Buffy", "project": "SIMMOON"}
+try:
+    if _rest_cfg_path.exists():
+        with open(_rest_cfg_path) as f:
+            _rc = json.load(f)
+        _rest_kw["rest_port"] = int(_rc.get("port", 27124))
+        _rest_kw["rest_api_key"] = _rc.get("apiKey", _rc.get("api_key", ""))
+        _rest_kw["rest_https"] = _rc.get("use_https", True)
+        _rest_kw["rest_host"] = _rc.get("host", "127.0.0.1")
+except Exception:
+    pass
+
+memory = ObsidianMemory(**_rest_kw)
 
 # ══════════════════════════════════════════════════════════════════════════
 # HECHOS FUNDACIONALES (fact, importancia=5)
