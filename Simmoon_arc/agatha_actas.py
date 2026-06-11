@@ -245,6 +245,24 @@ FACTORY_WORKSTATIONS = [
         "order": 1,
         "check": lambda: _MONITOR_OK and bool(collect_report()),
     },
+    {
+        "key": "gimp",
+        "name": "GIMP",
+        "emoji": "🖌️",
+        "role": "Edición y post-procesado de assets",
+        "type": "design",
+        "order": 4,
+        "check": lambda: os.path.isdir(r"C:\Users\docus\AppData\Local\Programs\GIMP 3"),
+    },
+    {
+        "key": "blender",
+        "name": "Blender",
+        "emoji": "🏗️",
+        "role": "Modelado 3D, renders y animaciones",
+        "type": "design",
+        "order": 5,
+        "check": lambda: os.path.isdir(r"C:\Program Files\Blender Foundation\Blender 5.1"),
+    },
 ]
 
 # ── File helpers ─────────────────────────────────────────────────────────

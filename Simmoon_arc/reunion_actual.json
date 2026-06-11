@@ -1,0 +1,40 @@
+{
+  "id": "reunion_20260611_1135",
+  "fecha": "2026-06-11 11:35",
+  "tipo": "semanal",
+  "participantes": [
+    {
+      "nombre": "Buffy",
+      "rol": "CEO / Orquestador",
+      "emoji": "🦙"
+    },
+    {
+      "nombre": "Creativo de Juegos",
+      "rol": "Dirección Creativa y Diseño",
+      "emoji": "🎮"
+    },
+    {
+      "nombre": "Guionista",
+      "rol": "Narrativa y Diálogos",
+      "emoji": "✍️"
+    },
+    {
+      "nombre": "Agatha Actas",
+      "rol": "Supervisora / Secretaria",
+      "emoji": "📋"
+    }
+  ],
+  "orden_del_dia": [
+    "🔄 Seguimiento de tareas pendientes",
+    "🎮 Brainstorming creativo (Creativo de Juegos)",
+    "✍️ Desarrollo narrativo (Guionista)",
+    "🏭 Estado de la fábrica (Agatha)",
+    "📋 Plan de la semana",
+    "🗳️ Votación de prioridades"
+  ],
+  "ideas": [],
+  "decisiones": [],
+  "tareas_pendientes": [],
+  "estado": "en_curso",
+  "proxima_reunion": "2026-06-12 18:00"
+}

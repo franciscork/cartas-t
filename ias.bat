@@ -47,7 +47,6 @@ echo.
 
 call :test_svc "🧠 Ollama       " 11434 "/api/tags"
 call :test_svc "🎨 ComfyUI      " 8188 "/queue"
-call :test_svc "🖼️  InvokeAI     " 9090 "/api/v1/app/version"
 call :test_svc "🧠 Hermes       " 9119 ""
 call :test_svc "🤖 OpenHuman    " 7788 ""
 call :test_svc "📊 Dashboard    " 5000 ""
@@ -58,8 +57,8 @@ call :test_svc_agatha
 echo.
 echo %CYAN%──────────────────────────────────────────────────────────%NC%
 echo   %BOLD%[a]%NC% Start ALL        %BOLD%[s]%NC% Stop ALL         %BOLD%[r]%NC% Restart ALL
-echo   %BOLD%[1]%NC% Ollama           %BOLD%[2]%NC% ComfyUI          %BOLD%[3]%NC% InvokeAI
-echo   %BOLD%[4]%NC% Hermes           %BOLD%[5]%NC% OpenHuman        %BOLD%[6]%NC% PostgreSQL
+echo   %BOLD%[1]%NC% Ollama           %BOLD%[2]%NC% ComfyUI          %BOLD%[3]%NC% Hermes
+echo   %BOLD%[4]%NC% OpenHuman        %BOLD%[5]%NC% PostgreSQL       %BOLD%[6]%NC% Dashboard
 echo   %BOLD%[7]%NC% Dashboard        %BOLD%[8]%NC% Telegram Bot     %BOLD%[9]%NC% Agatha Actas
 echo   %BOLD%[m]%NC% Models           %BOLD%[b]%NC% Backup DB
 echo   %BOLD%[q]%NC% Quit
@@ -128,32 +127,27 @@ echo %CYAN%║%NC%       %BOLD%☾  SIMMOON  —  Launching ALL IAs%NC%         
 echo %CYAN%╚══════════════════════════════════════════════════════════╝%NC%
 echo.
 
-echo %BOLD%[1/6] 🧠 Ollama...%NC%
+echo %BOLD%[1/5] 🧠 Ollama...%NC%
 wsl -d %DISTRO% -- bash -c "nohup ollama serve > /dev/null 2>&1 & sleep 3; curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null && echo 'OK' || echo 'WAIT'" 2>nul
 echo   %GREEN%✅ Iniciado%NC%
 
 echo.
-echo %BOLD%[2/6] 🗄️  PostgreSQL...%NC%
+echo %BOLD%[2/5] 🗄️  PostgreSQL...%NC%
 wsl -d %DISTRO% -- bash -c "sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; pg_isready -q -h localhost && echo 'OK' || echo 'FAIL'" 2>nul
 echo   %GREEN%✅ Iniciado%NC%
 
 echo.
-echo %BOLD%[3/6] 🎨 ComfyUI...%NC%
+echo %BOLD%[3/5] 🎨 ComfyUI...%NC%
 wsl -d %DISTRO% -- bash -c "cd ~/ComfyUI && nohup ./venv/bin/python main.py --listen --port 8188 > /dev/null 2>&1 &" 2>nul
 echo   %GREEN%✅ Iniciando (puede tardar 30-60s)%NC%
 
 echo.
-echo %BOLD%[4/6] 🖼️  InvokeAI...%NC%
-wsl -d %DISTRO% -- bash -c "source ~/invokeai-env/bin/activate 2>/dev/null && cd ~/invokeai && nohup invokeai-web --root ~/invokeai > /dev/null 2>&1 & disown" 2>nul
-echo   %GREEN%✅ Iniciando...%NC%
-
-echo.
-echo %BOLD%[5/6] 🧠 Hermes Agent...%NC%
+echo %BOLD%[4/5] 🧠 Hermes Agent...%NC%
 wsl -d %DISTRO% -- bash -c "export PATH=$HOME/.local/bin:$PATH; mkdir -p ~/.hermes/logs; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; tmux new-session -d -s hermes-gateway 'source ~/.bashrc 2>/dev/null; hermes gateway run 2>&1 | tee ~/.hermes/logs/gateway.log; bash'; tmux new-session -d -s hermes-tui 'source ~/.bashrc 2>/dev/null; hermes --tui 2>&1 | tee ~/.hermes/logs/tui.log; bash'; tmux new-session -d -s hermes-dashboard 'hermes dashboard --port 9119 --no-open 2>&1 | tee ~/.hermes/logs/dashboard.log; bash'" 2>nul
 echo   %GREEN%✅ 3 interfaces iniciadas%NC%
 
 echo.
-echo %BOLD%[6/6] 📊 Dashboard...%NC%
+echo %BOLD%[5/5] 📊 Dashboard...%NC%
 wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && nohup python3 dashboard.py > /dev/null 2>&1 & sleep 2" 2>nul
 echo   %GREEN%✅ http://localhost:5000%NC%
 
@@ -163,7 +157,6 @@ echo %CYAN%║%NC%              %GREEN%✅  TODAS LAS IAs ACTIVAS%NC%           
 echo %CYAN%╠══════════════════════════════════════════════════════════╣%NC%
 echo %CYAN%║%NC%  🧠 Ollama       → http://localhost:11434                %CYAN%║%NC%
 echo %CYAN%║%NC%  🎨 ComfyUI      → http://localhost:8188                 %CYAN%║%NC%
-echo %CYAN%║%NC%  🖼️  InvokeAI     → http://localhost:9090                 %CYAN%║%NC%
 echo %CYAN%║%NC%  🧠 Hermes Dash  → http://localhost:9119                 %CYAN%║%NC%
 echo %CYAN%║%NC%  🗄️  PostgreSQL   → localhost:5432                        %CYAN%║%NC%
 echo %CYAN%║%NC%  📊 Dashboard    → http://localhost:5000                 %CYAN%║%NC%
@@ -183,19 +176,14 @@ if "%svc%"=="ollama" (
 ) else if "%svc%"=="comfyui" (
     echo 🎨 Iniciando ComfyUI...
     wsl -d %DISTRO% -- bash -c "cd ~/ComfyUI && nohup ./venv/bin/python main.py --listen --port 8188 > /dev/null 2>&1 &"
-    echo %GREEN%✅ ComfyUI iniciando (30-60s)%NC%
-) else if "%svc%"=="invokeai" (
-    echo 🖼️  Iniciando InvokeAI...
-    wsl -d %DISTRO% -- bash -c "source ~/invokeai-env/bin/activate 2>/dev/null && cd ~/invokeai && nohup invokeai-web --root ~/invokeai > /dev/null 2>&1 & disown"
-    echo %GREEN%✅ InvokeAI iniciando%NC%
-) else if "%svc%"=="hermes" (
+    echo %GREEN%✅ ComfyUI iniciando (30-60s)%NC%    ) else if "%svc%"=="hermes" (
     echo 🧠 Iniciando Hermes...
     wsl -d %DISTRO% -- bash -c "export PATH=$HOME/.local/bin:$PATH; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; tmux new-session -d -s hermes-gateway 'hermes gateway run; bash'; tmux new-session -d -s hermes-tui 'hermes --tui; bash'; tmux new-session -d -s hermes-dashboard 'hermes dashboard --port 9119 --no-open; bash'"
     echo %GREEN%✅ Hermes iniciado en :9119%NC%
 ) else if "%svc%"=="openhuman" (
     echo 🤖 Iniciando OpenHuman...
-    wsl -d %DISTRO% -- bash -c "export LD_LIBRARY_PATH=~/openhuman; cd ~/openhuman && nohup ./openhuman-core > /dev/null 2>&1 &"
-    echo %GREEN%✅ OpenHuman iniciado%NC%
+    wsl -d %DISTRO% -- bash -c "export LD_LIBRARY_PATH=~/openhuman; cd ~/openhuman && nohup ./openhuman-core run --jsonrpc-only --host 0.0.0.0 --port 7788 > /dev/null 2>&1 &"
+    echo %GREEN%✅ OpenHuman iniciado (puerto 7788)%NC%
 ) else if "%svc%"=="postgres" (
     echo 🗄️  Iniciando PostgreSQL...
     wsl -d %DISTRO% -- bash -c "sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null"
@@ -215,7 +203,7 @@ if "%svc%"=="ollama" (
     echo %GREEN%✅ Dashboard → http://localhost:5000%NC%
 ) else (
     echo %YELLOW%Servicio desconocido: %svc%%NC%
-    echo   Opciones: ollama, comfyui, invokeai, hermes, openhuman, postgres, jarvis, dashboard
+    echo   Opciones: ollama, comfyui, hermes, openhuman, postgres, jarvis, dashboard
 )
 goto :eof
 
@@ -225,7 +213,7 @@ REM ═════════════════════════�
 :stop
 if "%~2"=="" (
     echo %YELLOW%🛑 Deteniendo TODOS los servicios...%NC%
-    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null; pkill -f 'main.py.*--port 8188' 2>/dev/null; pkill -f 'invokeai-web' 2>/dev/null; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; pkill -f 'hermes gateway' 2>/dev/null; pkill -f 'openhuman-core' 2>/dev/null; pkill -f 'dashboard.py' 2>/dev/null; sudo systemctl stop postgresql 2>/dev/null || sudo service postgresql stop 2>/dev/null; echo DONE"
+    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null; pkill -f 'main.py.*--port 8188' 2>/dev/null; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; pkill -f 'hermes gateway' 2>/dev/null; pkill -f 'openhuman-core' 2>/dev/null; pkill -f 'dashboard.py' 2>/dev/null; sudo systemctl stop postgresql 2>/dev/null || sudo service postgresql stop 2>/dev/null; echo DONE"
     echo %GREEN%✅ Todos los servicios detenidos%NC%
 ) else (
     call :stop_one %2
@@ -236,7 +224,6 @@ goto :eof
 echo Deteniendo %1...
 if "%~1"=="ollama"    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null || true"
 if "%~1"=="comfyui"   wsl -d %DISTRO% -- bash -c "pkill -f 'main.py.*--port 8188' 2>/dev/null || true"
-if "%~1"=="invokeai"  wsl -d %DISTRO% -- bash -c "pkill -f 'invokeai-web' 2>/dev/null || true"
 if "%~1"=="hermes"    wsl -d %DISTRO% -- bash -c "for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes' 2>/dev/null || true"
 if "%~1"=="openhuman" wsl -d %DISTRO% -- bash -c "pkill -f 'openhuman-core' 2>/dev/null || true"
 if "%~1"=="postgres"  wsl -d %DISTRO% -- bash -c "sudo service postgresql stop 2>/dev/null || true"
@@ -272,13 +259,12 @@ if "%~1"=="" (
     if /i "!CHOICE!"=="r" ( call :stop all & timeout /t 2 >nul & call :start all )
     if /i "!CHOICE!"=="1" call :start_one ollama
     if /i "!CHOICE!"=="2" call :start_one comfyui
-    if /i "!CHOICE!"=="3" call :start_one invokeai
-    if /i "!CHOICE!"=="4" call :start_one hermes
-    if /i "!CHOICE!"=="5" call :start_one openhuman
-    if /i "!CHOICE!"=="6" call :start_one postgres
-    if /i "!CHOICE!"=="7" call :start_one dashboard
-    if /i "!CHOICE!"=="8" call :start_one telegram
-    if /i "!CHOICE!"=="9" call :start_one agatha
+    if /i "!CHOICE!"=="3" call :start_one hermes
+    if /i "!CHOICE!"=="4" call :start_one openhuman
+    if /i "!CHOICE!"=="5" call :start_one postgres
+    if /i "!CHOICE!"=="6" call :start_one dashboard
+    if /i "!CHOICE!"=="7" call :start_one telegram
+    if /i "!CHOICE!"=="8" call :start_one agatha
     if /i "!CHOICE!"=="m" call :models
     if /i "!CHOICE!"=="b" call :backup
     goto :eof

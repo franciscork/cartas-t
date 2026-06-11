@@ -92,11 +92,17 @@ class HermesBridge:
         return self._hermes_path
 
     def _wsl_write_file(self, path: str, content: str) -> bool:
-        """Write a text file inside WSL from Windows using the \\wsl$ UNC path."""
+        """Write a text file inside WSL from Windows using the \\wsl$ UNC path.
+
+        Uses binary mode + LF-only newlines to avoid Windows CRLF translation
+        breaking Linux shebangs (e.g., /bin/bash^M).
+        """
         try:
             unc_path = f"\\\\wsl.localhost\\{WSL_DISTRO}\\{path.lstrip('/').replace('/', '\\\\')}"
-            with open(unc_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+            # Binary mode + LF-only newlines evita CRLF translation de Windows
+            content_lf = content.replace('\r\n', '\n').replace('\r', '\n')
+            with open(unc_path, 'wb') as f:
+                f.write(content_lf.encode('utf-8'))
             return True
         except Exception as e:
             if self.verbose:
@@ -141,34 +147,41 @@ class HermesBridge:
 
         try:
             if hp.startswith("wsl:"):
-                # ── WSL MODE: write query to /tmp via \\wsl$ UNC, run hermes from file ──
+                # ── WSL MODE: write wrapper script a /tmp via \\wsl$ UNC, ejecutar ──
                 inner_path = hp.split(":", 1)[1]
                 rand = random.randint(10000, 99999)
-                wsl_tmp = f"/tmp/hermes_query_{rand}.txt"
+                wrapper_sh = f"/tmp/hermes_wrapper_{rand}.sh"
 
                 try:
-                    if self.verbose:
-                        print(f"[BRIDGE] Writing query to {wsl_tmp} ({len(query)} chars)...")
-
-                    ok = self._wsl_write_file(wsl_tmp, query)
-                    if not ok:
-                        return "[ERROR] Could not write temp file to WSL."
-
-                    shell_cmd = (
-                        f'{inner_path} chat --model {self.model} --cli '
-                        f'--max-turns {max_turns} < {wsl_tmp}'
+                    # Escape query para bash single-quotes: ' -> '\\''
+                    # Single quotes evitan TODO shell expansion
+                    escaped_query = query.replace("'", "'\\''")
+                    wrapper_content = (
+                        f"#!/bin/bash\n"
+                        f"exec {inner_path} chat --model {self.model} --cli "
+                        f"--max-turns {max_turns} --query '{escaped_query}'\n"
                     )
+
                     if self.verbose:
-                        print(f"[BRIDGE] Running: {shell_cmd[:300]}...")
+                        print(f"[BRIDGE] Writing wrapper to {wrapper_sh} ({len(query)} chars in query)...")
+
+                    ok = self._wsl_write_file(wrapper_sh, wrapper_content)
+                    if not ok:
+                        return "[ERROR] Could not write wrapper script to WSL."
+
+                    # chmod +x && execute
+                    runner_cmd = f"chmod +x {wrapper_sh} && {wrapper_sh}"
+                    if self.verbose:
+                        print(f"[BRIDGE] Running: {inner_path} chat --model {self.model} --cli --max-turns {max_turns} --query '...'")
 
                     result = subprocess.run(
-                        ["wsl", "-d", WSL_DISTRO, "--", "bash", "-c", shell_cmd],
-                        capture_output=True, text=False,  # text=False -> read raw bytes
+                        ["wsl", "-d", WSL_DISTRO, "--", "bash", "-c", runner_cmd],
+                        capture_output=True, text=False,
                         timeout=timeout,
                     )
                 finally:
-                    # Clean up temp file siempre, incluso si hay excepcion
-                    self._wsl_delete_file(wsl_tmp)
+                    # Clean up wrapper script siempre, incluso si hay excepcion
+                    self._wsl_delete_file(wrapper_sh)
             else:
                 # ── NATIVE MODE: write local temp file, run via stdin redirect ──
                 rand = random.randint(10000, 99999)

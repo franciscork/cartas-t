@@ -59,7 +59,7 @@ SERVICES = {
     "openhuman": {
         "name": "OpenHuman (AI Assistant GUI)",
         "port": 7788,
-        "cmd": "cd ~/openhuman && LD_LIBRARY_PATH=~/openhuman ./openhuman-core",
+        "cmd": "cd ~/openhuman && LD_LIBRARY_PATH=~/openhuman ./openhuman-core run --jsonrpc-only --host 0.0.0.0 --port 7788",
         "env": {"OLLAMA_BASE_URL": "http://localhost:11434"},
         "depends": ["ollama"],
     },

@@ -2,7 +2,7 @@
 """
 SIMMOON Generator Factory — Unified image generation with automatic fallback.
 
-Fallback chain: ComfyUI (local GPU) → InvokeAI (local GPU) → HuggingFace (cloud free) → Leonardo.ai (cloud API)
+Fallback chain: ComfyUI (local GPU) → HuggingFace (cloud free) → Leonardo.ai (cloud API)
 
 Usage:
     from generator_factory import GeneratorFactory
@@ -18,7 +18,6 @@ import sys
 import time
 import urllib.request
 import urllib.error
-import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -60,9 +59,8 @@ class GeneratorFactory:
 
     Priority:
       1. ComfyUI (local, port 8188) — if reachable and configured
-      2. InvokeAI (local, port 9090) — if reachable and configured
-      3. HuggingFace (cloud, free) — if API key is set
-      4. Leonardo.ai (cloud, API key) — if API key is set
+      2. HuggingFace (cloud, free) — if API key is set
+      3. Leonardo.ai (cloud, API key) — if API key is set
 
     Config is loaded from config.json in the script directory.
     """
@@ -113,13 +111,6 @@ class GeneratorFactory:
             "url_template", "https://api-inference.huggingface.co/models/{model}"
         )
 
-        # InvokeAI settings
-        inv_config = backend_config.get("invokeai", {})
-        self.invokeai_url = inv_config.get("url", "http://127.0.0.1:9090").rstrip("/")
-        self.invokeai_enabled = inv_config.get("enabled", False)
-        self.invokeai_model = inv_config.get("model", "dreamshaper_8")
-        self.invokeai_model_keys = inv_config.get("model_keys", {})
-
         # Leonardo settings
         leo_config = backend_config.get("leonardo", {})
         self.leonardo_api_key = leonardo_api_key or os.environ.get(
@@ -146,157 +137,7 @@ class GeneratorFactory:
         self._comfyui_cache_ttl: float = 30  # seconds
 
         self._hf_available: Optional[bool] = None
-        self._invokeai_healthy: Optional[bool] = None
-        self._invokeai_check_time: float = 0
-        self._invokeai_cache_ttl: float = 30  # seconds
         self._leonardo_client: Optional[LeonardoClient] = None
-
-    # ── InvokeAI helpers ────────────────────────────────────────────
-
-    INVOKEAI_HEALTH_ENDPOINT = "/api/v1/app/version"
-    INVOKEAI_ENQUEUE = "/api/v1/queue/default/enqueue_batch"
-    INVOKEAI_STATUS = "/api/v1/queue/default/status"
-    INVOKEAI_OUTPUTS = Path.home() / "invokeai" / "outputs" / "images"
-
-    def _check_invokeai(self) -> bool:
-        """Check if InvokeAI is reachable (with caching)."""
-        now = time.time()
-        if self._invokeai_healthy is not None and (now - self._invokeai_check_time) < self._invokeai_cache_ttl:
-            return self._invokeai_healthy
-
-        if not self.invokeai_enabled:
-            self._invokeai_healthy = False
-            return False
-
-        try:
-            url = f"{self.invokeai_url}{self.INVOKEAI_HEALTH_ENDPOINT}"
-            if _HAS_REQUESTS:
-                resp = _requests.get(url, timeout=3)
-                healthy = resp.status_code == 200
-            else:
-                req = urllib.request.Request(url)
-                with urllib.request.urlopen(req, timeout=3) as resp:
-                    healthy = resp.status == 200
-        except Exception:
-            healthy = False
-
-        self._invokeai_healthy = healthy
-        self._invokeai_check_time = now
-        return healthy
-
-    def _generate_invokeai(
-        self,
-        prompt: str,
-        output_path: str,
-        negative_prompt: str,
-        width: int,
-        height: int,
-        seed: int,
-        steps: int,
-        cfg: float,
-    ) -> str:
-        """Generate via InvokeAI REST API (local GPU).
-
-        Returns output_path on success, raises on failure.
-        """
-        model_key = self.invokeai_model_keys.get(
-            self.invokeai_model, self.invokeai_model
-        )
-        model_name = self.invokeai_model
-        model_base = "sd-1"
-
-        # Build the InvokeAI txt2img graph
-        nodes = {
-            "1": {
-                "type": "main_model_loader", "id": "1", "is_intermediate": False,
-                "model": {"key": model_key, "hash": "", "name": model_name, "base": model_base, "type": "main"},
-            },
-            "2": {
-                "type": "compel", "id": "2", "is_intermediate": False,
-                "prompt": prompt,
-            },
-            "3": {
-                "type": "compel", "id": "3", "is_intermediate": False,
-                "prompt": negative_prompt,
-            },
-            "4": {
-                "type": "noise", "id": "4", "is_intermediate": False,
-                "seed": seed, "width": width, "height": height,
-            },
-            "5": {
-                "type": "denoise_latents", "id": "5", "is_intermediate": False,
-                "steps": steps, "cfg_scale": cfg,
-                "scheduler": "euler", "denoising_start": 0.0, "denoising_end": 1.0,
-            },
-            "6": {
-                "type": "l2i", "id": "6", "is_intermediate": False,
-            },
-        }
-
-        edges = [
-            {"source": {"node_id": "1", "field": "unet"}, "destination": {"node_id": "5", "field": "unet"}},
-            {"source": {"node_id": "1", "field": "clip"}, "destination": {"node_id": "2", "field": "clip"}},
-            {"source": {"node_id": "1", "field": "clip"}, "destination": {"node_id": "3", "field": "clip"}},
-            {"source": {"node_id": "1", "field": "vae"}, "destination": {"node_id": "6", "field": "vae"}},
-            {"source": {"node_id": "2", "field": "conditioning"}, "destination": {"node_id": "5", "field": "positive_conditioning"}},
-            {"source": {"node_id": "3", "field": "conditioning"}, "destination": {"node_id": "5", "field": "negative_conditioning"}},
-            {"source": {"node_id": "4", "field": "noise"}, "destination": {"node_id": "5", "field": "noise"}},
-            {"source": {"node_id": "5", "field": "latents"}, "destination": {"node_id": "6", "field": "latents"}},
-        ]
-
-        batch = {"graph": {"nodes": nodes, "edges": edges}, "runs": 1}
-
-        # Enqueue batch
-        url = f"{self.invokeai_url}{self.INVOKEAI_ENQUEUE}"
-        data = json.dumps({"batch": batch}).encode("utf-8")
-
-        if not _HAS_REQUESTS:
-            raise RuntimeError("requests library required for InvokeAI backend")
-
-        resp = _requests.post(url, data=data, headers={"Content-Type": "application/json"}, timeout=30)
-        if resp.status_code >= 400:
-            raise RuntimeError(f"InvokeAI enqueue failed: HTTP {resp.status_code}: {resp.text[:300]}")
-
-        result = resp.json()
-        batch_id = result.get("batch_id") or result.get("queue_id", "unknown")
-        print(f"  [InvokeAI] Batch enqueued: {batch_id}")
-
-        # Poll for completion
-        status_url = f"{self.invokeai_url}{self.INVOKEAI_STATUS}"
-        start_time = time.time()
-        timeout = 300
-
-        while time.time() - start_time < timeout:
-            try:
-                sr = _requests.get(status_url, timeout=10)
-                status_data = sr.json()
-            except Exception:
-                time.sleep(2)
-                continue
-
-            queue = status_data.get("queue", {})
-            if queue.get("pending", 0) == 0 and queue.get("in_progress", 0) == 0:
-                print(f"  [InvokeAI] Queue idle after {time.time() - start_time:.0f}s")
-                break
-            time.sleep(2)
-        else:
-            raise TimeoutError(f"InvokeAI generation timed out after {timeout}s")
-
-        # Retrieve the most recent output image
-        outputs_dir = self.INVOKEAI_OUTPUTS
-        if not outputs_dir.exists():
-            raise RuntimeError(f"InvokeAI outputs dir not found: {outputs_dir}")
-
-        images = sorted(outputs_dir.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not images:
-            raise RuntimeError("No output images found in InvokeAI outputs")
-
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-        with open(images[0], "rb") as f_src:
-            with open(output_path, "wb") as f_dst:
-                f_dst.write(f_src.read())
-
-        return output_path
 
     # ── HuggingFace helpers ───────────────────────────────────────────
 
@@ -442,8 +283,6 @@ class GeneratorFactory:
         """Return the current active backend name."""
         if self._check_comfyui():
             return "comfyui"
-        if self._check_invokeai():
-            return "invokeai"
         if self._check_huggingface():
             return "huggingface"
         if self._get_leonardo() is not None:
@@ -454,7 +293,6 @@ class GeneratorFactory:
         """Check if at least one backend is available."""
         return (
             self._check_comfyui()
-            or self._check_invokeai()
             or self._check_huggingface()
             or self._get_leonardo() is not None
         )
@@ -529,23 +367,6 @@ class GeneratorFactory:
             except Exception as e:
                 print(f"  [WARN] ComfyUI generation failed: {e}")
 
-        # ── Fallback to InvokeAI ───────────────────────────────────────
-        if self._check_invokeai():
-            try:
-                print(f"  [FALLBACK] Using InvokeAI (ComfyUI unavailable)...")
-                return self._generate_invokeai(
-                    prompt=prompt,
-                    output_path=output_path,
-                    negative_prompt=negative_prompt,
-                    width=w,
-                    height=h,
-                    seed=seed_val,
-                    steps=s,
-                    cfg=c,
-                )
-            except Exception as e:
-                print(f"  [WARN] InvokeAI generation failed: {e}")
-
         # ── Fallback to HuggingFace ─────────────────────────────────────
         if self._check_huggingface():
             try:
@@ -580,7 +401,7 @@ class GeneratorFactory:
 
         raise RuntimeError(
             "No generation backend available. "
-            "Start ComfyUI or InvokeAI, or set HF_API_KEY / LEONARDO_API_KEY."
+            "Start ComfyUI, or set HF_API_KEY / LEONARDO_API_KEY."
         )
 
     # ── ComfyUI implementation ──────────────────────────────────────────
@@ -762,7 +583,7 @@ class GeneratorFactory:
                 time.sleep(1.5)
             elif backend == "huggingface":
                 time.sleep(1.0)
-            # No rate limit for local backends (comfyui, invokeai)
+            # No rate limit for local backend (comfyui)
 
         # Summary
         total = len(prompts)
@@ -782,9 +603,6 @@ if __name__ == "__main__":
     comfy_ok = gen._check_comfyui()
     print(f"  ComfyUI status   : {'✅ Reachable' if comfy_ok else '❌ Unreachable'}")
 
-    inv_ok = gen._check_invokeai()
-    print(f"  InvokeAI         : {'✅ Reachable' if inv_ok else '❌ Not reachable'}")
-
     hf_ok = gen._check_huggingface()
     print(f"  HuggingFace      : {'✅ Configured' if hf_ok else '❌ Not configured'}")
     if not hf_ok:
@@ -801,9 +619,8 @@ if __name__ == "__main__":
     if active == "none":
         print("\n  💡 To enable generation:")
         print("     1. Start ComfyUI: cd ~/ComfyUI && python main.py")
-        print("     2. Or start InvokeAI: cd ~/invokeai && invokeai-web")
-        print("     3. Or set HF key: export HF_API_KEY='hf_...'")
-        print("     4. Or set Leonardo key: export LEONARDO_API_KEY='your_key'")
+        print("     2. Or set HF key: export HF_API_KEY='hf_...'")
+        print("     3. Or set Leonardo key: export LEONARDO_API_KEY='your_key'")
     else:
         print(f"\n  ✅ Ready to generate. Try:")
         print(f"     gen.generate_one('test pixel art', 'test.png')")

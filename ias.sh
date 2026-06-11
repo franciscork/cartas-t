@@ -8,7 +8,6 @@
 # Servicios:
 #   🧠 Ollama       :11434 — LLM server local
 #   🎨 ComfyUI      :8188  — Generación de imágenes
-#   🖼️  InvokeAI     :9090  — Generación alternativa
 #   🧠 Hermes        :9119  — Agente 3 escritorios (gateway + TUI + dash)
 #   🤖 OpenHuman     :7788  — Asistente AI con GUI
 #   💬 Jarvis         :6900  — Asistente AI CLI
@@ -37,8 +36,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SIMMOON_DIR="$SCRIPT_DIR/Simmoon_arc"
 LOG_DIR="$HOME/.simmoon-logs"
 COMFYUI_DIR="$HOME/ComfyUI"
-INVOKEAI_DIR="$HOME/invokeai"
-INVOKEAI_ENV="$HOME/invokeai-env"
 OPENHUMAN_DIR="$HOME/openhuman"
 JARVIS_DIR="$HOME/OpenJarvis"
 HERMES_LOG_DIR="$HOME/.hermes/logs"
@@ -52,7 +49,6 @@ _test_port() {
 }
 _test_ollama()   { _test_port 11434 "/api/tags"; }
 _test_comfyui()  { _test_port 8188 "/queue"; }
-_test_invokeai() { _test_port 9090 "/api/v1/app/version"; }
 _test_hermes()   { _test_port 9119; }
 _test_openhuman(){ _test_port 7788; }
 _test_jarvis()   {
@@ -116,7 +112,6 @@ cmd_status() {
     echo ""
     _service_status "🧠 Ollama      " "11434" _test_ollama
     _service_status "🎨 ComfyUI     " "8188"  _test_comfyui
-    _service_status "🖼️  InvokeAI    " "9090"  _test_invokeai
     _service_status "🧠 Hermes      " "9119"  _test_hermes
     _service_status "🤖 OpenHuman   " "7788"  _test_openhuman
     _service_status "💬 Jarvis       " "CLI"  _test_jarvis
@@ -167,7 +162,7 @@ cmd_stop() {
     if [ "$target" = "all" ]; then
         echo -e "${YELLOW}🛑 Deteniendo TODOS los servicios...${NC}"
         echo ""
-        for svc in hermes jarvis openhuman telegram buffy dashboard comfyui invokeai ollama; do
+        for svc in ollama comfyui hermes openhuman jarvis telegram buffy dashboard; do
             _stop_one "$svc"
         done
         echo ""
@@ -188,10 +183,6 @@ _stop_one() {
         comfyui)
             echo -n "  ⏹ ComfyUI... "
             pkill -f "main.py.*--port 8188" 2>/dev/null && echo "OK" || echo "ya detenido"
-            ;;
-        invokeai)
-            echo -n "  ⏹ InvokeAI... "
-            pkill -f "invokeai-web" 2>/dev/null && echo "OK" || echo "ya detenido"
             ;;
         hermes)
             echo -n "  ⏹ Hermes... "
@@ -234,7 +225,7 @@ _stop_one() {
             ;;
         *)
             echo "  ❓ Servicio desconocido: $svc"
-            echo "     Opciones: ollama, comfyui, invokeai, hermes, openhuman, jarvis, telegram, buffy, agatha, dashboard"
+            echo "     Opciones: ollama, comfyui, hermes, openhuman, jarvis, telegram, buffy, agatha, dashboard"
             ;;
     esac
 }
@@ -256,7 +247,7 @@ cmd_start() {
 
 _start_backends() {
     # 1. Ollama
-    echo -e "${BOLD}[1/8] 🧠 Ollama${NC}"
+    echo -e "${BOLD}[1/7] 🧠 Ollama${NC}"
     if [ "$(_test_ollama)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :11434${NC}"
     else
@@ -274,7 +265,7 @@ _start_backends() {
     fi
 
     # 2. PostgreSQL
-    echo -e "\n${BOLD}[2/8] 🗄️  PostgreSQL${NC}"
+    echo -e "\n${BOLD}[2/7] 🗄️  PostgreSQL${NC}"
     if [ "$(_test_postgres)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :5432${NC}"
     else
@@ -287,7 +278,7 @@ _start_backends() {
     fi
 
     # 3. ComfyUI
-    echo -e "\n${BOLD}[3/8] 🎨 ComfyUI${NC}"
+    echo -e "\n${BOLD}[3/7] 🎨 ComfyUI${NC}"
     if [ "$(_test_comfyui)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :8188${NC}"
     elif [ -f "$COMFYUI_DIR/main.py" ]; then
@@ -308,22 +299,8 @@ _start_backends() {
         echo -e "  ${RED}❌ ComfyUI no encontrado en $COMFYUI_DIR${NC}"
     fi
 
-    # 4. InvokeAI
-    echo -e "\n${BOLD}[4/8] 🖼️  InvokeAI${NC}"
-    if [ "$(_test_invokeai)" = "YES" ]; then
-        echo -e "  ${GREEN}✅ Ya activo en :9090${NC}"
-    elif [ -d "$INVOKEAI_DIR" ]; then
-        source "$INVOKEAI_ENV/bin/activate" 2>/dev/null
-        nohup invokeai-web --root "$INVOKEAI_DIR" &>"$LOG_DIR/invokeai.log" &
-        disown
-        sleep 5
-        [ "$(_test_invokeai)" = "YES" ] && echo -e "  ${GREEN}✅ Iniciado${NC}" || echo -e "  ${YELLOW}⚠️  Puede tardar más${NC}"
-    else
-        echo -e "  ${DIM}⏭️  No instalado${NC}"
-    fi
-
-    # 5. Hermes
-    echo -e "\n${BOLD}[5/8] 🧠 Hermes Agent${NC}"
+    # 4. Hermes
+    echo -e "\n${BOLD}[4/7] 🧠 Hermes Agent${NC}"
     if [ "$(_test_hermes)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :9119${NC}"
     elif command -v hermes &>/dev/null || [ -x "$HOME/.local/bin/hermes" ]; then
@@ -345,23 +322,23 @@ _start_backends() {
         echo -e "  ${DIM}⏭️  Hermes CLI no encontrado${NC}"
     fi
 
-    # 6. OpenHuman (opcional — solo si está instalado)
-    echo -e "\n${BOLD}[6/8] 🤖 OpenHuman${NC}"
+    # 5. OpenHuman (opcional — solo si está instalado)
+    echo -e "\n${BOLD}[5/7] 🤖 OpenHuman${NC}"
     if [ "$(_test_openhuman)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :7788${NC}"
     elif [ -f "$OPENHUMAN_DIR/openhuman-core" ]; then
         export LD_LIBRARY_PATH="$OPENHUMAN_DIR:${LD_LIBRARY_PATH:-}"
         export OLLAMA_BASE_URL="http://localhost:11434"
         export DISPLAY="${DISPLAY:-:0}"
-        nohup "$OPENHUMAN_DIR/openhuman-core" &>"$LOG_DIR/openhuman.log" &
-        sleep 3
-        echo -e "  ${GREEN}✅ Iniciado (GUI: \$DISPLAY)${NC}"
+        nohup "$OPENHUMAN_DIR/openhuman-core" run --jsonrpc-only --host 0.0.0.0 --port 7788 &>"$LOG_DIR/openhuman.log" &
+        sleep 5
+        echo -e "  ${GREEN}✅ Iniciado en :7788${NC}"
     else
         echo -e "  ${DIM}⏭️  No instalado${NC}"
     fi
 
-    # 7. Telegram Bot
-    echo -e "\n${BOLD}[7/8] 🤖 Telegram Bot${NC}"
+    # 6. Telegram Bot
+    echo -e "\n${BOLD}[6/7] 🤖 Telegram Bot${NC}"
     if [ "$(_test_telegram_bot)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo (sesión tmux: telegram-bot)${NC}"
     elif [ -f "$SIMMOON_DIR/telegram_bot.py" ]; then
@@ -379,8 +356,8 @@ _start_backends() {
         echo -e "  ${DIM}⏭️  telegram_bot.py no encontrado${NC}"
     fi
 
-    # 8. Dashboard (siempre)
-    echo -e "\n${BOLD}[8/8] 📊 Dashboard${NC}"
+    # 7. Dashboard (siempre)
+    echo -e "\n${BOLD}[7/7] 📊 Dashboard${NC}"
     if [ "$(_test_dashboard)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :5000${NC}"
     elif [ -f "$SIMMOON_DIR/dashboard.py" ]; then
@@ -414,16 +391,6 @@ _start_one() {
                 echo -e "${GREEN}🎨 ComfyUI iniciando... (ias status para verificar)${NC}"
             fi
             ;;
-        invokeai)
-            if [ "$(_test_invokeai)" = "YES" ]; then
-                echo -e "${GREEN}🖼️ InvokeAI ya activo en :9090${NC}"
-            else
-                source "$INVOKEAI_ENV/bin/activate" 2>/dev/null
-                nohup invokeai-web --root "$INVOKEAI_DIR" &>"$LOG_DIR/invokeai.log" &
-                disown
-                echo -e "${GREEN}🖼️ InvokeAI iniciando...${NC}"
-            fi
-            ;;
         hermes)
             cmd_start_hermes
             ;;
@@ -432,8 +399,8 @@ _start_one() {
                 echo -e "${GREEN}🤖 OpenHuman ya activo en :7788${NC}"
             elif [ -f "$OPENHUMAN_DIR/openhuman-core" ]; then
                 export LD_LIBRARY_PATH="$OPENHUMAN_DIR:${LD_LIBRARY_PATH:-}"
-                nohup "$OPENHUMAN_DIR/openhuman-core" &>"$LOG_DIR/openhuman.log" &
-                echo -e "${GREEN}🤖 OpenHuman iniciado${NC}"
+                nohup "$OPENHUMAN_DIR/openhuman-core" run --jsonrpc-only --host 0.0.0.0 --port 7788 &>"$LOG_DIR/openhuman.log" &
+                echo -e "${GREEN}🤖 OpenHuman iniciado en :7788${NC}"
             else
                 echo -e "${RED}OpenHuman no instalado${NC}"
             fi
@@ -525,7 +492,7 @@ _start_one() {
             ;;
         *)
             echo -e "${YELLOW}Servicio desconocido: $svc${NC}"
-            echo "  Opciones: ollama, comfyui, invokeai, hermes, openhuman, jarvis, telegram, dashboard"
+            echo "  Opciones: ollama, comfyui, hermes, openhuman, jarvis, telegram, dashboard"
             return 1
             ;;
     esac
@@ -648,7 +615,6 @@ cmd_menu() {
         echo ""
         _service_status "🧠 Ollama      " "11434" _test_ollama
         _service_status "🎨 ComfyUI     " "8188"  _test_comfyui
-        _service_status "🖼️  InvokeAI    " "9090"  _test_invokeai
         _service_status "🧠 Hermes      " "9119"  _test_hermes
         _service_status "🤖 OpenHuman   " "7788"  _test_openhuman
         _service_status "💬 Jarvis       " "CLI"  _test_jarvis
@@ -661,9 +627,9 @@ cmd_menu() {
         echo ""
         echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
         echo -e "  ${BOLD}[a]${NC} Start ALL        ${BOLD}[s]${NC} Stop ALL         ${BOLD}[r]${NC} Restart ALL"
-        echo -e "  ${BOLD}[1]${NC} Ollama           ${BOLD}[2]${NC} ComfyUI          ${BOLD}[3]${NC} InvokeAI"
-        echo -e "  ${BOLD}[4]${NC} Hermes           ${BOLD}[5]${NC} OpenHuman        ${BOLD}[6]${NC} Jarvis"
-        echo -e "  ${BOLD}[7]${NC} Dashboard        ${BOLD}[8]${NC} PostgreSQL        ${BOLD}[9]${NC} Telegram Bot"
+        echo -e "  ${BOLD}[1]${NC} Ollama           ${BOLD}[2]${NC} ComfyUI          ${BOLD}[3]${NC} Hermes"
+        echo -e "  ${BOLD}[4]${NC} OpenHuman        ${BOLD}[5]${NC} Jarvis           ${BOLD}[6]${NC} Dashboard"
+        echo -e "  ${BOLD}[7]${NC} PostgreSQL       ${BOLD}[8]${NC} Telegram Bot     ${BOLD}[9]${NC} Buffy Bridge"
         echo -e "  ${BOLD}[0]${NC} Buffy Bridge     ${BOLD}[m]${NC} Models           ${BOLD}[b]${NC} Backup DB"
         echo -e "  ${BOLD}[g]${NC} GPU Info         ${BOLD}[q]${NC} Quit"
         echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
@@ -679,14 +645,13 @@ cmd_menu() {
             r|restart) cmd_restart ;;
             1) _start_one ollama ;;
             2) _start_one comfyui ;;
-            3) _start_one invokeai ;;
-            4) cmd_start_hermes ;;
-            5) _start_one openhuman ;;
-            6) _start_one jarvis ;;
-            7) _start_one dashboard ;;
-            8) sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; [ "$(_test_postgres)" = "YES" ] && echo -e "${GREEN}✅ PostgreSQL iniciado${NC}" || echo -e "${RED}❌ Error${NC}" ;;
-            9) _start_one telegram ;;
-            0) _start_one buffy ;;
+            3) cmd_start_hermes ;;
+            4) _start_one openhuman ;;
+            5) _start_one jarvis ;;
+            6) _start_one dashboard ;;
+            7) sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; [ "$(_test_postgres)" = "YES" ] && echo -e "${GREEN}✅ PostgreSQL iniciado${NC}" || echo -e "${RED}❌ Error${NC}" ;;
+            8) _start_one telegram ;;
+            9) _start_one buffy ;;
             m|models) cmd_models ;;
             b|backup) cmd_backup ;;
             g|gpu) _gpu_info ;;
@@ -709,7 +674,6 @@ _show_summary() {
     echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🧠 Ollama       → http://localhost:11434                ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🎨 ComfyUI      → http://localhost:8188                 ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  🖼️  InvokeAI     → http://localhost:9090                 ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🧠 Hermes Dash  → http://localhost:9119                 ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🤖 OpenHuman    → http://localhost:7788                 ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🤖 Telegram Bot → tmux attach -t telegram-bot           ${CYAN}║${NC}"
@@ -743,7 +707,6 @@ cmd_help() {
     echo -e "${BOLD}Servicios:${NC}"
     echo "  ollama      LLM server local           :11434"
     echo "  comfyui     Generación de imágenes      :8188"
-    echo "  invokeai    Generación alternativa      :9090"
     echo "  hermes      Agente 3 escritorios        :9119"
     echo "  openhuman   Asistente AI GUI            :7788"
     echo "  jarvis      Asistente AI CLI            :6900"
