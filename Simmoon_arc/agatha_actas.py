@@ -425,7 +425,7 @@ def collect_activity() -> dict:
     agents = []
     agent_checks = {
         "Telegram Bot": check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
-        "Hermes Agent": check_http("http://localhost:9119", timeout=2),
+        "Hermes Agent": check_http("http://localhost:9119", timeout=5),
         "OpenHuman": check_http("http://localhost:7788", timeout=2),
         "PostgreSQL": check_http("http://localhost:5432", timeout=2),
     }
@@ -1216,7 +1216,7 @@ def generate_daily_summary() -> dict:
     # Agents status
     agents_status = [
         ("Telegram Bot", check_windows_process("telegram_bot") or check_tmux_session("telegram-bot")),
-        ("Hermes Agent", check_http("http://localhost:9119", timeout=2)),
+        ("Hermes Agent", check_http("http://localhost:9119", timeout=5)),
         ("OpenHuman", check_http("http://localhost:7788", timeout=2)),
     ]
     agents_active = sum(1 for _, running in agents_status if running)

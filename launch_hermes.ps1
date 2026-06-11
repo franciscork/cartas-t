@@ -43,7 +43,7 @@ switch ($Action) {
 "@ -Color Magenta
 
         # Verify Ollama
-        Write-Color "[1/5] Verificando Ollama..." -Color Yellow
+        Write-Color "[1/6] Verificando Ollama..." -Color Yellow
         $ollamaOk = wsl -d $Distro -- bash -c "curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null && echo YES || echo NO" 2>$null
         if ($ollamaOk -eq "YES") {
             Write-Color "  ✅ Ollama activo" -Color Green
@@ -54,27 +54,39 @@ switch ($Action) {
         }
 
         # Stop existing sessions
-        Write-Color "[2/5] Limpiando sesiones previas..." -Color Yellow
-        wsl -d $Distro -- bash -c "tmux kill-session -t hermes-gateway 2>/dev/null; tmux kill-session -t hermes-tui 2>/dev/null; tmux kill-session -t hermes-dashboard 2>/dev/null; pkill -f 'hermes dashboard' 2>/dev/null; echo DONE" 2>$null
+        Write-Color "[2/6] Limpiando sesiones previas..." -Color Yellow
+        wsl -d $Distro -- bash -c "tmux kill-session -t hermes-gateway 2>/dev/null; tmux kill-session -t hermes-tui 2>/dev/null; tmux kill-session -t hermes-dashboard 2>/dev/null; pkill -f 'hermes' 2>/dev/null; echo DONE" 2>$null
+        netsh interface portproxy delete v4tov4 listenport=$DashboardPort listenaddress=127.0.0.1 2>$null
         Write-Color "  ✅ Limpieza completada" -Color Green
 
         # Launch Gateway
-        Write-Color "[3/5] Iniciando Gateway..." -Color Yellow
-        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-gateway 'source ~/.bashrc 2>/dev/null; hermes gateway run 2>&1 | tee `$HOME/.hermes/logs/gateway.log; bash'" 2>$null
+        Write-Color "[3/6] Iniciando Gateway..." -Color Yellow
+        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-gateway 'source ~/.bashrc 2>/dev/null; export PATH=/usr/local/bin:/usr/bin:/bin:`$HOME/.local/bin && hermes gateway run --replace 2>&1 | tee `$HOME/.hermes/logs/gateway.log; bash'" 2>$null
         Start-Sleep -Seconds 3
         Write-Color "  ✅ Gateway activo (sesión: hermes-gateway)" -Color Green
 
         # Launch TUI
-        Write-Color "[4/5] Iniciando TUI (Terminal)..." -Color Yellow
-        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-tui 'source ~/.bashrc 2>/dev/null; hermes --tui 2>&1 | tee `$HOME/.hermes/logs/tui.log; bash'" 2>$null
+        Write-Color "[4/6] Iniciando TUI (Terminal)..." -Color Yellow
+        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-tui 'source ~/.bashrc 2>/dev/null; export PATH=/usr/local/bin:/usr/bin:/bin:`$HOME/.local/bin && hermes --tui 2>&1 | tee `$HOME/.hermes/logs/tui.log; bash'" 2>$null
         Write-Color "  ✅ TUI activo (sesión: hermes-tui)" -Color Green
         Write-Color "     Acceder: wsl -d Ubuntu -e bash -c 'tmux attach -t hermes-tui'" -Color Cyan
 
         # Launch Dashboard
-        Write-Color "[5/5] Iniciando Dashboard (Web)..." -Color Yellow
-        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-dashboard 'hermes dashboard --port $DashboardPort --no-open 2>&1 | tee `$HOME/.hermes/logs/dashboard.log; bash'" 2>$null
+        Write-Color "[5/6] Iniciando Dashboard (Web)..." -Color Yellow
+        wsl -d $Distro -- bash -c "export PATH=`$HOME/.local/bin:`$PATH; mkdir -p `$HOME/.hermes/logs; tmux new-session -d -s hermes-dashboard 'source ~/.bashrc 2>/dev/null; export PATH=/usr/local/bin:/usr/bin:/bin:`$HOME/.local/bin && hermes dashboard --port $DashboardPort --no-open 2>&1 | tee `$HOME/.hermes/logs/dashboard.log; bash'" 2>$null
         Start-Sleep -Seconds 3
         Write-Color "  ✅ Dashboard en http://localhost:$DashboardPort" -Color Green
+
+        # Setup port forwarding from Windows to WSL
+        Write-Color "[6/6] Configurando port forwarding Windows → WSL..." -Color Yellow
+        $wslIp = wsl -d $Distro -- bash -c "ip addr show eth0 2>/dev/null | grep 'inet ' | awk '{print \$2}' | cut -d/ -f1" 2>$null
+        if ($wslIp) {
+            netsh interface portproxy delete v4tov4 listenport=$DashboardPort listenaddress=127.0.0.1 2>$null
+            netsh interface portproxy add v4tov4 listenport=$DashboardPort listenaddress=127.0.0.1 connectport=$DashboardPort connectaddress=$wslIp 2>$null
+            Write-Color "  ✅ Port forwarding: Windows:$DashboardPort → WSL:$DashboardPort ($wslIp)" -Color Green
+        } else {
+            Write-Color "  ⚠️ No se pudo detectar IP de WSL para port forwarding" -Color Yellow
+        }
 
         # Summary
         Write-Color @"
@@ -99,7 +111,8 @@ switch ($Action) {
     }
     "stop" {
         Write-Color "🛑 Hermes — Deteniendo todas las interfaces..." -Color Yellow
-        wsl -d $Distro -- bash -c "tmux kill-session -t hermes-gateway 2>/dev/null; tmux kill-session -t hermes-tui 2>/dev/null; tmux kill-session -t hermes-dashboard 2>/dev/null; pkill -f 'hermes dashboard' 2>/dev/null; pkill -f 'hermes gateway' 2>/dev/null; echo DONE" 2>$null
+        wsl -d $Distro -- bash -c "tmux kill-session -t hermes-gateway 2>/dev/null; tmux kill-session -t hermes-tui 2>/dev/null; tmux kill-session -t hermes-dashboard 2>/dev/null; pkill -f 'hermes (gateway|dashboard|--tui)' 2>/dev/null; echo DONE" 2>$null
+        netsh interface portproxy delete v4tov4 listenport=$DashboardPort listenaddress=127.0.0.1 2>$null
         Write-Color "  ✅ Todas las interfaces detenidas" -Color Green
     }
     "status" {
