@@ -1508,6 +1508,18 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
                            descripcion="Rampa de lanzamiento para exportar recursos. 3x2", alquiler=120),
 
+    "ind_05": TipoEdificio("ind_05", "EcoCentro Progreso", "industry",
+
+                           "misc_06_recycling_center_pixel.png",
+
+                           costo=1200, produce_energia=-20, produce_oxigeno=-4,
+
+                           mantenimiento=18, empleos=10, ancho_tiles=3, alto_tiles=2,
+
+                           produce_felicidad=8,
+
+                           descripcion="Planta de reciclaje total: residuos en compost, metales refinados y fibras. 3x2", alquiler=45),
+
 
 
     # ── Transporte (transport) ──
@@ -1670,7 +1682,7 @@ EDIFICIOS_PRIVADOS = {
 
     # Industria
 
-    "ind_01", "ind_02", "ind_03", "ind_04",
+    "ind_01", "ind_02", "ind_03", "ind_04", "ind_05",
 
     # Transporte
 
@@ -1791,7 +1803,7 @@ CATALOGO_ZONAS: Dict[str, TipoZona] = {
 
             # Industria
 
-            "ind_01", "ind_02", "ind_03", "ind_04",
+            "ind_01", "ind_02", "ind_03", "ind_04", "ind_05",
 
             # Vehiculos
 
