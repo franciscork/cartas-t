@@ -206,7 +206,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "✍️",
         "role": "Narrativa, Diálogos y World-Building",
         "type": "design",
-        "order": 14,
+        "order": 15,
         "check": lambda: (SCRIPT_DIR / "factory" / "agent_guionista.py").exists(),
     },
     {
@@ -215,7 +215,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🏢",
         "role": "Brainstorming semanal y actas en Obsidian",
         "type": "management",
-        "order": 1,
+        "order": 0,
         "check": lambda: (SCRIPT_DIR / "simmoon_reuniones.py").exists(),
     },
     {
@@ -224,7 +224,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎯",
         "role": "Control de calidad: verifica assets, detecta corruptos",
         "type": "monitoring",
-        "order": 14,
+        "order": 16,
         "check": lambda: (SCRIPT_DIR / "simmoon_quality_inspector.py").exists(),
     },
     {
@@ -233,7 +233,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "📱",
         "role": "Interfaz de chat con agentes",
         "type": "communication",
-        "order": 15,
+        "order": 17,
         "check": lambda: check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
     },
     {
@@ -242,7 +242,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "📊",
         "role": "Monitoreo de GPU/RAM/disco/servicios",
         "type": "monitoring",
-        "order": 16,
+        "order": 18,
         "check": lambda: _MONITOR_OK and bool(collect_report()),
     },
 ]
