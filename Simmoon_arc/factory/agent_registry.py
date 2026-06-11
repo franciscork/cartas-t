@@ -381,14 +381,49 @@ class AgentRegistry:
             health_check_fn=lambda: _tmux_session_exists("agatha-actas"),
         ))
 
+        # ── Creative Specialist ──
+        self.register(AgentCapability(
+            agent_type="design",
+            name="creativo-juegos",
+            endpoint="factory/agent_creativo.py",
+            capabilities=["game_design", "mechanics_innovation", "creative_brainstorming",
+                         "mood_concept", "feature_design", "game_balance"],
+            priority=2,
+            description="🎮 Creativo de Juegos — diseño de mecánicas y brainstorming",
+            health_check_fn=lambda: (SCRIPT_DIR / "agent_creativo.py").exists(),
+        ))
+
+        # ── Scriptwriter ──
+        self.register(AgentCapability(
+            agent_type="design",
+            name="guionista",
+            endpoint="factory/agent_guionista.py",
+            capabilities=["narrative_design", "dialog_writing", "story_development",
+                         "world_building", "character_creation", "descriptive_text"],
+            priority=3,
+            description="✍️ Guionista — narrativa, diálogos y world-building",
+            health_check_fn=lambda: (SCRIPT_DIR / "agent_guionista.py").exists(),
+        ))
+
+        # ── Meeting System ──
+        self.register(AgentCapability(
+            agent_type="service",
+            name="reuniones",
+            endpoint="simmoon_reuniones.py",
+            capabilities=["meeting", "brainstorming", "minutes", "tracking"],
+            priority=3,
+            description="🏢 Sistema de Reuniones — brainstorming semanal y actas",
+            health_check_fn=lambda: (SCRIPT_DIR / "simmoon_reuniones.py").exists(),
+        ))
+
         # ── Supervisor (Buffy herself) ──
         self.register(AgentCapability(
             agent_type="supervisor",
             name="buffy",
             endpoint="builtin",
-            capabilities=["orchestrate", "design", "plan", "review"],
+            capabilities=["orchestrate", "design", "plan", "review", "ceo", "delegate"],
             priority=1,
-            description="Buffy (DeepSeek) — orquestador principal",
+            description="Buffy (DeepSeek) — CEO / orquestador principal",
             health_check_fn=lambda: True,  # Buffy siempre está aquí
         ))
 
