@@ -89,7 +89,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎨",
         "role": "Recomienda qué assets generar vía IA",
         "type": "design",
-        "order": 1,
+        "order": 0,
         "check": lambda: (SCRIPT_DIR / "simmoon_agent.py").exists(),
     },
     {
@@ -98,7 +98,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🤝",
         "role": "AutoGen: Generator + Critic + Curator",
         "type": "design",
-        "order": 2,
+        "order": 1,
         "check": lambda: (SCRIPT_DIR / "simmoon_autogen.py").exists(),
     },
     {
@@ -107,7 +107,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🖼️",
         "role": "Genera assets con ComfyUI / HuggingFace",
         "type": "production",
-        "order": 3,
+        "order": 0,
         "check": lambda: (SCRIPT_DIR / "simmoon_generator.py").exists(),
     },
     {
@@ -116,7 +116,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🧪",
         "role": "Genera assets vía Diffusers en WSL2",
         "type": "production",
-        "order": 4,
+        "order": 1,
         "check": lambda: (SCRIPT_DIR / "simmoon_diffusers.py").exists(),
     },
     {
@@ -125,7 +125,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎮",
         "role": "Convierte assets a pixel-art retro",
         "type": "production",
-        "order": 5,
+        "order": 2,
         "check": lambda: (SCRIPT_DIR / "simmoon_pixelator.py").exists(),
     },
     {
@@ -134,7 +134,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🏭",
         "role": "LangGraph: Prompt → Generar → Pixelar → DB",
         "type": "production",
-        "order": 6,
+        "order": 3,
         "check": lambda: (SCRIPT_DIR / "simmoon_pipeline.py").exists(),
     },
     {
@@ -143,7 +143,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🏗️",
         "role": "Fábrica de backends con fallback chain",
         "type": "production",
-        "order": 7,
+        "order": 4,
         "check": lambda: (SCRIPT_DIR / "generator_factory.py").exists(),
     },
     {
@@ -152,7 +152,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🗄️",
         "role": "Base de datos compartida / memoria persistente",
         "type": "storage",
-        "order": 8,
+        "order": 0,
         "check": lambda: bool(get_db_conn()),
     },
     {
@@ -161,7 +161,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🧠",
         "role": "Motor de LLM local (modelos AI)",
         "type": "engine",
-        "order": 9,
+        "order": 0,
         "check": lambda: check_http("http://localhost:11434", timeout=2),
     },
     {
@@ -170,7 +170,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎨",
         "role": "Generación de imágenes con workflow visual",
         "type": "engine",
-        "order": 10,
+        "order": 1,
         "check": lambda: check_http("http://localhost:8188", timeout=2),
     },
     {
@@ -179,7 +179,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🧠",
         "role": "Agente Nous Research con memoria",
         "type": "agent",
-        "order": 11,
+        "order": 0,
         "check": lambda: check_http("http://localhost:9119", timeout=2),
     },
     {
@@ -188,7 +188,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🤖",
         "role": "Agente open-source",
         "type": "agent",
-        "order": 12,
+        "order": 1,
         "check": lambda: check_http("http://localhost:7788", timeout=2),
     },
     {
@@ -197,7 +197,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎮",
         "role": "Dirección Creativa y Diseño de Mecánicas",
         "type": "design",
-        "order": 13,
+        "order": 2,
         "check": lambda: (SCRIPT_DIR / "factory" / "agent_creativo.py").exists(),
     },
     {
@@ -206,7 +206,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "✍️",
         "role": "Narrativa, Diálogos y World-Building",
         "type": "design",
-        "order": 15,
+        "order": 3,
         "check": lambda: (SCRIPT_DIR / "factory" / "agent_guionista.py").exists(),
     },
     {
@@ -215,7 +215,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🏢",
         "role": "Brainstorming semanal y actas en Obsidian",
         "type": "management",
-        "order": 0,
+        "order": 1,
         "check": lambda: (SCRIPT_DIR / "simmoon_reuniones.py").exists(),
     },
     {
@@ -224,7 +224,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "🎯",
         "role": "Control de calidad: verifica assets, detecta corruptos",
         "type": "monitoring",
-        "order": 16,
+        "order": 0,
         "check": lambda: (SCRIPT_DIR / "simmoon_quality_inspector.py").exists(),
     },
     {
@@ -233,7 +233,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "📱",
         "role": "Interfaz de chat con agentes",
         "type": "communication",
-        "order": 17,
+        "order": 0,
         "check": lambda: check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
     },
     {
@@ -242,7 +242,7 @@ FACTORY_WORKSTATIONS = [
         "emoji": "📊",
         "role": "Monitoreo de GPU/RAM/disco/servicios",
         "type": "monitoring",
-        "order": 18,
+        "order": 1,
         "check": lambda: _MONITOR_OK and bool(collect_report()),
     },
 ]
