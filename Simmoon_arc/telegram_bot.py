@@ -56,11 +56,11 @@ DEFAULT_CONFIG = {
     "telegram_token": "",
     "bot_name": "SIMMOON Bot",
     "allowed_users": [],
-    "ollama_model": "qwen2.5:3b",
+    "ollama_model": "qwen25-64k",
     "ollama_url": "http://127.0.0.1:11434",
     "openhuman_url": "http://localhost:7788",
-    "hermes_model": "qwen2.5:3b",
-    "buffy_model": "qwen2.5:3b",
+    "hermes_model": "qwen25-64k",
+    "buffy_model": "qwen25-64k",
 }
 
 # ── Buffy System Prompt ────────────────────────────────────────────────────

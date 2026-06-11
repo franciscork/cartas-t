@@ -56,9 +56,19 @@ except ImportError:
     _LOG_OK = False
 
 # ── Config ────────────────────────────────────────────────────────────────
-AGATHA_TOKEN = os.environ.get("AGATHA_BOT_TOKEN", "8746645663:AAHMcgOwdYuG21GNHY7az6fr0Ir36FMRjqk")
-TELEGRAM_API = f"https://api.telegram.org/bot{AGATHA_TOKEN}"
 CONFIG_PATH = SCRIPT_DIR / "agatha_config.json"
+
+# Token loading: env var > config file > empty
+_agatha_cfg_token = ""
+try:
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            _agatha_cfg = json.load(f)
+            _agatha_cfg_token = _agatha_cfg.get("bot_token", "")
+except Exception:
+    pass
+AGATHA_TOKEN = os.environ.get("AGATHA_BOT_TOKEN", _agatha_cfg_token)
+TELEGRAM_API = f"https://api.telegram.org/bot{AGATHA_TOKEN}"
 DEFAULT_INTERVAL = 14400  # 4 hours in seconds
 
 # ── FactoryGames — Puestos de Trabajo ─────────────────────────────────────

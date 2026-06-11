@@ -49,7 +49,7 @@ BUFFY_STATE_PATH = SCRIPT_DIR / "buffy_telegram_state.json"
 DEFAULT_CONFIG = {
     "telegram_token": "",
     "bot_name": "Jeremi_Hermes_bot",
-    "ollama_model": "qwen2.5:3b",
+    "ollama_model": "qwen25-64k",
     "ollama_url": "http://127.0.0.1:11434",
 }
 
@@ -314,7 +314,7 @@ class BuffyTelegram:
         self.token = self.config.get("telegram_token", "")
         self.api = TelegramAPI(self.token) if self.token else None
         self.state = ConversationState()
-        self.model = self.config.get("buffy_model", self.config.get("ollama_model", "qwen2.5:3b"))
+        self.model = self.config.get("buffy_model", self.config.get("ollama_model", "qwen25-64k"))
         self.ollama_url = self.config.get("ollama_url", "http://127.0.0.1:11434")
 
     def validate(self) -> bool:
@@ -631,10 +631,10 @@ def setup():
         print("  Obtén uno de @BotFather en Telegram: https://t.me/BotFather")
         config["telegram_token"] = input("  Token de Telegram Bot: ").strip()
 
-    print(f"\n  Modelo Ollama actual: {config.get('ollama_model', 'qwen2.5:3b')}")
+    print(f"\n  Modelo Ollama actual: {config.get('ollama_model', 'qwen25-64k')}")
     change = input("  ¿Cambiar modelo? (s/N): ").strip().lower()
     if change == "s":
-        config["ollama_model"] = input("  Nuevo modelo (ej: qwen2.5:7b): ").strip()
+        config["ollama_model"] = input("  Nuevo modelo (ej: qwen25-64k): ").strip()
 
     # Guardar
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
