@@ -37,9 +37,14 @@ echo "  DISPLAY    : $DISPLAY"
 echo "══════════════════════════════════════════════"
 
 if [ "${1:-}" = "--no-gui" ]; then
-    echo "  Mode: headless (API-only)"
-    exec "$OPENHUMAN_BIN" --no-gui
+    echo "  Mode: headless (API-only via JSON-RPC)"
+    exec "$OPENHUMAN_BIN" run --jsonrpc-only --host 0.0.0.0 --port "$OPENHUMAN_PORT"
 else
-    echo "  Mode: GUI + API"
-    exec "$OPENHUMAN_BIN"
+    echo "  Mode: GUI + API (fallback: headless si no hay display)"
+    if [ -z "${DISPLAY:-}" ] || [ "$DISPLAY" = ":0" ] && ! xdpyinfo &>/dev/null 2>&1; then
+        echo "  ⚠️  No display available, starting in headless mode"
+        exec "$OPENHUMAN_BIN" run --jsonrpc-only --host 0.0.0.0 --port "$OPENHUMAN_PORT"
+    else
+        exec "$OPENHUMAN_BIN"
+    fi
 fi

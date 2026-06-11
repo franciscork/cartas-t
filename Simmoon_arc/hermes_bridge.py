@@ -15,7 +15,9 @@ Usage:
 
 import json
 import os
+import random
 import subprocess
+import tempfile
 from pathlib import Path
 from shutil import which
 
@@ -89,11 +91,35 @@ class HermesBridge:
             self._hermes_path = _find_hermes()
         return self._hermes_path
 
+    def _wsl_write_file(self, path: str, content: str) -> bool:
+        """Write a text file inside WSL from Windows using the \\wsl$ UNC path."""
+        try:
+            unc_path = f"\\\\wsl.localhost\\{WSL_DISTRO}\\{path.lstrip('/').replace('/', '\\\\')}"
+            with open(unc_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            return True
+        except Exception as e:
+            if self.verbose:
+                print(f"[BRIDGE] WSL write failed: {e}")
+            return False
+
+    def _wsl_delete_file(self, path: str):
+        """Delete a file inside WSL via the \\wsl$ UNC path."""
+        try:
+            unc_path = f"\\\\wsl.localhost\\{WSL_DISTRO}\\{path.lstrip('/').replace('/', '\\\\')}"
+            if os.path.exists(unc_path):
+                os.unlink(unc_path)
+        except Exception:
+            pass
+
     def chat(self, prompt, system=None, max_turns=10, timeout=180):
         """Send a prompt to Hermes and get the response.
 
         Hermes handles tool calling internally — the response already
         includes any tool execution results.
+
+        Query is passed via a temp file (\\wsl$ UNC mount) to avoid
+        shell escaping bugs with long or complex prompts.
 
         Args:
             prompt: User prompt text
@@ -112,40 +138,78 @@ class HermesBridge:
         query = prompt
         if system:
             query = f"{system}\n\n---\n\n{prompt}"
-        # Escape for safe shell embedding
-        query_safe = query.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$').replace('`', '\\`')
 
         try:
             if hp.startswith("wsl:"):
-                # Run hermes inside WSL2 from Windows
+                # ── WSL MODE: write query to /tmp via \\wsl$ UNC, run hermes from file ──
                 inner_path = hp.split(":", 1)[1]
-                cmd = [
-                    "wsl", "-d", WSL_DISTRO, "--", "bash", "-c",
-                    f'{inner_path} chat --model {self.model} --cli --max-turns {max_turns} --query "{query_safe}"'
-                ]
+                rand = random.randint(10000, 99999)
+                wsl_tmp = f"/tmp/hermes_query_{rand}.txt"
+
+                try:
+                    if self.verbose:
+                        print(f"[BRIDGE] Writing query to {wsl_tmp} ({len(query)} chars)...")
+
+                    ok = self._wsl_write_file(wsl_tmp, query)
+                    if not ok:
+                        return "[ERROR] Could not write temp file to WSL."
+
+                    shell_cmd = (
+                        f'{inner_path} chat --model {self.model} --cli '
+                        f'--max-turns {max_turns} < {wsl_tmp}'
+                    )
+                    if self.verbose:
+                        print(f"[BRIDGE] Running: {shell_cmd[:300]}...")
+
+                    result = subprocess.run(
+                        ["wsl", "-d", WSL_DISTRO, "--", "bash", "-c", shell_cmd],
+                        capture_output=True, text=False,  # text=False -> read raw bytes
+                        timeout=timeout,
+                    )
+                finally:
+                    # Clean up temp file siempre, incluso si hay excepcion
+                    self._wsl_delete_file(wsl_tmp)
             else:
-                # Native binary (full path)
-                cmd = [
-                    hp, "chat",
-                    "--model", self.model,
-                    "--cli",
-                    "--max-turns", str(max_turns),
-                    "--query", query,
-                ]
+                # ── NATIVE MODE: write local temp file, run via stdin redirect ──
+                rand = random.randint(10000, 99999)
+                tmp_native = os.path.join(
+                    tempfile.gettempdir(), f"hermes_query_{rand}.txt"
+                )
+                try:
+                    with open(tmp_native, 'w', encoding='utf-8') as f:
+                        f.write(query)
 
-            if self.verbose:
-                print(f"[BRIDGE] Running: {' '.join(cmd)[:200]}")
+                    cmd = [
+                        hp, "chat",
+                        "--model", self.model,
+                        "--cli",
+                        "--max-turns", str(max_turns),
+                    ]
+                    if self.verbose:
+                        print(f"[BRIDGE] Running (native): {hp} chat...")
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True,
-                timeout=timeout,
-            )
+                    with open(tmp_native, 'r', encoding='utf-8') as f:
+                        result = subprocess.run(
+                            cmd, stdin=f,
+                            capture_output=True, text=False,  # text=False -> read raw bytes
+                            timeout=timeout,
+                        )
+                finally:
+                    try:
+                        os.unlink(tmp_native)
+                    except Exception:
+                        pass
+
+            # Manual decode with errors='replace' to handle non-UTF-8 output
+            stdout = result.stdout.decode('utf-8', errors='replace') if result.stdout else ""
+            stderr = result.stderr.decode('utf-8', errors='replace') if result.stderr else ""
+
             if result.returncode == 0:
-                return result.stdout.strip()
+                return stdout.strip()
             else:
                 return (
                     f"[ERROR] Hermes exit {result.returncode}: "
-                    f"{result.stderr[:500]}"
+                    f"{stderr[:500]}"
                 )
         except subprocess.TimeoutExpired:
             return f"[TIMEOUT] Hermes chat exceeded {timeout}s."

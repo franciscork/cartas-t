@@ -180,7 +180,7 @@ FACTORY_WORKSTATIONS = [
         "role": "Agente Nous Research con memoria",
         "type": "agent",
         "order": 0,
-        "check": lambda: check_http("http://localhost:9119", timeout=2),
+        "check": lambda: check_wsl_http("http://localhost:9119", timeout=5),
     },
     {
         "key": "openhuman",
@@ -189,7 +189,7 @@ FACTORY_WORKSTATIONS = [
         "role": "Agente open-source",
         "type": "agent",
         "order": 1,
-        "check": lambda: check_http("http://localhost:7788", timeout=2),
+        "check": lambda: check_wsl_http("http://localhost:7788", timeout=5),
     },
     {
         "key": "creativo_juegos",
@@ -402,10 +402,26 @@ def check_windows_process(script_name: str) -> bool:
 
 
 def check_http(url: str, timeout: int = 3) -> bool:
-    """Quick HTTP health check."""
+    """Quick HTTP health check (from Windows)."""
     try:
         r = urllib.request.urlopen(url, timeout=timeout)
         return r.status < 500
+    except Exception:
+        return False
+
+
+def check_wsl_http(url: str, timeout: int = 5) -> bool:
+    """Quick HTTP health check from inside WSL (bypasses Windows→WSL networking issues).
+    
+    Uses _wsl_cmd to run curl inside WSL, which can reach services running on WSL
+    localhost that are not accessible from Windows via port forwarding.
+    """
+    try:
+        r = _wsl_cmd(
+            f"curl -sf --max-time {timeout} '{url}' > /dev/null 2>&1 && echo YES || echo NO",
+            timeout=timeout + 3,
+        )
+        return "YES" in r.stdout
     except Exception:
         return False
 
@@ -425,8 +441,8 @@ def collect_activity() -> dict:
     agents = []
     agent_checks = {
         "Telegram Bot": check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
-        "Hermes Agent": check_http("http://localhost:9119", timeout=5),
-        "OpenHuman": check_http("http://localhost:7788", timeout=2),
+        "Hermes Agent": check_wsl_http("http://localhost:9119", timeout=5),
+        "OpenHuman": check_wsl_http("http://localhost:7788", timeout=5),
         "PostgreSQL": check_http("http://localhost:5432", timeout=2),
     }
     for name, running in agent_checks.items():
@@ -1216,8 +1232,8 @@ def generate_daily_summary() -> dict:
     # Agents status
     agents_status = [
         ("Telegram Bot", check_windows_process("telegram_bot") or check_tmux_session("telegram-bot")),
-        ("Hermes Agent", check_http("http://localhost:9119", timeout=5)),
-        ("OpenHuman", check_http("http://localhost:7788", timeout=2)),
+        ("Hermes Agent", check_wsl_http("http://localhost:9119", timeout=5)),
+        ("OpenHuman", check_wsl_http("http://localhost:7788", timeout=5)),
     ]
     agents_active = sum(1 for _, running in agents_status if running)
     
