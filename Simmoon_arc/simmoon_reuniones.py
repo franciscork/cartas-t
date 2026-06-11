@@ -11,6 +11,7 @@ Uso:
     python simmoon_reuniones.py --ideas           # Tormenta de ideas (Agatha difunde)
     python simmoon_reuniones.py --decision        # Registrar decision (Agatha difunde)
     python simmoon_reuniones.py --difundir        # Difundir acta completa a Telegram
+    python simmoon_reuniones.py --verificar       # Fran verifica ideas una por una
     python simmoon_reuniones.py --actas --ultima  # Ver ultima acta
     python simmoon_reuniones.py --status          # Estado de seguimiento
 """
@@ -380,6 +381,136 @@ class SistemaReuniones:
         print(f"  ✅ Acta '{reunion_id}' difundida por Telegram ({len(partes)} parte(s))")
         return True
 
+    # ── Verificación de ideas por Fran ──────────────────────────────────
+
+    def verificar_ideas(self, reunion_id: str) -> int:
+        """Revisar ideas del acta una por una para que Fran las verifique.
+        
+        Lee todas las ideas del acta, las presenta una a una,
+        Fran puede aprobar (con detalles) o rechazar.
+        Solo las aprobadas quedan en el acta final.
+
+        Args:
+            reunion_id: ID de la reunión
+
+        Returns:
+            Número de ideas aprobadas
+        """
+        if not self.memory:
+            print("  ❌ Obsidian no disponible")
+            return 0
+
+        acta = self.memory.get(reunion_id, memory_type="task")
+        if not acta:
+            print(f"  ❌ Acta '{reunion_id}' no encontrada")
+            return 0
+
+        contenido = acta.get("content", "")
+        if not contenido:
+            print("  ❌ Acta vacía")
+            return 0
+
+        # Parsear líneas para encontrar ideas (💡)
+        lineas = contenido.split("\n")
+        ideas_encontradas = []
+
+        for i, linea in enumerate(lineas):
+            if "💡" in linea and not linea.startswith("#"):
+                ideas_encontradas.append({
+                    "texto": linea,
+                    "idx": i,
+                })
+
+        if not ideas_encontradas:
+            print("\n  📭 No hay ideas pendientes de verificar en el acta.\n")
+            return 0
+
+        print(f"\n  🔍 REVISIÓN DE IDEAS — {reunion_id}")
+        print(f"  {'='*50}")
+        print(f"  Fran, revisa cada idea una por una:\n")
+
+        aprobadas = []
+        rechazadas = []
+
+        for idx, idea in enumerate(ideas_encontradas, 1):
+            print(f"\n  {'─'*50}")
+            print(f"  📌 *Idea #{idx}*")
+            print(f"  {'─'*50}")
+            print(f"\n  {idea['texto'].strip()}")
+            print(f"\n  ─────────────────────────────")
+            print(f"  ¿Aprobar o rechazar? [a/r] ", end="")
+            decision = input().strip().lower()
+
+            if decision in ("a", "s", "si", "yes", ""):
+                print(f"  📝 Detalles (opcional, Enter para saltar):")
+                detalles = input("  > ").strip()
+                aprobadas.append({
+                    "texto": idea["texto"],
+                    "detalles": detalles,
+                    "verificada": True,
+                })
+                print(f"  ✅ Idea #{idx} VERIFICADA por Fran")
+            else:
+                rechazadas.append(idea["texto"])
+                print(f"  ❌ Idea #{idx} RECHAZADA")
+
+        # Regenerar acta: solo secciones fijas + ideas aprobadas
+        print(f"\n  {'='*50}")
+        print(f"  Publicando acta final en Obsidian...")
+
+        # Construir nuevo contenido solo con ideas aprobadas
+        nuevas_lineas = []
+        for linea in lineas:
+            # Verificar si esta línea es una idea rechazada
+            es_rechazada = any(linea.strip() == r.strip() for r in rechazadas)
+            if es_rechazada:
+                continue  # Saltar ideas rechazadas
+            nuevas_lineas.append(linea)
+
+        # Reemplazar ideas aprobadas con versión VERIFICADA
+        # (en orden inverso para no desplazar índices con las inserciones)
+        for ap in reversed(aprobadas):
+            idx_original = None
+            for i, linea in enumerate(nuevas_lineas):
+                if linea.strip() == ap["texto"].strip():
+                    idx_original = i
+                    break
+            if idx_original is not None:
+                texto_original = ap["texto"]
+                if ap["detalles"]:
+                    nueva_linea = f"{texto_original}  ✅ VERIFICADA por Fran"
+                    nuevas_lineas[idx_original] = nueva_linea
+                    nuevas_lineas.insert(idx_original + 1, f"     📋 Detalles: {ap['detalles']}")
+                else:
+                    nuevas_lineas[idx_original] = f"{texto_original}  ✅ VERIFICADA por Fran"
+
+        # Si no quedan ideas, confirmar antes de guardar
+        if len(aprobadas) == 0 and len(rechazadas) > 0:
+            print(f"\n  ⚠️  Todas las ideas fueron rechazadas.")
+            print(f"  ¿Guardar acta sin ideas? [s/N] ", end="")
+            if input().strip().lower() not in ("s", "si", "yes"):
+                print(f"  🛑 Acta no modificada.\n")
+                return 0
+
+        nuevo_contenido = "\n".join(nuevas_lineas)
+
+        # Guardar en Obsidian
+        self.memory.save_task(
+            key_name=reunion_id,
+            content=nuevo_contenido,
+            tags=["reunion", "brainstorming", "verificada"],
+            importance=5,
+        )
+
+        total = len(aprobadas)
+        print(f"\n  📊 Resumen de verificación:")
+        print(f"     ✅ Aprobadas: {total}")
+        print(f"     ❌ Rechazadas: {len(rechazadas)}")
+        print(f"  \n  ✅ Acta final publicada en Obsidian")
+        print(f"     Solo las ideas VERIFICADAS por Fran fueron incluidas.\n")
+
+        return total
+
     # ── Progreso ────────────────────────────────────────────────────────
 
     def obtener_ultimas_reuniones(self, limit: int = 5) -> List[Dict]:
@@ -633,6 +764,23 @@ def cmd_difundir():
     print()
 
 
+def cmd_verificar():
+    """Verificar ideas del acta: Fran revisa una por una."""
+    if not REUNIONES_PATH.exists():
+        print("\n  ❌ No hay reunión activa. Inicia una con:\n")
+        print("     python simmoon_reuniones.py --nueva\n")
+        return
+
+    with open(REUNIONES_PATH, "r", encoding="utf-8") as f:
+        reunion = json.load(f)
+
+    sis = SistemaReuniones()
+    total = sis.verificar_ideas(reunion["id"])
+    if total > 0:
+        print(f"  📋 Agatha: {total} ideas verificadas registradas en el acta")
+    print()
+
+
 def cmd_status():
     """Mostrar estado de seguimiento."""
     sis = SistemaReuniones()
@@ -679,6 +827,8 @@ def main():
         cmd_actas()
     elif cmd in ("--difundir", "-f"):
         cmd_difundir()
+    elif cmd in ("--verificar", "-v"):
+        cmd_verificar()
     elif cmd in ("--status", "-s"):
         cmd_status()
     elif cmd in ("--config", "-c"):
