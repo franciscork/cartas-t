@@ -7,9 +7,11 @@ Organiza reuniones de brainstorming/estrategia del equipo FactoryGames,
 guarda actas en Obsidian y gestiona el seguimiento de tareas.
 
 Uso:
-    python simmoon_reuniones.py --nueva           # Iniciar nueva reunión
-    python simmoon_reuniones.py --ideas           # Tormenta de ideas
-    python simmoon_reuniones.py --actas --ultima  # Ver última acta
+    python simmoon_reuniones.py --nueva           # Iniciar nueva reunion (Agatha difunde)
+    python simmoon_reuniones.py --ideas           # Tormenta de ideas (Agatha difunde)
+    python simmoon_reuniones.py --decision        # Registrar decision (Agatha difunde)
+    python simmoon_reuniones.py --difundir        # Difundir acta completa a Telegram
+    python simmoon_reuniones.py --actas --ultima  # Ver ultima acta
     python simmoon_reuniones.py --status          # Estado de seguimiento
 """
 
@@ -66,6 +68,59 @@ def _get_obsidian() -> Optional[Any]:
     return _OBSIDIAN_MEMORY if _OBSIDIAN_MEMORY else None
 
 
+# ── Agatha Telegram integration ──────────────────────────────────────────
+_AGATHA_TELEGRAM = None
+
+def _get_agatha_telegram() -> Optional[dict]:
+    """Cargar credenciales de Agatha para enviar actas por Telegram."""
+    global _AGATHA_TELEGRAM
+    if _AGATHA_TELEGRAM is None:
+        cfg_path = SCRIPT_DIR / "agatha_config.json"
+        if cfg_path.exists():
+            try:
+                with open(cfg_path) as f:
+                    cfg = json.load(f)
+                token = cfg.get("bot_token", "")
+                chat_id = cfg.get("chat_id")
+                if token and chat_id:
+                    _AGATHA_TELEGRAM = {"token": token, "chat_id": chat_id}
+                    return _AGATHA_TELEGRAM
+            except Exception:
+                pass
+        _AGATHA_TELEGRAM = False
+    return _AGATHA_TELEGRAM if _AGATHA_TELEGRAM else None
+
+
+def _send_telegram(text: str) -> bool:
+    """Enviar mensaje a Telegram usando el bot de Agatha.
+    
+    Args:
+        text: Texto del mensaje (sin parse_mode para evitar errores)
+    
+    Returns:
+        True si se envió correctamente
+    """
+    agatha = _get_agatha_telegram()
+    if not agatha:
+        return False
+    
+    payload = json.dumps({
+        "chat_id": agatha["chat_id"],
+        "text": text,
+    }).encode("utf-8")
+    
+    try:
+        url = f"https://api.telegram.org/bot{agatha['token']}/sendMessage"
+        req = urllib.request.Request(url, data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            return result.get("ok", False)
+    except Exception:
+        return False
+
+
 # Configuración de reuniones
 REUNIONES_CONFIG = {
     "tipo": "semanal",
@@ -103,6 +158,7 @@ class SistemaReuniones:
 
     def nueva_reunion(self, tipo: str = "semanal") -> Dict[str, Any]:
         """Iniciar una nueva reunión y guardar acta inicial en Obsidian.
+        Agatha notifica por Telegram automáticamente.
 
         Args:
             tipo: 'semanal', 'extraordinaria', 'brainstorming'
@@ -134,6 +190,28 @@ class SistemaReuniones:
                 importance=5,
             )
 
+        # 📋 Agatha toma acta y difunde por Telegram
+        tg_msg = (
+            f"📋 Agatha Actas - Nueva Reunion 🏢\n"
+            f"\n"
+            f"📅 {reunion['fecha']}\n"
+            f"🆔 {reunion['id']}\n"
+            f"\n"
+            f"👥 Participantes:\n"
+        )
+        for p in reunion["participantes"]:
+            tg_msg += f"  {p['emoji']} {p['nombre']} - {p['rol']}\n"
+        tg_msg += f"\n📋 Orden del Dia:\n"
+        for i, item in enumerate(reunion["orden_del_dia"], 1):
+            tg_msg += f"  {i}. {item}\n"
+        tg_msg += f"\n✅ Acta guardada en Obsidian\n"
+        tg_msg += f"📅 Proxima: {reunion['proxima_reunion']}"
+
+        if _send_telegram(tg_msg):
+            print("  📋 Agatha: acta difundida por Telegram ✅")
+        else:
+            print("  ⚠️  Agatha: no pudo enviar por Telegram")
+
         return reunion
 
     def _calcular_proxima(self) -> str:
@@ -156,6 +234,7 @@ class SistemaReuniones:
     def agregar_idea(self, reunion_id: str, autor: str, idea: str,
                      categoria: str = "general") -> bool:
         """Agregar una idea a la reunión actual.
+        Agatha notifica por Telegram automáticamente.
 
         Args:
             reunion_id: ID de la reunión
@@ -178,6 +257,8 @@ class SistemaReuniones:
             "votos": 0,
         }
 
+        emoji_cat = {"mecanica": "🎮", "narrativa": "✍️", "estrategia": "🏭", "produccion": "🛠️", "general": "💡"}
+
         # Leer acta actual, agregar idea, guardar
         acta = self.memory.get(reunion_id, memory_type="task")
         if acta:
@@ -193,6 +274,20 @@ class SistemaReuniones:
                 tags=["reunion", "brainstorming"],
                 importance=5,
             )
+
+            # 📋 Agatha difunde la nueva idea por Telegram
+            tg_msg = (
+                f"💡 Nueva Idea - {reunion_id}\n"
+                f"\n"
+                f"{emoji_cat.get(categoria, '💡')} [{categoria}]\n"
+                f"{idea}\n"
+                f"\n"
+                f"👤 {autor}\n"
+                f"\n"
+                f"📋 Registrada en Obsidian por Agatha"
+            )
+            _send_telegram(tg_msg)
+
             return True
         return False
 
@@ -201,6 +296,7 @@ class SistemaReuniones:
     def registrar_decision(self, reunion_id: str, decision: str,
                            responsable: str = "") -> bool:
         """Registrar una decisión tomada en la reunión.
+        Agatha notifica por Telegram automáticamente.
 
         Args:
             reunion_id: ID de la reunión
@@ -218,11 +314,71 @@ class SistemaReuniones:
             contenido = acta.get("content", "")
             resp = f" → _{responsable}_" if responsable else ""
             contenido += f"\n- ✅ *Decisión*: {decision}{resp}"
-            return self.memory.save_task(
+            saved = self.memory.save_task(
                 key_name=reunion_id, content=contenido,
                 tags=["reunion", "decision"], importance=5,
             )
+
+            # 📋 Agatha difunde la decisión por Telegram
+            tg_msg = (
+                f"✅ Decision - {reunion_id}\n"
+                f"\n"
+                f"{decision}\n"
+            )
+            if responsable:
+                tg_msg += f"\n👤 Responsable: {responsable}"
+            tg_msg += f"\n\n📋 Registrada en Obsidian por Agatha"
+            _send_telegram(tg_msg)
+
+            return saved
         return False
+
+    # ── Difusión de actas ───────────────────────────────────────────────
+
+    def difundir_actas(self, reunion_id: str) -> bool:
+        """Difundir el acta completa de una reunión a Telegram y Obsidian.
+        
+        Lee el acta de Obsidian y la envía por Telegram.
+        Si el acta es muy larga, la divide en partes.
+
+        Args:
+            reunion_id: ID de la reunión a difundir
+
+        Returns:
+            True si se difundió correctamente
+        """
+        if not self.memory:
+            print("  ❌ Obsidian no disponible para difundir actas")
+            return False
+
+        acta = self.memory.get(reunion_id, memory_type="task")
+        if not acta:
+            print(f"  ❌ Acta '{reunion_id}' no encontrada en Obsidian")
+            return False
+
+        contenido = acta.get("content", "")
+        if not contenido:
+            print(f"  ❌ Acta '{reunion_id}' vacía")
+            return False
+
+        # Telegram tiene límite de 4096 caracteres
+        MAX_TG = 4000
+        partes = [contenido[i:i+MAX_TG] for i in range(0, len(contenido), MAX_TG)]
+
+        header = f"📋 ACTA COMPLETA - {reunion_id}\n📤 Difundida por Agatha\n\n"
+
+        for idx, parte in enumerate(partes):
+            if len(partes) > 1:
+                msg = f"{header}(Parte {idx+1}/{len(partes)})\n\n{parte}"
+            else:
+                msg = f"{header}{parte}"
+
+            if not _send_telegram(msg):
+                print(f"  ⚠️  Error difundiendo parte {idx+1}")
+                return False
+
+        print(f"  ✅ Acta '{reunion_id}' difundida por Telegram ({len(partes)} parte(s))")
+        return True
 
     # ── Progreso ────────────────────────────────────────────────────────
 
@@ -367,9 +523,11 @@ def cmd_nueva():
     for i, item in enumerate(reunion["orden_del_dia"], 1):
         print(f"     {i}. {item}")
     print(f"\n  ✅ Acta guardada en Obsidian")
+    print(f"  📋 Agatha difundió el acta por Telegram ✅")
     print(f"\n  💡 Próximos pasos:")
     print(f"     python simmoon_reuniones.py --ideas       # Agregar ideas")
     print(f"     python simmoon_reuniones.py --decision    # Registrar decisión")
+    print(f"     python simmoon_reuniones.py --difundir    # Difundir acta completa")
     print(f"     python simmoon_reuniones.py --actas       # Ver actas")
     print()
 
@@ -455,6 +613,26 @@ def cmd_actas():
     print()
 
 
+def cmd_difundir():
+    """Difundir acta de la reunión actual por Telegram."""
+    if not REUNIONES_PATH.exists():
+        print("\n  ❌ No hay reunión activa.\n")
+        return
+
+    with open(REUNIONES_PATH, "r", encoding="utf-8") as f:
+        reunion = json.load(f)
+
+    sis = SistemaReuniones()
+    print(f"\n  📤 DIFUNDIR ACTA — {reunion['id']}")
+    print(f"  {'='*50}")
+    print(f"  Difundiendo acta completa por Telegram...")
+    if sis.difundir_actas(reunion["id"]):
+        print(f"  ✅ Acta difundida correctamente")
+    else:
+        print(f"  ❌ Error al difundir acta")
+    print()
+
+
 def cmd_status():
     """Mostrar estado de seguimiento."""
     sis = SistemaReuniones()
@@ -499,6 +677,8 @@ def main():
         cmd_decision()
     elif cmd in ("--actas", "-a"):
         cmd_actas()
+    elif cmd in ("--difundir", "-f"):
+        cmd_difundir()
     elif cmd in ("--status", "-s"):
         cmd_status()
     elif cmd in ("--config", "-c"):
