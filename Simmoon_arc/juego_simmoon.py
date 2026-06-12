@@ -121,7 +121,7 @@ class Config:
 
     FPS: int = 60
 
-    
+
 
     # Mapa
 
@@ -129,7 +129,7 @@ class Config:
 
     TAMANIO_TILE: int = 64  # px base del tile (se escala con zoom)
 
-    
+
 
     # Colores (paleta retro Sci-Fi)
 
@@ -263,7 +263,7 @@ def cargar_votos(dir_assets: str) -> Dict[str, int]:
 
     votos = {}
 
-    
+
 
     # Intentar 1: API de votos (servidor local)
 
@@ -297,7 +297,7 @@ def cargar_votos(dir_assets: str) -> Dict[str, int]:
 
         pass  # API no disponible, intentar archivo local
 
-    
+
 
     # Intentar 2: Archivo votes.json local
 
@@ -333,7 +333,7 @@ def cargar_votos(dir_assets: str) -> Dict[str, int]:
 
             pass
 
-    
+
 
     log.warning("No se encontraron votos. No hay edificios disponibles.")
 
@@ -361,7 +361,7 @@ def filtrar_catalogo_por_votos(votos: Dict[str, int]) -> Dict[str, TipoEdificio]
 
         return {}
 
-    
+
 
     filtrado = {}
 
@@ -371,7 +371,7 @@ def filtrar_catalogo_por_votos(votos: Dict[str, int]) -> Dict[str, TipoEdificio]
 
             filtrado[asset_id] = tipo
 
-    
+
 
     print(f"  🗳️  Catálogo filtrado: {len(filtrado)}/{len(CATALOGO_EDIFICIOS)} edificios (con votos)")
 
@@ -497,7 +497,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
                            descripcion="Almacenamiento de recursos y mercancías. 2x1", alquiler=25),
 
-    
+
 
     # ── Energía Solar (solar_energy) ── Tamaños: 1x1, 2x1, 2x2 ──
 
@@ -1573,9 +1573,9 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "rsk_01": TipoEdificio("rsk_01", "Brigada de Presurización", "risk_management",
 
-                                                       "rsk_01_pressurization_brigade_pixel.png",
+                           "rsk_01_pressurization_brigade_pixel.png",
 
-                            produce_presion=15,
+                           produce_presion=15,
 
                            costo=500, produce_energia=-4,
 
@@ -1585,9 +1585,9 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "rsk_02": TipoEdificio("rsk_02", "Control de Radiación Solar", "risk_management",
 
-                                                       "rsk_02_solar_radiation_control_pixel.png",
+                           "rsk_02_solar_radiation_control_pixel.png",
 
-                            produce_presion=10,
+                           produce_presion=10,
 
                            costo=600, produce_energia=-5,
 
@@ -1597,9 +1597,9 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "rsk_03": TipoEdificio("rsk_03", "Centro de Evacuación Subterránea", "risk_management",
 
-                                                       "rsk_03_evacuation_center_pixel.png",
+                           "rsk_03_evacuation_center_pixel.png",
 
-                            produce_presion=20,
+                           produce_presion=20,
 
                            costo=800, produce_energia=-6,
 
@@ -1742,114 +1742,114 @@ CATALOGO_ZONAS: Dict[str, TipoZona] = {
 
     "alojamiento": TipoZona("alojamiento", "Alojamiento", (70, 130, 180), "🏠",
 
-        categorias_compatibles=["hou_01", "hou_02", "hou_04",
+                            categorias_compatibles=["hou_01", "hou_02", "hou_04",
 
-                                "misc_01", "site_08"],
+                                                    "misc_01", "site_08"],
 
-        prima_min=60, prima_max=250, alquiler_min=8, alquiler_max=50),
+                            prima_min=60, prima_max=250, alquiler_min=8, alquiler_max=50),
 
     "comercial": TipoZona("comercial", "Comercial", (255, 180, 50), "🏢",
 
-        categorias_compatibles=[
+                          categorias_compatibles=[
 
-            # Negocios y servicios
+        # Negocios y servicios
 
-            "biz_02", "biz_03", "biz_04", "biz_06", "biz_07", "biz_10", "biz_11",
-            "hou_03",
+        "biz_02", "biz_03", "biz_04", "biz_06", "biz_07", "biz_10", "biz_11",
+        "hou_03",
 
-            # Sitios comerciales
+        # Sitios comerciales
 
-            "site_03", "site_09", "site_10",
+        "site_03", "site_09", "site_10",
 
-            # Edificios varios
+        # Edificios varios
 
-            "misc_04", "misc_05", "misc_07", "misc_08", "misc_10", "misc_11", "misc_12",
+        "misc_04", "misc_05", "misc_07", "misc_08", "misc_10", "misc_11", "misc_12",
 
-            # Civiles y riesgos
+        # Civiles y riesgos
 
-            "civ_01", "civ_02", "rsk_01", "rsk_02", "rsk_03",
+        "civ_01", "civ_02", "rsk_01", "rsk_02", "rsk_03",
 
-            # Universidades
+        # Universidades
 
-            "univ_01", "univ_02", "univ_03", "univ_04", "univ_05",
+        "univ_01", "univ_02", "univ_03", "univ_04", "univ_05",
 
-            "univ_06", "univ_07", "univ_08", "univ_09", "univ_10",
+        "univ_06", "univ_07", "univ_08", "univ_09", "univ_10",
 
-            # Gobierno
+        # Gobierno
 
-            "gov_01", "gov_02",
+        "gov_01", "gov_02",
 
-            # Oficios
+        # Oficios
 
-            "oficio_01", "oficio_02", "oficio_04", "oficio_05", "oficio_06",
+        "oficio_01", "oficio_02", "oficio_04", "oficio_05", "oficio_06",
 
-            "oficio_08", "oficio_10", "oficio_11",
+        "oficio_08", "oficio_10", "oficio_11",
 
-        ],
+    ],
 
         prima_min=60, prima_max=300, alquiler_min=12, alquiler_max=100),
 
     "industrial": TipoZona("industrial", "Industrial", (180, 120, 50), "🏭",
 
-        categorias_compatibles=[
+                           categorias_compatibles=[
 
-            # Negocios industriales
+        # Negocios industriales
 
-            "biz_01", "biz_05", "biz_08", "biz_12",
+        "biz_01", "biz_05", "biz_08", "biz_12",
 
-            # Sitios industriales
+        # Sitios industriales
 
-            "site_01", "site_02", "site_04", "site_05", "site_12",
+        "site_01", "site_02", "site_04", "site_05", "site_12",
 
-            # Industria
+        # Industria
 
-            "ind_01", "ind_02", "ind_03", "ind_04", "ind_05",
+        "ind_01", "ind_02", "ind_03", "ind_04", "ind_05",
 
-            # Vehiculos
+        # Vehiculos
 
-            "veh_01", "veh_02", "veh_03", "veh_04", "veh_05",
+        "veh_01", "veh_02", "veh_03", "veh_04", "veh_05",
 
-            "veh_06", "veh_07", "veh_08", "veh_09", "veh_10",
+        "veh_06", "veh_07", "veh_08", "veh_09", "veh_10",
 
-            # Transporte
+        # Transporte
 
-            "tra_01", "tra_02",
+        "tra_01", "tra_02",
 
-            # Oficios industriales
+        # Oficios industriales
 
-            "oficio_07", "oficio_09", "oficio_12",
+        "oficio_07", "oficio_09", "oficio_12",
 
-        ],
+    ],
 
         prima_min=80, prima_max=400, alquiler_min=15, alquiler_max=120),
 
     "ecologico": TipoZona("ecologico", "Ecologico", (34, 139, 34), "🌱",
 
-        categorias_compatibles=[
+                          categorias_compatibles=[
 
-            # Invernaderos
+        # Invernaderos
 
-            "gh_01", "gh_02", "gh_03", "gh_04", "gh_05", "gh_06", "gh_07",
+        "gh_01", "gh_02", "gh_03", "gh_04", "gh_05", "gh_06", "gh_07",
 
-            # Sitios ecologicos
+        # Sitios ecologicos
 
-            "site_06", "site_07",
+        "site_06", "site_07",
 
-            # Recursos vitales
+        # Recursos vitales
 
-            "life_01", "life_02", "life_03",
+        "life_01", "life_02", "life_03",
 
-            # Decoracion
+        # Decoracion
 
-            "dec_01", "dec_02", "dec_03", "dec_04", "dec_05",
+        "dec_01", "dec_02", "dec_03", "dec_04", "dec_05",
 
-            "dec_06", "dec_07", "dec_08",
+        "dec_06", "dec_07", "dec_08",
 
-            # Oficios ecologicos
+        # Oficios ecologicos
 
-            "oficio_03",
+        "oficio_03",
 
-        ],
+    ],
 
         prima_min=30, prima_max=150, alquiler_min=8, alquiler_max=50),
 
@@ -1876,7 +1876,7 @@ class Recursos:
 
     """Gestiona los recursos de la colonia."""
 
-    
+
 
     def __init__(self):
 
@@ -1904,7 +1904,7 @@ class Recursos:
         self.felicidad = Config.FELICIDAD_INICIAL
         self.bono_produccion = 1.0  # 1.0 = neutral, 1.25 = contentos, 0.75 = enojados
 
-    
+
 
     def actualizar_balance(self, edificios: List['EdificioColocado']) -> None:
 
@@ -1938,7 +1938,7 @@ class Recursos:
 
         self.agua = int(self.agua_total * self.bono_produccion)
         self.presion = int(self.presion_total * self.bono_produccion)
-    
+
 
     def gastar(self, creditos: int = 0) -> bool:
 
@@ -1952,7 +1952,7 @@ class Recursos:
 
         return False
 
-    
+
 
     def ingresar(self, creditos: int) -> None:
 
@@ -2008,7 +2008,7 @@ class Mapa:
 
     """Mapa isometrico con grid para la colonia. Soporta edificios multi-tile y zonificacion."""
 
-    
+
 
     def __init__(self, tamanio: int = None):
 
@@ -2042,7 +2042,7 @@ class Mapa:
 
         self.generar_terreno()
 
-    
+
 
     def generar_terreno(self, seed: int = 0) -> None:
 
@@ -2072,7 +2072,7 @@ class Mapa:
 
         return True
 
-    
+
 
     def colocar_edificio(self, x: int, y: int, tipo: TipoEdificio, sprite: pygame.Surface) -> Optional[EdificioColocado]:
 
@@ -2096,7 +2096,7 @@ class Mapa:
 
         return None
 
-    
+
 
     def vender_edificio(self, x: int, y: int) -> Optional[EdificioColocado]:
 
@@ -2124,7 +2124,7 @@ class Mapa:
 
         return None
 
-    
+
 
     def esta_ocupado(self, x: int, y: int) -> bool:
 
@@ -2136,7 +2136,7 @@ class Mapa:
 
         return True  # Fuera del mapa se considera ocupado
 
-    
+
 
     def tile_valido(self, x: int, y: int, ancho: int = 1, alto: int = 1) -> bool:
 
@@ -2202,7 +2202,7 @@ class Camara:
 
     """Cámara isométrica con zoom y desplazamiento."""
 
-    
+
 
     def __init__(self, ancho_ventana: int, alto_ventana: int):
 
@@ -2216,7 +2216,7 @@ class Camara:
 
         self.alto_ventana = alto_ventana
 
-    
+
 
     def iso_a_pantalla(self, x: int, y: int) -> Tuple[float, float]:
 
@@ -2230,7 +2230,7 @@ class Camara:
 
         return px, py
 
-    
+
 
     def pantalla_a_iso(self, px: float, py: float) -> Tuple[int, int]:
 
@@ -2252,7 +2252,7 @@ class Camara:
 
         return int(grid_x), int(grid_y)
 
-    
+
 
     def mover(self, dx: float, dy: float) -> None:
 
@@ -2264,7 +2264,7 @@ class Camara:
 
         self.offset_y += dy * velocidad
 
-    
+
 
     def acercar(self, cantidad: float) -> None:
 
@@ -2279,7 +2279,7 @@ class JuegoSimmoon:
 
     """Motor principal del juego SIMMOON."""
 
-    
+
 
     def __init__(self, votos: Optional[Dict[str, int]] = None):
 
@@ -2297,13 +2297,13 @@ class JuegoSimmoon:
 
         self.ejecutando = True
 
-        
+
 
         # Directorio de assets (relativo a este archivo)
 
         self.dir_assets = str(Path(__file__).parent)
 
-        
+
 
         # Votos y catálogo filtrado
 
@@ -2311,7 +2311,7 @@ class JuegoSimmoon:
 
         self.catalogo = filtrar_catalogo_por_votos(self.votos) if votos else filtrar_catalogo_por_votos({})
 
-        
+
 
         # Componentes del juego
 
@@ -2323,7 +2323,7 @@ class JuegoSimmoon:
 
         self.renderizador = Renderizador(self.dir_assets)
 
-        
+
 
         # Estado del juego
 
@@ -2451,7 +2451,7 @@ class JuegoSimmoon:
             except Exception:
                 self.fuente_cartel = pygame.font.Font(None, 22)
 
-    
+
 
     def _precargar_sprites(self) -> None:
 
@@ -2461,7 +2461,7 @@ class JuegoSimmoon:
 
             self.renderizador.cargar_sprite(tipo.ruta_sprite, (64, 64))
 
-    
+
 
     def _obtener_tile_bajo_raton(self) -> Tuple[int, int]:
 
@@ -2471,7 +2471,7 @@ class JuegoSimmoon:
 
         return self.camara.pantalla_a_iso(mx, my)
 
-    
+
 
     def _mostrar_mensaje(self, texto: str) -> None:
 
@@ -2986,7 +2986,7 @@ class JuegoSimmoon:
 
                     evento = f"☄️ ¡IMPACTO de aerolito en {objetivo.tipo.nombre}! Daño: -{dano}💰. Requiere reparación."
 
-        
+
 
         # ─── Evento: Tormenta solar (daña paneles solares) ───
 
@@ -3006,7 +3006,7 @@ class JuegoSimmoon:
 
                 evento = f"🌞 ¡Tormenta solar! {objetivo.tipo.nombre} dañado. -{dano}💰. Requiere reparación."
 
-        
+
 
         # ─── Evento: Auge turístico (bonus de visas) ───
 
@@ -3018,7 +3018,7 @@ class JuegoSimmoon:
 
             evento = f"🎉 ¡Auge turístico! Visitantes VIP gastan +{bonus}💰 en la colonia."
 
-        
+
 
         # ─── Evento: Sabotaje industrial ───
 
@@ -3038,7 +3038,7 @@ class JuegoSimmoon:
 
                 evento = f"💥 ¡Sabotaje industrial en {objetivo.tipo.nombre}! Policía investiga. -{dano}💰."
 
-        
+
 
         # ─── Evento: Inspectores de la Tierra ───
 
@@ -3060,7 +3060,7 @@ class JuegoSimmoon:
 
                 evento = f"⚠️ ¡Inspectores de la Tierra imponen multa! -{multa}💰 por déficit de recursos."
 
-        
+
 
         # Evaluar deficits vitales
 
@@ -3436,7 +3436,7 @@ class JuegoSimmoon:
 
         self.pantalla.blit(txt_ok, (btn_ok_rect.x + 30, btn_ok_rect.y + 7))
 
-    
+
 
     def renderizar_panel_finanzas(self) -> None:
 
@@ -3674,7 +3674,7 @@ class JuegoSimmoon:
 
         self.mouse_click = False  # Resetear flag de click
 
-        
+
 
         for evento in pygame.event.get():
 
@@ -3713,53 +3713,53 @@ class JuegoSimmoon:
 
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
 
-                    pant_w, pant_h = self.pantalla.get_width(), self.pantalla.get_height()
+                pant_w, pant_h = self.pantalla.get_width(), self.pantalla.get_height()
 
-                    # Botón CERRAR de finanzas
+                # Botón CERRAR de finanzas
 
-                    if self.mostrando_finanzas:
+                if self.mostrando_finanzas:
 
-                        ancho_f, alto_f = 700, 480
+                    ancho_f, alto_f = 700, 480
 
-                        cx_f, cy_f = (pant_w - ancho_f) // 2, (pant_h - alto_f) // 2
+                    cx_f, cy_f = (pant_w - ancho_f) // 2, (pant_h - alto_f) // 2
 
-                        btn_fin = pygame.Rect(cx_f + ancho_f // 2 - 60, cy_f + alto_f - 45, 120, 35)
+                    btn_fin = pygame.Rect(cx_f + ancho_f // 2 - 60, cy_f + alto_f - 45, 120, 35)
 
-                        if btn_fin.collidepoint(evento.pos):
+                    if btn_fin.collidepoint(evento.pos):
 
-                            self.mostrando_finanzas = False
+                        self.mostrando_finanzas = False
 
             # continue removed (not in loop)
 
-                    ancho, alto = 460, 540
+                ancho, alto = 460, 540
 
-                    cx, cy = (pant_w - ancho) // 2, (pant_h - alto) // 2
+                cx, cy = (pant_w - ancho) // 2, (pant_h - alto) // 2
 
-                    # Botón CERRAR del resumen
+                # Botón CERRAR del resumen
 
-                    if self.mostrando_resumen:
+                if self.mostrando_resumen:
 
-                        btn_ok = pygame.Rect(cx + ancho // 2 - 70, cy + alto - 55, 140, 38)
+                    btn_ok = pygame.Rect(cx + ancho // 2 - 70, cy + alto - 55, 140, 38)
 
-                        if btn_ok.collidepoint(evento.pos):
+                    if btn_ok.collidepoint(evento.pos):
 
-                            self.mostrando_resumen = False
+                        self.mostrando_resumen = False
 
-                    # Botones del permiso (APROBAR / CANCELAR)
+                # Botones del permiso (APROBAR / CANCELAR)
 
-                    if self.mostrando_permiso:
+                if self.mostrando_permiso:
 
-                        btn_aprobar = pygame.Rect(cx + 30, cy + alto - 55, 160, 38)
+                    btn_aprobar = pygame.Rect(cx + 30, cy + alto - 55, 160, 38)
 
-                        btn_cancelar = pygame.Rect(cx + ancho - 190, cy + alto - 55, 160, 38)
+                    btn_cancelar = pygame.Rect(cx + ancho - 190, cy + alto - 55, 160, 38)
 
-                        if btn_aprobar.collidepoint(evento.pos):
+                    if btn_aprobar.collidepoint(evento.pos):
 
-                            self._aprobar_permiso()
+                        self._aprobar_permiso()
 
-                        elif btn_cancelar.collidepoint(evento.pos):
+                    elif btn_cancelar.collidepoint(evento.pos):
 
-                            self.mostrando_permiso = False
+                        self.mostrando_permiso = False
 
         if evento.type == pygame.QUIT:
 
@@ -3775,7 +3775,7 @@ class JuegoSimmoon:
 
             self.ejecutando = False
 
-        
+
 
         elif evento.type == pygame.KEYDOWN:
 
@@ -3825,6 +3825,26 @@ class JuegoSimmoon:
 
                     self.mostrando_ayuda = not self.mostrando_ayuda
 
+            elif evento.key in (pygame.K_w, pygame.K_UP):
+                self.camara.mover(0, -1)
+                if self.tutorial_activo and self.tutorial_paso == 1:
+                    self.tutorial_paso = 2
+
+            elif evento.key in (pygame.K_s, pygame.K_DOWN):
+                self.camara.mover(0, 1)
+                if self.tutorial_activo and self.tutorial_paso == 1:
+                    self.tutorial_paso = 2
+
+            elif evento.key in (pygame.K_a, pygame.K_LEFT):
+                self.camara.mover(-1, 0)
+                if self.tutorial_activo and self.tutorial_paso == 1:
+                    self.tutorial_paso = 2
+
+            elif evento.key in (pygame.K_d, pygame.K_RIGHT):
+                self.camara.mover(1, 0)
+                if self.tutorial_activo and self.tutorial_paso == 1:
+                    self.tutorial_paso = 2
+
             elif evento.key == pygame.K_SPACE:
 
                 # Atajo: espacio = siguiente turno
@@ -3837,7 +3857,8 @@ class JuegoSimmoon:
                 else:
                     if not self.mostrando_resumen:
                         self.procesar_siguiente_turno()
-
+                    else:
+                        self.mostrando_resumen = False
 
                     SonidoProcedural.sonido_turno()
 
@@ -3861,7 +3882,7 @@ class JuegoSimmoon:
 
                 self.zona_seleccionada = None
 
-        
+
 
         elif evento.type == pygame.MOUSEBUTTONDOWN:
 
@@ -3869,150 +3890,109 @@ class JuegoSimmoon:
 
             grid_x, grid_y = self._obtener_tile_bajo_raton()
 
-                
-
-                if evento.button == 1:
-
-                    panel_x = self.pantalla.get_width() - 320
-
-                    if mouse_pos[0] >= panel_x:
-
-                        pass  # was continue
 
 
+            if evento.button == 1:
 
+                panel_x = self.pantalla.get_width() - 320
 
-                    # Modo zonificar: pintar zona
+                if mouse_pos[0] >= panel_x:
 
-                    if self.modo_zonificar and self.zona_seleccionada:
-
-                        if self.mapa.pintar_zona(grid_x, grid_y, self.zona_seleccionada):
-
-                            self._mostrar_mensaje(f"Zona {CATALOGO_ZONAS[self.zona_seleccionada].nombre} [{grid_x},{grid_y}]")
-
-                        else:
-
-                            self._mostrar_mensaje("❌ Terreno ocupado, no se puede zonificar")
-
-                            SonidoProcedural.sonido_alerta()
-
-                        pass  # was continue
+                    pass  # was continue
 
 
 
 
-                    if self.modo_vender:
+                # Modo zonificar: pintar zona
 
-                        # Vender o reparar edificio
+                if self.modo_zonificar and self.zona_seleccionada:
 
-                        ox, oy = grid_x, grid_y
+                    if self.mapa.pintar_zona(grid_x, grid_y, self.zona_seleccionada):
 
-                        edif_danado = self.mapa.grid[oy][ox] if 0 <= ox < self.mapa.tamanio and 0 <= oy < self.mapa.tamanio else None
+                        self._mostrar_mensaje(f"Zona {CATALOGO_ZONAS[self.zona_seleccionada].nombre} [{grid_x},{grid_y}]")
 
-                        if edif_danado and not edif_danado.activo:
+                    else:
 
-                            coste_rep = edif_danado.tipo.costo // 3
+                        self._mostrar_mensaje("❌ Terreno ocupado, no se puede zonificar")
 
-                            if self.recursos.gastar(coste_rep):
+                        SonidoProcedural.sonido_alerta()
 
-                                edif_danado.activo = True
+                    pass  # was continue
 
-                                self.recursos.actualizar_balance(self.mapa.edificios)
 
-                                self._mostrar_mensaje(f"🔧 Reparado: {edif_danado.tipo.nombre} (-{coste_rep} 💰)")
 
-                                SonidoProcedural.sonido_construir()
 
-                            else:
+                if self.modo_vender:
 
-                                self._mostrar_mensaje(f"❌ Necesitas {coste_rep}💰 para reparar")
+                    # Vender o reparar edificio
 
-                                SonidoProcedural.sonido_alerta()
+                    ox, oy = grid_x, grid_y
 
-                        elif edif_danado:
+                    edif_danado = self.mapa.grid[oy][ox] if 0 <= ox < self.mapa.tamanio and 0 <= oy < self.mapa.tamanio else None
 
-                            reembolso = edif_danado.tipo.costo // 2
+                    if edif_danado and not edif_danado.activo:
 
-                            self.mapa.vender_edificio(grid_x, grid_y)
+                        coste_rep = edif_danado.tipo.costo // 3
 
-                            self.recursos.ingresar(reembolso)
+                        if self.recursos.gastar(coste_rep):
+
+                            edif_danado.activo = True
 
                             self.recursos.actualizar_balance(self.mapa.edificios)
 
-                            self._mostrar_mensaje(f"✅ Vendido: {edif_danado.tipo.nombre} (+{reembolso} 💰)")
+                            self._mostrar_mensaje(f"🔧 Reparado: {edif_danado.tipo.nombre} (-{coste_rep} 💰)")
 
-                            SonidoProcedural.sonido_vender()
+                            SonidoProcedural.sonido_construir()
 
                         else:
 
-                            self._mostrar_mensaje("❌ No hay edificio aquí para vender")
+                            self._mostrar_mensaje(f"❌ Necesitas {coste_rep}💰 para reparar")
 
                             SonidoProcedural.sonido_alerta()
 
-                    
+                    elif edif_danado:
 
-                    elif self.modo_construir and self.edificio_seleccionado:
+                        reembolso = edif_danado.tipo.costo // 2
 
-                        # Colocar edificio (soporte multi-tile)
+                        self.mapa.vender_edificio(grid_x, grid_y)
 
-                        tipo = self.edificio_seleccionado
+                        self.recursos.ingresar(reembolso)
 
+                        self.recursos.actualizar_balance(self.mapa.edificios)
 
+                        self._mostrar_mensaje(f"✅ Vendido: {edif_danado.tipo.nombre} (+{reembolso} 💰)")
 
-                        # Si es privado, abrir overlay de permiso en vez de colocar directo
+                        SonidoProcedural.sonido_vender()
 
-                        if es_edificio_privado(tipo.id):
+                    else:
 
-                            if self.mapa.tile_valido(grid_x, grid_y, tipo.ancho_tiles, tipo.alto_tiles):
+                        self._mostrar_mensaje("❌ No hay edificio aquí para vender")
 
-                                self.permiso_tipo = tipo
-
-                                self.permiso_gx = grid_x
-
-                                self.permiso_gy = grid_y
-
-                                self.mostrando_permiso = True
-
-                            else:
-
-                                if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1:
-
-                                    self._mostrar_mensaje(f"❌ No hay espacio ({tipo.ancho_tiles}x{tipo.alto_tiles} tiles)")
-
-                                else:
-
-                                    self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
-
-                            pass  # was continue
+                        SonidoProcedural.sonido_alerta()
 
 
 
+                elif self.modo_construir and self.edificio_seleccionado:
 
-                        # Público: colocación directa
+                    # Colocar edificio (soporte multi-tile)
+
+                    tipo = self.edificio_seleccionado
+
+
+
+                    # Si es privado, abrir overlay de permiso en vez de colocar directo
+
+                    if es_edificio_privado(tipo.id):
 
                         if self.mapa.tile_valido(grid_x, grid_y, tipo.ancho_tiles, tipo.alto_tiles):
 
-                            if self.recursos.gastar(tipo.costo):
+                            self.permiso_tipo = tipo
 
-                                sprite = self.renderizador.cargar_sprite(
+                            self.permiso_gx = grid_x
 
-                                    tipo.ruta_sprite, (64, 64)
+                            self.permiso_gy = grid_y
 
-                                )
-
-                                self.mapa.colocar_edificio(grid_x, grid_y, tipo, sprite)
-
-                                self.recursos.actualizar_balance(self.mapa.edificios)
-
-                                tam_txt = "" if tipo.ancho_tiles == 1 and tipo.alto_tiles == 1 else f" ({tipo.ancho_tiles}x{tipo.alto_tiles})"
-
-                                self._mostrar_mensaje(f"✅ Construido: {tipo.nombre}{tam_txt}")
-
-                                SonidoProcedural.sonido_construir()
-
-                            else:
-
-                                self._mostrar_mensaje(f"❌ Créditos insuficientes (necesitas {tipo.costo} 💰)")
+                            self.mostrando_permiso = True
 
                         else:
 
@@ -4024,41 +4004,82 @@ class JuegoSimmoon:
 
                                 self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
 
-                
+                        pass  # was continue
 
-                elif evento.button == 3:  # Click derecho
 
-                    # Modo zonificar: borrar zona o cancelar seleccion
 
-                    if self.modo_zonificar:
 
-                        if self.zona_seleccionada:
+                    # Público: colocación directa
 
-                            self.zona_seleccionada = None
+                    if self.mapa.tile_valido(grid_x, grid_y, tipo.ancho_tiles, tipo.alto_tiles):
+
+                        if self.recursos.gastar(tipo.costo):
+
+                            sprite = self.renderizador.cargar_sprite(
+
+                                tipo.ruta_sprite, (64, 64)
+
+                            )
+
+                            self.mapa.colocar_edificio(grid_x, grid_y, tipo, sprite)
+
+                            self.recursos.actualizar_balance(self.mapa.edificios)
+
+                            tam_txt = "" if tipo.ancho_tiles == 1 and tipo.alto_tiles == 1 else f" ({tipo.ancho_tiles}x{tipo.alto_tiles})"
+
+                            self._mostrar_mensaje(f"✅ Construido: {tipo.nombre}{tam_txt}")
+
+                            SonidoProcedural.sonido_construir()
 
                         else:
 
-                            self.mapa.borrar_zona(grid_x, grid_y)
+                            self._mostrar_mensaje(f"❌ Créditos insuficientes (necesitas {tipo.costo} 💰)")
 
                     else:
 
-                        self.edificio_seleccionado = None
+                        if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1:
 
-                        self.modo_construir = False
+                            self._mostrar_mensaje(f"❌ No hay espacio ({tipo.ancho_tiles}x{tipo.alto_tiles} tiles)")
 
-                        self.modo_vender = False
+                        else:
 
-                
+                            self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
 
-                elif evento.button == 4:  # Rueda arriba
 
-                    self.camara.acercar(0.1)
 
-                elif evento.button == 5:  # Rueda abajo
+            elif evento.button == 3:  # Click derecho
 
-                    self.camara.acercar(-0.1)
+                # Modo zonificar: borrar zona o cancelar seleccion
 
-            
+                if self.modo_zonificar:
+
+                    if self.zona_seleccionada:
+
+                        self.zona_seleccionada = None
+
+                    else:
+
+                        self.mapa.borrar_zona(grid_x, grid_y)
+
+                else:
+
+                    self.edificio_seleccionado = None
+
+                    self.modo_construir = False
+
+                    self.modo_vender = False
+
+
+
+            elif evento.button == 4:  # Rueda arriba
+
+                self.camara.acercar(0.1); if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
+
+            elif evento.button == 5:  # Rueda abajo
+
+                self.camara.acercar(-0.1); if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
+
+
 
             elif evento.type == pygame.VIDEORESIZE:
 
@@ -4068,7 +4089,7 @@ class JuegoSimmoon:
 
                 self.pantalla = pygame.display.set_mode((evento.w, evento.h), pygame.RESIZABLE)
 
-        
+
 
         # ── Movimiento continuo de cámara con teclas ──
 
@@ -4476,13 +4497,13 @@ class JuegoSimmoon:
 
         self.pantalla.fill(Config.COLOR_FONDO)
 
-        
+
 
         # Renderizar mapa
 
         self.renderizador.renderizar_mapa(self.pantalla, self.mapa, self.camara)
 
-        
+
 
         # Renderizar cursor de zonificacion
 
@@ -4564,7 +4585,7 @@ class JuegoSimmoon:
 
                     )
 
-        
+
 
         # Renderizar panel UI y manejar clicks
 
@@ -4592,17 +4613,17 @@ class JuegoSimmoon:
 
             edificio_id, cat_clickeada, click_turno = self.renderizador.renderizar_panel(
 
-            self.pantalla, self.recursos,
+                self.pantalla, self.recursos,
 
-            self.edificio_seleccionado,
+                self.edificio_seleccionado,
 
-            self.modo_construir, self.modo_vender,
+                self.modo_construir, self.modo_vender,
 
-            self.categoria_actual, self.catalogo, self.votos,
+                self.categoria_actual, self.catalogo, self.votos,
 
-            mouse_pos, self.mouse_click
+                mouse_pos, self.mouse_click
 
-        )
+            )
 
         self.categoria_actual = cat_clickeada  # Actualizar categoría activa
 
@@ -4616,7 +4637,7 @@ class JuegoSimmoon:
 
             SonidoProcedural.sonido_turno()
 
-        
+
 
         # Si se clickeó un edificio en el panel, seleccionarlo
 
@@ -4636,7 +4657,7 @@ class JuegoSimmoon:
 
             self.renderizador.renderizar_minimapa(self.pantalla, self.mapa, self.camara)
 
-        
+
 
         # ── Overlay de resumen del turno ──
 
@@ -4660,7 +4681,7 @@ class JuegoSimmoon:
 
             self.renderizar_panel_finanzas()
 
-        
+
 
         # ── Mensaje temporal ──
 
@@ -4684,7 +4705,7 @@ class JuegoSimmoon:
 
             self.pantalla.blit(txt_msg, msg_rect)
 
-        
+
 
         # ── Tooltip del tile bajo el ratón ──
 
@@ -4706,7 +4727,7 @@ class JuegoSimmoon:
 
                 self.pantalla.blit(txt_tile, (10, self.pantalla.get_height() - 25))
 
-        
+
 
         # Actualizar pantalla
 
@@ -4741,7 +4762,7 @@ class JuegoSimmoon:
 
             self.reloj.tick(Config.FPS)
 
-        
+
 
         pygame.quit()
 
@@ -4765,7 +4786,7 @@ if __name__ == "__main__":
 
     print("  Cargando votos...")
 
-    
+
 
     # Cargar votos y filtrar catálogo
 
@@ -4775,7 +4796,7 @@ if __name__ == "__main__":
 
     catalogo_filtrado = filtrar_catalogo_por_votos(votos)
 
-    
+
 
     print(f"  Edificios disponibles: {len(catalogo_filtrado)}")
 
@@ -4797,7 +4818,7 @@ if __name__ == "__main__":
 
     print()
 
-    
+
 
     juego = JuegoSimmoon(votos=votos)
 
