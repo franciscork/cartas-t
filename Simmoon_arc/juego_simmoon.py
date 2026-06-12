@@ -387,7 +387,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_01": TipoEdificio("biz_01", "Oficina Minera", "businesses",
 
-                           "biz_01_lunar_mining_office_pixel.png",
+                           "biz_oficina_minera_blender.png",
 
                            costo=500, produce_energia=-5, produce_oxigeno=-2,
 
@@ -407,7 +407,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_03": TipoEdificio("biz_03", "Hotel Lunar", "businesses",
 
-                           "biz_03_lunar_hotel_pixel.png",
+                           "biz_hotel_lunar_blender.png",
 
                            costo=800, produce_energia=-8, produce_oxigeno=-3, produce_agua=-2,
 
@@ -417,7 +417,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_04": TipoEdificio("biz_04", "Restaurante Lunar", "businesses",
 
-                           "biz_04_lunar_restaurant_pixel.png",
+                           "biz_restaurante_lunar_blender.png",
 
                            costo=350, produce_energia=-4, produce_oxigeno=-1, produce_agua=-1,
 
@@ -428,7 +428,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_05": TipoEdificio("biz_05", "Laboratorio", "businesses",
 
-                           "biz_05_research_laboratory_pixel.png",
+                           "biz_laboratorio_blender.png",
 
                            costo=1200, produce_energia=-10, produce_oxigeno=-2,
 
@@ -438,7 +438,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_06": TipoEdificio("biz_06", "Centro Médico", "businesses",
 
-                           "biz_06_medical_center_pixel.png",
+                           "biz_centro_medico_blender.png",
 
                            costo=900, produce_energia=-7, produce_oxigeno=-3,
 
@@ -449,7 +449,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_07": TipoEdificio("biz_07", "Terminal Espacial", "businesses",
 
-                           "biz_07_spaceport_terminal_pixel.png",
+                           "biz_terminal_espacial_blender.png",
 
                            costo=2000, produce_energia=-15, produce_oxigeno=-5,
 
@@ -459,7 +459,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_08": TipoEdificio("biz_08", "Fábrica", "businesses",
 
-                           "biz_08_manufacturing_plant_pixel.png",
+                           "biz_fabrica_blender.png",
 
                            costo=1500, produce_energia=-20, produce_oxigeno=-4, produce_agua=-3,
 
@@ -479,7 +479,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_11": TipoEdificio("biz_11", "Tienda Lunar", "businesses",
 
-                           "biz_11_lunar_shop_pixel.png",
+                           "biz_tienda_lunar_blender.png",
 
                            costo=300, produce_energia=-2, produce_oxigeno=-1,
 
@@ -1131,7 +1131,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_01": TipoEdificio("oficio_01", "Bar Lunar Gravity", "businesses",
 
-                              "biz_04_lunar_restaurant_pixel.png",
+                              "biz_restaurante_lunar_blender.png",
 
                               costo=300, produce_energia=-3, produce_agua=-1,
 
@@ -1141,7 +1141,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_02": TipoEdificio("oficio_02", "Tatuajes Low-G", "businesses",
 
-                              "biz_11_lunar_shop_pixel.png",
+                              "biz_tienda_lunar_blender.png",
 
                               costo=200, produce_energia=-2,
 
@@ -1172,7 +1172,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_05": TipoEdificio("oficio_05", "Estudio Holocine", "businesses",
 
-                              "biz_05_research_laboratory_pixel.png",
+                              "biz_laboratorio_blender.png",
 
                               costo=500, produce_energia=-6,
 
@@ -1183,7 +1183,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_06": TipoEdificio("oficio_06", "Taller de Trajes", "businesses",
 
-                              "biz_01_lunar_mining_office_pixel.png",
+                              "biz_oficina_minera_blender.png",
 
                               costo=280, produce_energia=-3,
 
@@ -1214,7 +1214,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_09": TipoEdificio("oficio_09", "Destilería Lunar", "businesses",
 
-                              "biz_08_manufacturing_plant_pixel.png",
+                              "biz_fabrica_blender.png",
 
                               costo=400, produce_energia=-5, produce_agua=-2,
 
@@ -1259,7 +1259,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "univ_01": TipoEdificio("univ_01", "MIT Lunar Laboratory", "universities",
 
-                            "biz_05_research_laboratory_pixel.png",
+                            "biz_laboratorio_blender.png",
 
                             costo=2000, produce_energia=-12, produce_oxigeno=-4,
 
@@ -1279,7 +1279,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "univ_03": TipoEdificio("univ_03", "Oxford Astrobiology Inst.", "universities",
 
-                            "biz_05_research_laboratory_pixel.png",
+                            "biz_laboratorio_blender.png",
 
                             costo=1600, produce_energia=-8, produce_oxigeno=-2,
 
@@ -1309,7 +1309,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "univ_06": TipoEdificio("univ_06", "ETH Zurich Materials Lab", "universities",
 
-                            "biz_08_manufacturing_plant_pixel.png",
+                            "biz_fabrica_blender.png",
 
                             costo=1900, produce_energia=-15, produce_oxigeno=-4, produce_agua=-2,
 
@@ -1387,7 +1387,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "hou_01": TipoEdificio("hou_01", "Albergue Básico", "housing",
 
-                           "hou_01_basic_habitat_module_pixel.png",
+                           "hou_albergue_basico_blender.png",
 
                            costo=300, produce_energia=-2,
 
@@ -4073,11 +4073,13 @@ class JuegoSimmoon:
 
             elif evento.button == 4:  # Rueda arriba
 
-                self.camara.acercar(0.1); if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
+                self.camara.acercar(0.1)
+                if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
 
             elif evento.button == 5:  # Rueda abajo
 
-                self.camara.acercar(-0.1); if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
+                self.camara.acercar(-0.1)
+                if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
 
 
 
