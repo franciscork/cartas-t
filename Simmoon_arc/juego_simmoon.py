@@ -469,7 +469,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_10": TipoEdificio("biz_10", "Banco Lunar", "businesses",
 
-                           "biz_10_lunar_bank_pixel.png",
+                           "biz_banco_lunar_blender.png",
 
                            costo=600, produce_energia=-3, produce_oxigeno=-1,
 
@@ -489,7 +489,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "biz_12": TipoEdificio("biz_12", "Almacén", "businesses",
 
-                           "biz_12_lunar_warehouse_pixel.png",
+                           "biz_almacen_blender.png",
 
                            costo=250, produce_energia=-2,
 
@@ -888,7 +888,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_02": TipoEdificio("misc_02", "Planta de Agua", "buildings_misc",
 
-                            "misc_02_water_processing_plant_pixel.png",
+                            "misc_planta_agua_blender.png",
 
                             produce_presion=5,
 
@@ -912,7 +912,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_04": TipoEdificio("misc_04", "Torre de Comunicaciones", "buildings_misc",
 
-                            "misc_04_communication_tower_pixel.png",
+                            "misc_torre_comunicaciones_blender.png",
 
                             costo=350, produce_energia=-3, mantenimiento=3, empleos=2,
 
@@ -940,7 +940,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_07": TipoEdificio("misc_07", "Academia Lunar", "buildings_misc",
 
-                            "misc_07_school_academy_pixel.png",
+                            "misc_academia_blender.png",
 
                             costo=800, produce_energia=-8, mantenimiento=12, empleos=10,
 
@@ -1234,7 +1234,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_11": TipoEdificio("oficio_11", "Observatorio Privado", "buildings_misc",
 
-                              "misc_04_communication_tower_pixel.png",
+                              "misc_torre_comunicaciones_blender.png",
 
                               costo=550, produce_energia=-4,
 
@@ -1299,7 +1299,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "univ_05": TipoEdificio("univ_05", "Caltech Lunar Observatory", "universities",
 
-                            "misc_04_communication_tower_pixel.png",
+                            "misc_torre_comunicaciones_blender.png",
 
                             costo=2200, produce_energia=-14, produce_oxigeno=-3,
 
@@ -1339,7 +1339,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "univ_09": TipoEdificio("univ_09", "Sorbonne Lunar Humanities", "universities",
 
-                            "misc_07_school_academy_pixel.png",
+                            "misc_academia_blender.png",
 
                             costo=1200, produce_energia=-6, produce_oxigeno=-2,
 

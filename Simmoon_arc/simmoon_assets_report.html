@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON — Inventario Completo de Assets</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --card2: #1c2128; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --green: #3fb950; --yellow: #d29922;
+    --red: #f85149; --blue: #58a6ff; --purple: #bc8cff; --orange: #d18616;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); padding:20px 24px; }
+  h1 { font-size:1.3rem; margin-bottom:2px; display:flex; align-items:center; gap:8px; }
+  .subtitle { color:var(--dim); font-size:0.8rem; margin-bottom:16px; }
+  
+  /* Summary banner */
+  .hero { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; margin-bottom:20px; }
+  .hero-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; text-align:center; }
+  .hero-card .num { font-size:1.6rem; font-weight:700; }
+  .hero-card .label { font-size:0.65rem; color:var(--dim); text-transform:uppercase; letter-spacing:0.8px; margin-top:2px; }
+  .hero-card .desc { font-size:0.6rem; color:var(--dim); margin-top:2px; }
+  .hero-card.pipeline { grid-column:1/-1; display:flex; align-items:center; justify-content:center; gap:6px; padding:12px; }
+  .hero-card.pipeline .step { display:flex; align-items:center; gap:4px; font-size:0.7rem; }
+  .hero-card.pipeline .arrow { color:var(--dim); font-size:0.8rem; }
+  
+  /* Section headers */
+  .section { margin-bottom:24px; }
+  .section-title { font-size:0.85rem; font-weight:600; padding:8px 0; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .section-title .count { font-size:0.65rem; color:var(--dim); font-weight:400; background:var(--card2); padding:1px 8px; border-radius:4px; }
+  
+  /* Table */
+  .asset-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+  .asset-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); color:var(--dim); font-weight:600; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px; }
+  .asset-table td { padding:5px 8px; border-bottom:1px solid rgba(48,54,61,0.4); }
+  .asset-table tr:hover td { background:rgba(88,166,255,0.04); }
+  .asset-table .cat-icon { font-size:1rem; width:28px; text-align:center; }
+  .asset-table .cat-name { font-weight:500; }
+  .asset-table .cat-dir { color:var(--dim); font-family:'Consolas',monospace; font-size:0.6rem; }
+  
+  /* Status badges */
+  .badge { display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:600; }
+  .badge.done { background:rgba(63,185,80,0.15); color:var(--green); }
+  .badge.pending { background:rgba(210,153,34,0.12); color:var(--yellow); }
+  .badge.empty { background:rgba(139,148,158,0.1); color:var(--dim); }
+  .badge.pp { background:rgba(188,140,255,0.15); color:var(--purple); }
+  .badge.count { background:rgba(88,166,255,0.1); color:var(--blue); }
+  .badge.game { background:rgba(63,185,80,0.1); color:var(--green); }
+  
+  /* Progress bar */
+  .progress-wrap { background:var(--card2); border-radius:6px; height:6px; width:100%; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:6px; transition:width 0.3s; }
+  .progress-fill.green { background:var(--green); }
+  .progress-fill.purple { background:var(--purple); }
+  .progress-fill.blue { background:var(--blue); }
+  
+  /* Charts row */
+  .charts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+  .chart-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .chart-card .title { font-size:0.7rem; font-weight:600; margin-bottom:6px; color:var(--dim); text-transform:uppercase; letter-spacing:0.5px; }
+  
+  /* Pipeline visualization */
+  .pipeline-viz { display:flex; align-items:center; gap:0; margin:8px 0; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; overflow-x:auto; }
+  .pipe-step { display:flex; flex-direction:column; align-items:center; min-width:90px; text-align:center; padding:4px 8px; }
+  .pipe-step .icon { font-size:1.2rem; }
+  .pipe-step .name { font-size:0.6rem; color:var(--text); margin-top:2px; }
+  .pipe-step .count { font-size:0.55rem; color:var(--dim); }
+  .pipe-arrow { color:var(--dim); font-size:0.7rem; }
+  .pipe-done { border-right:2px solid var(--green); }
+  .pipe-pending { border-right:2px dashed var(--yellow); opacity:0.5; }
+  
+  /* Log */
+  .log { font-family:'Consolas',monospace; font-size:0.65rem; line-height:1.6; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:8px 12px; max-height:200px; overflow-y:auto; }
+  .log .time { color:var(--dim); }
+  .log .green { color:var(--green); }
+  .log .yellow { color:var(--yellow); }
+  .log .blue { color:var(--blue); }
+  .log .purple { color:var(--purple); }
+  
+  /* Stats inline */
+  .stat-row { display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 10px; }
+  .stat-item { font-size:0.65rem; color:var(--dim); }
+  .stat-item strong { color:var(--text); }
+  
+  .footer { text-align:center; color:var(--dim); font-size:0.65rem; padding:16px; border-top:1px solid var(--border); margin-top:16px; }
+  
+  @media (max-width:700px) { .charts { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<h1> SIMMOON — Inventario Completo de Assets</h1>
+<div class="subtitle">Pipeline completo: ComfyUI → Pixelator (64x64, 16 colores) → Post-Processor (auto-contraste, borde, paleta 64 colores, miniatura 128x128) — <span id="fecha"></span></div>
+
+<!-- ===== HERO SUMMARY ===== -->
+<div class="hero" id="heroSummary"></div>
+
+<!-- ===== PIPELINE STATUS ===== -->
+<div class="section">
+  <div class="section-title">Pipeline Pipeline de Generacion <span class="count">4 etapas</span></div>
+  <div class="pipeline-viz">
+    <div class="pipe-step pipe-done">
+      <div class="icon">🤖</div>
+      <div class="name">ComfyUI</div>
+      <div class="count">837 assets</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step pipe-done">
+      <div class="icon">🎨</div>
+      <div class="name">Pixelador</div>
+      <div class="count">837 pix</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-right:2px solid var(--purple);">
+      <div class="icon">✨</div>
+      <div class="name">Post-Proc</div>
+      <div class="count" style="color:var(--purple);">837 hechos</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-right:2px solid var(--blue);">
+      <div class="icon">🎮</div>
+      <div class="name">Integrado</div>
+      <div class="count" style="color:var(--blue);">4 cats</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step pipe-done">
+      <div class="icon">🖥️</div>
+      <div class="name">Juego</div>
+      <div class="count">26 edificios</div>
+    </div>
+    <div class="pipe-arrow" style="color:var(--green);">→</div>
+    <div class="pipe-step" style="opacity:1;">
+      <div class="icon">✅</div>
+      <div class="name">Completo</div>
+      <div class="count" style="color:var(--green);">20/22 cats</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATS ROW ===== -->
+<div class="charts">
+  <div class="chart-card">
+    <div class="title">Cobertura de Post-Procesamiento</div>
+    <div style="margin-bottom:4px;"><span style="font-size:0.6rem;color:var(--dim);">Con postproc:</span> <span style="font-size:0.8rem;font-weight:600;color:var(--purple);" id="ppPct">0%</span></div>
+    <div class="progress-wrap"><div class="progress-fill purple" id="ppBar" style="width:0%;"></div></div>
+    <div style="margin-top:4px;display:flex;justify-content:space-between;font-size:0.6rem;color:var(--dim);">
+      <span id="ppDone">0</span>
+      <span id="ppTotal">22</span>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="title">Assets por Estado</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div><span style="font-size:0.6rem;color:var(--dim);">Pixelados:</span> <strong style="color:var(--blue);" id="totalMain">0</strong></div>
+      <div><span style="font-size:0.6rem;color:var(--dim);">Post-procesados:</span> <strong style="color:var(--purple);" id="totalPP">0</strong></div>
+      <div><span style="font-size:0.6rem;color:var(--dim);">Miniaturas:</span> <strong style="color:var(--green);" id="totalThumbs">0</strong></div>
+      <div><span style="font-size:0.6rem;color:var(--dim);">Integrados en juego:</span> <strong id="totalGame">26</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FULL CATALOG TABLE ===== -->
+<div class="section">
+  <div class="section-title">Catalogo Completo de Assets <span class="count" id="catCount">0 categorias</span></div>
+  <table class="asset-table" id="assetTable">
+    <thead>
+      <tr>
+        <th style="width:28px;"></th>
+        <th>Categoria</th>
+        <th>Directorio</th>
+        <th style="text-align:center;">Pixelados</th>
+        <th style="text-align:center;">Post-Proc</th>
+        <th style="text-align:center;">Thumbs</th>
+        <th style="text-align:center;">En Juego</th>
+        <th>Progreso</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PIPELINE LOG ===== -->
+<div class="section">
+  <div class="section-title">Historial de Generacion <span class="count">Pipeline completo</span></div>
+  <div class="log" id="pipelineLog">
+    <div><span class="time">[Sesion 1]</span> <span class="green">✓</span> Generacion ComfyUI: <span class="blue">45 assets</span> (businesses, vehicles, characters)</div>
+    <div><span class="time">[Sesion 2]</span> <span class="green">✓</span> Generacion ComfyUI: <span class="blue">23 environments</span> (lunar_sites, lunar_map, life_support)</div>
+    <div><span class="time">[Sesion 3]</span> <span class="green">✓</span> Pixelador: <span class="blue">80 vehicles</span> → 64x64, 16 colores retro</div>
+    <div><span class="time">[Sesion 4]</span> <span class="green">✓</span> Pixelador: <span class="blue">166 entornos</span> → 64x64, 16 colores</div>
+    <div><span class="time">[Sesion 5]</span> <span class="green">✓</span> Post-Process: <span class="purple">246 assets</span> procesados (auto-contraste, borde 2px, paleta 64 colores)</div>
+    <div><span class="time">[Sesion 6]</span> <span class="green">✓</span> Integracion renderizador: <span class="blue">4 categorias</span> con postproc (vehicles, lunar_sites, life_support, lunar_map)</div>
+    <div><span class="time">[Sesion 7]</span> <span class="green">✓</span> Post-Process masivo: batch 1 — <span class="purple">248 assets</span> (businesses, buildings_misc, solar_energy)</div>
+    <div><span class="time">[Sesion 7b]</span> <span class="green">✓</span> Post-Process masivo: batch 2 — <span class="purple">203 assets</span> (decorations, roads, greenhouses, characters)</div>
+    <div><span class="time">[Sesion 7c]</span> <span class="green">✓</span> Post-Process masivo: batch 3 — <span class="purple">140 assets</span> (ui_elements, lunar_flora, infrastructure, housing, industry, civic, government, risk_management, transport)</div>
+    <div><span class="time">[Final]</span> <span class="green">✓</span> <strong>Pipeline completo</strong> — 837/837 assets post-procesados · 20 categorias con postproc · 2 vacias (anomalies, robots)</div>
+  </div>
+</div>
+
+<div class="footer">
+  SIMMOON Asset Pipeline | <span id="footerCount"></span> assets totales | <span id="footerDate"></span>
+</div>
+
+<script>
+const fecha = new Date().toLocaleString('es-ES', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+document.getElementById('fecha').textContent = fecha;
+document.getElementById('footerDate').textContent = fecha;
+
+// ── DATA ──
+const categories = [
+  {icon:"⚠️", name:"Anomalies", dir:"anomalies_pixel", main:0, thumbs:0, pp:false, ppMain:0, ppThumbs:0, game:false},
+  {icon:"🏗️", name:"Buildings Misc", dir:"buildings_misc_pixel", main:87, thumbs:0, pp:true, ppMain:87, ppThumbs:87, game:false},
+  {icon:"🏪", name:"Businesses", dir:"businesses_pixel", main:96, thumbs:0, pp:true, ppMain:96, ppThumbs:96, game:false},
+  {icon:"👤", name:"Characters", dir:"characters_pixel", main:42, thumbs:0, pp:true, ppMain:42, ppThumbs:42, game:false},
+  {icon:"🔬", name:"Civic", dir:"civic_pixel", main:2, thumbs:0, pp:true, ppMain:2, ppThumbs:2, game:false},
+  {icon:"🎨", name:"Decorations", dir:"decorations_pixel", main:56, thumbs:0, pp:true, ppMain:56, ppThumbs:56, game:false},
+  {icon:"🏛️", name:"Government", dir:"government_pixel", main:2, thumbs:0, pp:true, ppMain:2, ppThumbs:2, game:false},
+  {icon:"🌱", name:"Greenhouses", dir:"greenhouses_pixel", main:49, thumbs:0, pp:true, ppMain:49, ppThumbs:49, game:false},
+  {icon:"🏠", name:"Housing", dir:"housing_pixel", main:4, thumbs:0, pp:true, ppMain:4, ppThumbs:4, game:false},
+  {icon:"🏭", name:"Industry", dir:"industry_pixel", main:4, thumbs:0, pp:true, ppMain:4, ppThumbs:4, game:false},
+  {icon:"📦", name:"Infrastructure", dir:"infrastructure_pixel", main:28, thumbs:0, pp:true, ppMain:28, ppThumbs:28, game:false},
+  {icon:"🫁", name:"Life Support", dir:"life_support_pixel", main:6, thumbs:0, pp:true, ppMain:6, ppThumbs:6, game:true},
+  {icon:"🌱", name:"Lunar Flora", dir:"lunar_flora_pixel", main:32, thumbs:0, pp:true, ppMain:32, ppThumbs:32, game:false},
+  {icon:"🗺️", name:"Lunar Map", dir:"lunar_map_pixel", main:64, thumbs:0, pp:true, ppMain:64, ppThumbs:64, game:true},
+  {icon:"🏘️", name:"Lunar Sites", dir:"lunar_sites_pixel", main:96, thumbs:0, pp:true, ppMain:96, ppThumbs:96, game:true},
+  {icon:"⚠️", name:"Risk Management", dir:"risk_management_pixel", main:3, thumbs:0, pp:true, ppMain:3, ppThumbs:3, game:false},
+  {icon:"🛣️", name:"Roads", dir:"roads_pixel", main:56, thumbs:0, pp:true, ppMain:56, ppThumbs:56, game:false},
+  {icon:"👤", name:"Robots", dir:"robots_pixel", main:0, thumbs:0, pp:false, ppMain:0, ppThumbs:0, game:false},
+  {icon:"⚡", name:"Solar Energy", dir:"solar_energy_pixel", main:65, thumbs:0, pp:true, ppMain:65, ppThumbs:65, game:false},
+  {icon:"🚀", name:"Transport", dir:"transport_pixel", main:2, thumbs:0, pp:true, ppMain:2, ppThumbs:2, game:false},
+  {icon:"📦", name:"UI Elements", dir:"ui_elements_pixel", main:63, thumbs:0, pp:true, ppMain:63, ppThumbs:63, game:false},
+  {icon:"🚗", name:"Vehicles", dir:"vehicles_pixel", main:80, thumbs:0, pp:true, ppMain:80, ppThumbs:80, game:true},
+];
+
+// ── TOTALS ──
+let tMain = 0, tPP = 0, tThumbs = 0, tGame = 0, tPPcats = 0;
+categories.forEach(c => {
+  tMain += c.main;
+  tPP += c.ppMain;
+  tThumbs += c.ppThumbs;
+  if (c.game) tGame++;
+  if (c.pp) tPPcats++;
+});
+
+document.getElementById('totalMain').textContent = tMain;
+document.getElementById('totalPP').textContent = tPP;
+document.getElementById('totalThumbs').textContent = tThumbs;
+document.getElementById('totalGame').textContent = '26 sprites en catalogo';
+document.getElementById('catCount').textContent = categories.length + ' categorias';
+document.getElementById('footerCount').textContent = tMain + ' assets pixelados, ' + tPP + ' post-procesados';
+
+// ── PP PROGRESS ──
+const pct = (tPPcats / categories.length * 100).toFixed(0);
+document.getElementById('ppPct').textContent = pct + '%';
+document.getElementById('ppBar').style.width = pct + '%';
+document.getElementById('ppDone').textContent = tPPcats + ' cats con postproc';
+document.getElementById('ppTotal').textContent = categories.length + ' total';
+
+// ── TABLE ──
+const tbody = document.getElementById('tableBody');
+categories.forEach(c => {
+  const tr = document.createElement('tr');
+  
+  let statusPP = '<span class="badge empty">—</span>';
+  let statusGame = '<span class="badge empty">—</span>';
+  let progressW = 0;
+  
+  if (c.pp) {
+    const ppPct = c.main > 0 ? (c.ppMain / c.main * 100).toFixed(0) : 0;
+    statusPP = `<span class="badge pp">${ppPct}%</span>`;
+    progressW = parseInt(ppPct);
+  }
+  if (c.game) {
+    statusGame = '<span class="badge game">En juego</span>';
+  }
+  
+  // Progress bar
+  let barColor = 'blue';
+  let barW = '0%';
+  if (c.main > 0) {
+    if (c.pp) {
+      barColor = 'purple';
+      barW = '100%';
+    } else {
+      barColor = 'blue';
+      barW = c.main > 50 ? '60%' : c.main > 10 ? '30%' : '15%';
+    }
+  }
+  if (c.pp && c.game) {
+    barColor = 'green';
+  }
+  
+  let mainBadge = c.main > 0 ? `<span class="badge count">${c.main}</span>` : '<span class="badge empty">0</span>';
+  let thumbBadge = c.ppThumbs > 0 ? `<span class="badge count">${c.ppThumbs}</span>` : '<span class="badge empty">0</span>';
+  let ppMainBadge = c.ppMain > 0 ? `<span class="badge pp">${c.ppMain}</span>` : '<span class="badge empty">—</span>';
+  
+  tr.innerHTML = `
+    <td class="cat-icon">${c.icon}</td>
+    <td><span class="cat-name">${c.name}</span></td>
+    <td><span class="cat-dir">${c.dir}</span></td>
+    <td style="text-align:center;">${mainBadge}</td>
+    <td style="text-align:center;">${ppMainBadge}</td>
+    <td style="text-align:center;">${thumbBadge}</td>
+    <td style="text-align:center;">${statusGame}</td>
+    <td style="min-width:100px;"><div class="progress-wrap"><div class="progress-fill ${barColor}" style="width:${barW};"></div></div></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ── HERO SUMMARY ──
+document.getElementById('heroSummary').innerHTML = `
+  <div class="hero-card"><div class="num" style="color:var(--blue);">${tMain}</div><div class="label">Assets Pixelados</div><div class="desc">64x64, 16 colores retro</div></div>
+  <div class="hero-card"><div class="num" style="color:var(--purple);">${tPP}</div><div class="label">Post-Procesados</div><div class="desc">Auto-contraste + borde + paleta</div></div>
+  <div class="hero-card"><div class="num" style="color:var(--green);">${tThumbs}</div><div class="label">Miniaturas</div><div class="desc">128x128 px</div></div>
+  <div class="hero-card"><div class="num" style="color:var(--yellow);">${categories.length}</div><div class="label">Categorias</div><div class="desc">Assets para el juego</div></div>
+  <div class="hero-card"><div class="num" style="color:var(--green);">${tPPcats}</div><div class="label">Con Post-Proc</div><div class="desc">${pct}% del catalogo</div></div>
+  <div class="hero-card"><div class="num" style="color:var(--text);">26</div><div class="label">En Catalogo Juego</div><div class="desc">Edificios jugables</div></div>
+`;
+</script>
+
+</body>
+</html>
