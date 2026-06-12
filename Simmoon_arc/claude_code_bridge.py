@@ -144,6 +144,16 @@ class ClaudeCodeBridge:
     - run_task() → tarea completa con todos los parámetros
     """
 
+    # Nombre del modelo que Claude Code usa por defecto.
+    # En ollama_mode, se pasa explicitamente con --model para evitar
+    # que Claude Code valide el nombre contra Anthropic.
+    # Ollama debe tener un alias que mapee este nombre al modelo local
+    # (creado automaticamente por _ensure_model_alias).
+    # Se crean ambos alias (claude-opus-4-8 y claude-sonnet-4-20250514)
+    # para cubrir diferentes versiones de Claude Code.
+    CLAUDE_DEFAULT_MODEL = "claude-opus-4-8"
+    CLAUDE_ALT_MODEL = "claude-sonnet-4-20250514"
+
     def __init__(self, model: Optional[str] = None, effort: str = "medium",
                  verbose: bool = False, max_budget_usd: Optional[float] = None,
                  dangerously_skip_permissions: bool = True,
@@ -151,7 +161,7 @@ class ClaudeCodeBridge:
                  bare_mode: bool = False,
                  ollama_mode: bool = False,
                  ollama_url: str = "http://localhost:11434",
-                 ollama_model: str = "qwen3.5:9b",
+                 ollama_model: str = "gemma3:latest",
                  native_ollama: bool = True,
                  native_ollama_model: str = "minimax-m3:cloud"):
         """
@@ -165,7 +175,7 @@ class ClaudeCodeBridge:
             bare_mode: Modo minimo (sin hooks/LSP)
             ollama_mode: Si True, redirige Claude Code a Ollama (gratis, local)
             ollama_url: URL de Ollama para ollama_mode
-            ollama_model: Modelo Ollama a usar en ollama_mode
+            ollama_model: Modelo Ollama local a usar en ollama_mode (ej: gemma3:latest)
             native_ollama: Usar ollama launch claude (Ollama v0.24+) — recomendado, sin API key
             native_ollama_model: Modelo para native_ollama.
                 Recomendados: minimax-m3:cloud, qwen3.5:cloud, kimi-k2.5:cloud, glm-5:cloud
@@ -192,6 +202,7 @@ class ClaudeCodeBridge:
         # Verificar disponibilidad al iniciar
         self._availability = None
         self._native_available = None
+        self._alias_ensured = False  # Flag lazy para _ensure_model_alias()
 
     # ── Propiedades ──────────────────────────────────────────────────────
 
@@ -253,8 +264,74 @@ class ClaudeCodeBridge:
         """Verificar si el binario es un script .cmd (necesita shell=True en Windows)."""
         return path.lower().endswith('.cmd')
 
+    # ── Alias de modelo para Ollama ────────────────────────────────────
+
+    def _ensure_model_alias(self):
+        """Crear alias en Ollama para que Claude Code funcione localmente.
+
+        Claude Code CLI siempre envia un nombre de modelo de Anthropic en sus
+        requests (ej: claude-opus-4-8, claude-sonnet-4-20250514).
+        Ollama no conoce ese modelo.
+        Esta funcion crea alias en Ollama que mapean los nombres de modelo
+        de Claude al modelo local configurado (self.ollama_model).
+
+        Los alias persisten hasta que se reinicie Ollama, asi que se recrean
+        cada vez que el bridge se inicializa.
+        """
+        if not self.ollama_mode:
+            return
+
+        local_model = self.ollama_model
+        alias_names = [self.CLAUDE_DEFAULT_MODEL, self.CLAUDE_ALT_MODEL]
+
+        for alias_name in alias_names:
+            # 1. Verificar si el alias ya existe
+            try:
+                req = urllib.request.Request(
+                    f"{self.ollama_url}/api/show",
+                    data=json.dumps({"model": alias_name}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if self.verbose:
+                        print(f"  ✅ Alias existe: {alias_name} → {local_model}")
+                    continue
+            except Exception:
+                pass
+
+            # 2. Crear alias si no existe
+            if self.verbose:
+                print(f"  🔧 Creando alias: {alias_name} → {local_model}...")
+
+            try:
+                payload = json.dumps({
+                    "model": alias_name,
+                    "from": local_model,
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    f"{self.ollama_url}/api/create",
+                    data=payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    resp.read()
+                    if self.verbose:
+                        print(f"  ✅ Alias creado: {alias_name} → {local_model}")
+            except Exception as e:
+                if self.verbose:
+                    print(f"  ⚠️  No se pudo crear alias '{alias_name}': {e}")
+
+    # ── Ejecucion de comandos ──────────────────────────────────────────
+
     def _run_claude(self, args: List[str], timeout: int = 60) -> subprocess.CompletedProcess:
         """Ejecutar Claude Code manejando correctamente archivos .cmd en Windows."""
+        # Asegurar alias de modelo en Ollama (lazy, solo en el primer uso)
+        if self.ollama_mode and not self._alias_ensured:
+            self._ensure_model_alias()
+            self._alias_ensured = True
+
         claude_path = self._find_claude_binary()
         if not claude_path:
             raise FileNotFoundError("Claude Code binary not found")
@@ -425,11 +502,14 @@ class ClaudeCodeBridge:
         
         args = ["-p", prompt]
         
+        # En ollama_mode, pasar el modelo CLAUDE_DEFAULT_MODEL (que tiene alias
+        # en Ollama apuntando al modelo local). Asi Claude Code no valida
+        # el modelo contra Anthropic porque se lo pasamos explicitamente.
         if self.ollama_mode:
-            # En modo Ollama, usar el modelo Ollama
-            args.extend(["--model", self.ollama_model])
+            args.extend(["--model", self.CLAUDE_DEFAULT_MODEL])
         elif self.model:
             args.extend(["--model", self.model])
+        
         if self.effort:
             args.extend(["--effort", self.effort])
         if self.max_budget_usd is not None:
@@ -1105,9 +1185,17 @@ class BuffySupervisor:
     def __init__(self, bridge: Optional[ClaudeCodeBridge] = None,
                  ollama_client: Optional[OllamaAnthropicClient] = None,
                  prefer_ollama: bool = True,
-                 ollama_model: str = "qwen2.5-coder:14b",
+                 ollama_model: str = "gemma3:latest",
                  verbose: bool = True):
-        self.bridge = bridge or ClaudeCodeBridge(verbose=verbose)
+        # Bridge con ollama_mode=True: Claude Code CLI se conecta a Ollama local
+        # en lugar de Anthropic API. No requiere ANTHROPIC_API_KEY.
+        # El modelo default es gemma3:latest porque esta confirmado que funciona
+        # con el endpoint /v1/messages de Ollama.
+        self.bridge = bridge or ClaudeCodeBridge(
+            verbose=verbose,
+            ollama_mode=True,
+            ollama_model=ollama_model,
+        )
         self.ollama = ollama_client or OllamaAnthropicClient(
             model=ollama_model, verbose=verbose
         )
@@ -1121,23 +1209,34 @@ class BuffySupervisor:
         
         Prioridad:
         1. ollama launch claude (nativo, gratis, sin API key)
-        2. Ollama Anthropic Client (fallback)
-        3. Claude Code API (requiere ANTHROPIC_API_KEY)
+        2. Claude Code + ollama_mode (Claude Code CLI redirigido a Ollama local)
+        3. Ollama Anthropic Client (fallback, solo texto)
+        4. Claude Code API (requiere ANTHROPIC_API_KEY)
         """
         native_available = self.bridge.check_native_ollama_available()
         ollama_available = OllamaAnthropicClient.check_available()
-        claude_available = self.bridge.available and ("ANTHROPIC_API_KEY" in os.environ)
-
+        
+        # Prioridad 1: ollama launch claude (nativo, sin API key)
         if self.prefer_ollama and native_available:
             return "native_ollama"
         if native_available:
             return "native_ollama"
-        if self.prefer_ollama and ollama_available:
-            return "ollama"
+        
+        # Prioridad 2: Claude Code con ollama_mode (edita archivos, usa Ollama local)
+        if self.bridge.ollama_mode and self.bridge.available and ollama_available:
+            return "claude"
+        
+        # Prioridad 3: Claude Code con API key (requiere ANTHROPIC_API_KEY)
+        claude_available = self.bridge.available and ("ANTHROPIC_API_KEY" in os.environ)
         if claude_available:
             return "claude"
+        
+        # Prioridad 4: Ollama directo (solo texto, no edita archivos)
+        if self.prefer_ollama and ollama_available:
+            return "ollama"
         if ollama_available:
             return "ollama"
+        
         return "none"
 
     @property
@@ -1350,7 +1449,7 @@ def test_bridge():
     print("  🧪 TEST: Claude Code Bridge")
     print(f"{'='*60}\n")
 
-    bridge = ClaudeCodeBridge(verbose=True, effort="low")
+    bridge = ClaudeCodeBridge(verbose=True, effort="low", ollama_mode=True, ollama_model="gemma3:latest")
 
     # Verificar disponibilidad
     status = bridge.status()

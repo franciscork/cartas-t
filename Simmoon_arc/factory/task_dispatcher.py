@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -291,7 +292,6 @@ class TaskDispatcher:
         Returns:
             DispatchResult con la respuesta
         """
-        import time
         start_time = time.time()
 
         # Verificar que Ollama esté disponible
@@ -386,7 +386,6 @@ class TaskDispatcher:
         Returns:
             DispatchResult con el resultado del pipeline
         """
-        import time
         start_time = time.time()
 
         # Importar pipeline_generator y simmoon_pipeline (soft import)

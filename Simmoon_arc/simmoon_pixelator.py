@@ -60,14 +60,15 @@ def _make_palette_image(palette_colors):
 
 
 def pixelate_image(input_path, output_path, game_res=64, colors=16,
-                   palettes=None, outline_strength=1.5, add_outlines=True):
+                   palettes=None, outline_strength=1.5, add_outlines=True,
+                   no_upscale=False):
     """
     Full pixel art conversion pipeline with RGBA support.
     
     1. Downsample to game resolution (nearest-neighbor)
     2. Quantize colors to retro palette
     3. Add 1px outlines (edge detection)
-    4. Upscale with nearest-neighbor
+    4. Upscale with nearest-neighbor (unless no_upscale=True)
     5. Preserve transparency
     """
     # Select palette
@@ -121,9 +122,13 @@ def pixelate_image(input_path, output_path, game_res=64, colors=16,
         pixel_art = _add_1px_outlines(pixel_art, outline_strength)
 
     # STEP 4: Upscale with nearest-neighbor (keeps hard pixel edges)
-    upscale = max(2, 512 // max(target_w, target_h))
-    final_size = (target_w * upscale, target_h * upscale)
-    final = pixel_art.resize(final_size, Image.NEAREST)
+    if no_upscale:
+        final_size = (target_w, target_h)
+        final = pixel_art
+    else:
+        upscale = max(2, 512 // max(target_w, target_h))
+        final_size = (target_w * upscale, target_h * upscale)
+        final = pixel_art.resize(final_size, Image.NEAREST)
 
     # Save
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -159,7 +164,7 @@ def _add_1px_outlines(img, strength=1.5):
 
 
 def process_directory(input_dir, output_dir, game_res=64, colors=16,
-                      outline_strength=1.5, suffix="_pixel"):
+                      outline_strength=1.5, suffix="_pixel", no_upscale=False):
     """Process all PNG images in a directory."""
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -178,7 +183,8 @@ def process_directory(input_dir, output_dir, game_res=64, colors=16,
         out_file = output_path / out_name
         try:
             pixelate_image(str(f), str(out_file), game_res=game_res,
-                          colors=colors, outline_strength=outline_strength)
+                          colors=colors, outline_strength=outline_strength,
+                          no_upscale=no_upscale)
             count += 1
             print(f"  [OK] {f.name} -> {out_name} ({game_res}x{game_res}px, {colors} colors)")
         except Exception as e:
@@ -203,6 +209,8 @@ def main():
                         help="Outline strength (0=none, 3=strong, default: 1.5)")
     parser.add_argument("--suffix", default="_pixel",
                         help="Output file suffix (default: _pixel)")
+    parser.add_argument("--no-upscale", action="store_true",
+                        help="Keep at game resolution (don't upscale to ~512px)")
     parser.add_argument("--list-palettes", action="store_true",
                         help="Show available color palettes")
 
@@ -220,12 +228,13 @@ def main():
         output_dir = args.output_dir or (input_dir.rstrip("/\\") + "_pixel")
         total = process_directory(input_dir, output_dir, game_res=args.game_res,
                                   colors=args.colors, outline_strength=args.outline,
-                                  suffix=args.suffix)
+                                  suffix=args.suffix, no_upscale=args.no_upscale)
         print(f"\nProcessed {total} images: {input_dir} -> {output_dir}")
 
     elif args.input and args.output:
         pixelate_image(args.input, args.output, game_res=args.game_res,
-                       colors=args.colors, outline_strength=args.outline)
+                       colors=args.colors, outline_strength=args.outline,
+                       no_upscale=args.no_upscale)
         print(f"[OK] {args.input} -> {args.output}")
 
     else:

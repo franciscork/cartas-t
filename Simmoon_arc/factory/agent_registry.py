@@ -381,6 +381,46 @@ class AgentRegistry:
             health_check_fn=lambda: _tmux_session_exists("agatha-actas"),
         ))
 
+        # ── Image Processing Agents ──
+        _gimp_path = None
+        _gimp_candidates = [
+            r"C:\Users\docus\AppData\Local\Programs\GIMP 3\bin\gimp-3.2.exe",
+            r"C:\Users\docus\AppData\Local\Programs\GIMP 3\bin\gimp-3.exe",
+            r"C:\Program Files\GIMP 3\bin\gimp-console-3.0.exe",
+            r"C:\Program Files\GIMP 2\bin\gimp-console-2.10.exe",
+        ]
+        for _p in _gimp_candidates:
+            if os.path.isfile(_p):
+                _gimp_path = _p
+                break
+        if not _gimp_path:
+            _gimp_path = shutil.which("gimp-3.2") or shutil.which("gimp") or ""
+
+        self.register(AgentCapability(
+            agent_type="image",
+            name="gimp",
+            endpoint=_gimp_path or "gimp",
+            capabilities=["post-process", "batch-edit", "palette", "scale", "border",
+                         "auto-contrast"],
+            priority=2,
+            description="🎨 GIMP — post-procesado de assets (contraste, paleta, borde)",
+            health_check_fn=lambda: bool(_gimp_path and os.path.isfile(_gimp_path)),
+        ))
+
+        _blender_path = r"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe"
+        if not os.path.isfile(_blender_path):
+            _blender_path = shutil.which("blender") or ""
+
+        self.register(AgentCapability(
+            agent_type="image",
+            name="blender",
+            endpoint=_blender_path or "blender",
+            capabilities=["3d-render", "model", "animate", "scene", "headless"],
+            priority=2,
+            description="🧊 Blender — renderizado 3D y modelado",
+            health_check_fn=lambda: bool(_blender_path and os.path.isfile(_blender_path)),
+        ))
+
         # ── Creative Specialist ──
         self.register(AgentCapability(
             agent_type="design",

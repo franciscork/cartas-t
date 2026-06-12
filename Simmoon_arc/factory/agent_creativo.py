@@ -41,7 +41,7 @@ Siempre da ideas ACCIONABLES, no genéricas. Piensa en "¿cómo se implementa es
 """
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-DEFAULT_MODEL = "qwen25-64k"
+DEFAULT_MODEL = "gemma3:latest"
 
 
 class CreativoJuegos:

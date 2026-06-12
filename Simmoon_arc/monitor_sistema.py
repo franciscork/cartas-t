@@ -308,9 +308,10 @@ def check_gpu(require_gpu: bool = True) -> dict:
 def check_ram() -> dict:
     """Check system RAM usage.
 
-    En WSL, consulta a Windows directamente vía PowerShell para obtener
-    la RAM real del host (ej. 32GB), ya que `free` dentro de WSL solo
-    reporta la asignación de WSL (~50% de la RAM total).
+    Estrategia:
+    1. Windows nativo: usa psutil.virtual_memory() (RAM real 32GB)
+    2. WSL: consulta a Windows via PowerShell (TotalVisibleMemorySize)
+    3. Fallback: free -b dentro de WSL (solo asignacion a WSL ~50%)
     """
     result = {
         "total_gb": 0,
@@ -319,6 +320,24 @@ def check_ram() -> dict:
         "available_gb": 0,
         "used_percent": 0,
     }
+
+    # ── Windows nativo: psutil da la RAM real del host ──
+    if sys.platform == "win32" and not _is_wsl():
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            total_gb = round(mem.total / (1024**3), 1)
+            used_gb = round(mem.used / (1024**3), 1)
+            available_gb = round(mem.available / (1024**3), 1)
+            free_gb = round(mem.free / (1024**3), 1)
+            result["total_gb"] = total_gb
+            result["used_gb"] = used_gb
+            result["free_gb"] = free_gb
+            result["available_gb"] = available_gb
+            result["used_percent"] = round(mem.percent, 1)
+            return result
+        except Exception:
+            pass
 
     # ── En WSL: consultar RAM real desde Windows ──
     # Usamos subprocess.run con lista (sin shell) para evitar que bash
