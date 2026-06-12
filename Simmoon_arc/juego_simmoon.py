@@ -4074,31 +4074,6 @@ class JuegoSimmoon:
 
         # ── Movimiento continuo de cámara con teclas ──
 
-        teclas = pygame.key.get_pressed()
-
-        if teclas[pygame.K_w] or teclas[pygame.K_UP]:
-
-            self.camara.mover(0, -1)
-
-        if teclas[pygame.K_s] or teclas[pygame.K_DOWN]:
-
-            self.camara.mover(0, 1)
-
-        if teclas[pygame.K_a] or teclas[pygame.K_LEFT]:
-
-            self.camara.mover(-1, 0)
-            if self.tutorial_activo and self.tutorial_paso == 1:
-                self.tutorial_wasd_hecho = True
-                self.tutorial_paso = 2
-
-        if teclas[pygame.K_d] or teclas[pygame.K_RIGHT]:
-
-            self.camara.mover(1, 0)
-            if self.tutorial_activo and self.tutorial_paso == 1:
-                self.tutorial_wasd_hecho = True
-                self.tutorial_paso = 2
-
-    
 
     def actualizar(self) -> None:
 

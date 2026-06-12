@@ -648,6 +648,82 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
 
 
+    # ── Personajes (characters) ──
+
+    "char_01": TipoEdificio("char_01", "Astronauta Trabajador", "characters",
+
+                            "char_01_astronaut_worker_pixel.png",
+
+                            costo=100, produce_energia=-1,
+
+                            mantenimiento=2, empleos=1,
+
+                            produce_felicidad=3,
+
+                            descripcion="Colono trabajador de la colonia lunar."),
+
+    "char_02": TipoEdificio("char_02", "Científico", "characters",
+
+                            "char_02_scientist_pixel.png",
+
+                            costo=150, produce_energia=-1,
+
+                            mantenimiento=2, empleos=2,
+
+                            produce_felicidad=4,
+
+                            descripcion="Investigador del laboratorio lunar."),
+
+    "char_03": TipoEdificio("char_03", "Guardia de Seguridad", "characters",
+
+                            "char_03_security_guard_pixel.png",
+
+                            costo=120, produce_energia=-1,
+
+                            mantenimiento=2, empleos=1,
+
+                            produce_felicidad=2,
+
+                            descripcion="Protege la colonia de amenazas."),
+
+    "char_04": TipoEdificio("char_04", "Minero", "characters",
+
+                            "char_04_miner_pixel.png",
+
+                            costo=130, produce_energia=-2,
+
+                            mantenimiento=3, empleos=1,
+
+                            produce_felicidad=2,
+
+                            descripcion="Excava recursos del regolito lunar."),
+
+    "char_05": TipoEdificio("char_05", "Oficial Médico", "characters",
+
+                            "char_05_medical_officer_pixel.png",
+
+                            costo=180, produce_energia=-2,
+
+                            mantenimiento=4, empleos=2,
+
+                            produce_felicidad=6,
+
+                            descripcion="Atiende la salud de los colonos."),
+
+    "char_06": TipoEdificio("char_06", "Piloto", "characters",
+
+                            "char_06_pilot_pixel.png",
+
+                            costo=160, produce_energia=-2,
+
+                            mantenimiento=3, empleos=2,
+
+                            produce_felicidad=4,
+
+                            descripcion="Pilota naves y lanzaderas lunares."),
+
+
+
     # ── Decoración (decorations) ──
 
     "dec_01": TipoEdificio("dec_01", "Formación Rocosa", "decorations",
@@ -790,6 +866,50 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
                           mantenimiento=5, empleos=2, ancho_tiles=2, alto_tiles=2,
 
                           descripcion="Árboles para terraformación. 2x2"),
+
+
+
+    # ── Flora Lunar (lunar_flora) ──
+
+    "flora_01": TipoEdificio("flora_01", "Hongo de Cristal", "lunar_flora",
+
+                             "flora_01_crystal_fungus_pixel.png",
+
+                             costo=30, mantenimiento=0,
+
+                             produce_oxigeno=1,
+
+                             descripcion="Hongo bioluminiscente que produce oxígeno."),
+
+    "flora_02": TipoEdificio("flora_02", "Musgo Lunar", "lunar_flora",
+
+                             "flora_02_lunar_moss_pixel.png",
+
+                             costo=20, mantenimiento=0,
+
+                             produce_oxigeno=2,
+
+                             descripcion="Alfombra de musgo adaptado al vacío."),
+
+    "flora_03": TipoEdificio("flora_03", "Planta Tubular", "lunar_flora",
+
+                             "flora_03_tube_plant_pixel.png",
+
+                             costo=40, mantenimiento=0,
+
+                             produce_oxigeno=1, produce_felicidad=2,
+
+                             descripcion="Planta alienígena de tallos huecos."),
+
+    "flora_04": TipoEdificio("flora_04", "Flor Luminiscente", "lunar_flora",
+
+                             "flora_04_glow_flower_pixel.png",
+
+                             costo=50, mantenimiento=0,
+
+                             produce_oxigeno=1, produce_felicidad=3,
+
+                             descripcion="Flor que brilla en la oscuridad lunar."),
 
 
 
@@ -1429,6 +1549,46 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
 
 
+    # ── Infraestructura (infrastructure) ──
+
+    "infra_01": TipoEdificio("infra_01", "Tubería de Presión", "infrastructure",
+
+                             "infra_01_pressure_pipe_pixel.png",
+
+                             costo=80, mantenimiento=0,
+
+                             produce_presion=2,
+
+                             descripcion="Mantiene la presión atmosférica."),
+
+    "infra_02": TipoEdificio("infra_02", "Cable Eléctrico", "infrastructure",
+
+                             "infra_02_power_cable_pixel.png",
+
+                             costo=60, mantenimiento=0,
+
+                             descripcion="Distribuye energía por la colonia."),
+
+    "infra_03": TipoEdificio("infra_03", "Tubería de Agua", "infrastructure",
+
+                             "infra_03_water_pipeline_pixel.png",
+
+                             costo=70, mantenimiento=0,
+
+                             produce_agua=1,
+
+                             descripcion="Conduce agua a los edificios."),
+
+    "infra_04": TipoEdificio("infra_04", "Tubo de Transporte", "infrastructure",
+
+                             "infra_04_transport_tube_pixel.png",
+
+                             costo=100, mantenimiento=0,
+
+                             descripcion="Cápsula de transporte neumático."),
+
+
+
     # ── Transporte (transport) ──
 
     "tra_01": TipoEdificio("tra_01", "Garaje de Rovers", "transport",
@@ -1579,6 +1739,10 @@ EDIFICIOS_PRIVADOS = {
     # Gobierno
 
     "gov_01", "gov_02",
+
+    # Personajes (privados — necesitan permiso del comisionado)
+
+    "char_01", "char_02", "char_03", "char_04", "char_05", "char_06",
 
     # Alojamiento (albergues)
 
