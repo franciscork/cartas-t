@@ -3706,7 +3706,6 @@ class JuegoSimmoon:
 
         elif self.mostrando_resumen:
 
-            self.mostrando_resumen = False
 
             if self.mostrando_permiso:
 
@@ -3762,114 +3761,113 @@ class JuegoSimmoon:
 
                             self.mostrando_permiso = False
 
-            if evento.type == pygame.QUIT:
+        if evento.type == pygame.QUIT:
+
+            self.ejecutando = False
+
+        # continue removed (not in loop)
+
+
+
+        # ── Salir ──
+
+        if evento.type == pygame.QUIT:
+
+            self.ejecutando = False
+
+        
+
+        elif evento.type == pygame.KEYDOWN:
+
+            if evento.key == pygame.K_ESCAPE:
 
                 self.ejecutando = False
 
-            # continue removed (not in loop)
+            elif evento.key == pygame.K_b:
 
+                # Alternar modo construir
 
+                self.modo_construir = not self.modo_construir
 
-            # ── Salir ──
+                self.modo_vender = False
+                if self.tutorial_activo and self.tutorial_paso == 6:
+                    self.tutorial_z_hecho = True
+                    self.tutorial_paso = 7
 
-            if evento.type == pygame.QUIT:
-
-                self.ejecutando = False
-
-            
-
-            elif evento.type == pygame.KEYDOWN:
-
-                if evento.key == pygame.K_ESCAPE:
-
-                    self.ejecutando = False
-
-                elif evento.key == pygame.K_b:
-
-                    # Alternar modo construir
-
-                    self.modo_construir = not self.modo_construir
-
-                    self.modo_vender = False
-                    if self.tutorial_activo and self.tutorial_paso == 6:
-                        self.tutorial_z_hecho = True
-                        self.tutorial_paso = 7
-
-                    if not self.modo_construir:
-
-                        self.edificio_seleccionado = None
-
-                elif evento.key == pygame.K_v:
-
-                    # Alternar modo vender
-
-                    self.modo_vender = not self.modo_vender
-
-                    self.modo_construir = False
+                if not self.modo_construir:
 
                     self.edificio_seleccionado = None
-                    if self.tutorial_activo and self.tutorial_paso == 3:
-                        self.tutorial_b_hecho = True
-                        self.tutorial_paso = 4
 
-                elif evento.key == pygame.K_h:
+            elif evento.key == pygame.K_v:
 
-                    # Alternar ayuda estatica (H)
+                # Alternar modo vender
 
-                    if self.tutorial_activo:
+                self.modo_vender = not self.modo_vender
 
-                        self.tutorial_activo = False
+                self.modo_construir = False
 
-                        self.mostrando_ayuda = True
+                self.edificio_seleccionado = None
+                if self.tutorial_activo and self.tutorial_paso == 3:
+                    self.tutorial_b_hecho = True
+                    self.tutorial_paso = 4
 
-                    else:
+            elif evento.key == pygame.K_h:
 
-                        self.mostrando_ayuda = not self.mostrando_ayuda
+                # Alternar ayuda estatica (H)
 
-                elif evento.key == pygame.K_SPACE:
+                if self.tutorial_activo:
 
-                    # Atajo: espacio = siguiente turno
+                    self.tutorial_activo = False
 
-                    if self.tutorial_activo and self.tutorial_paso == 0:
-                        self.tutorial_paso = 1
-                    elif self.tutorial_activo and self.tutorial_paso == 5:
-                        self.tutorial_espacio_hecho = True
-                        self.tutorial_paso = 6
-                    else:
-                        if not self.mostrando_resumen:
-                            self.procesar_siguiente_turno()
+                    self.mostrando_ayuda = True
 
+                else:
+
+                    self.mostrando_ayuda = not self.mostrando_ayuda
+
+            elif evento.key == pygame.K_SPACE:
+
+                # Atajo: espacio = siguiente turno
+
+                if self.tutorial_activo and self.tutorial_paso == 0:
+                    self.tutorial_paso = 1
+                elif self.tutorial_activo and self.tutorial_paso == 5:
+                    self.tutorial_espacio_hecho = True
+                    self.tutorial_paso = 6
+                else:
+                    if not self.mostrando_resumen:
                         self.procesar_siguiente_turno()
 
-                        SonidoProcedural.sonido_turno()
 
-                elif evento.key == pygame.K_f:
+                    SonidoProcedural.sonido_turno()
 
-                    # Alternar panel de finanzas
+            elif evento.key == pygame.K_f:
 
-                    self.mostrando_finanzas = not self.mostrando_finanzas
+                # Alternar panel de finanzas
 
-                elif evento.key == pygame.K_z:
+                self.mostrando_finanzas = not self.mostrando_finanzas
 
-                    # Alternar modo zonificar
+            elif evento.key == pygame.K_z:
 
-                    self.modo_zonificar = not self.modo_zonificar
+                # Alternar modo zonificar
 
-                    self.modo_construir = False
+                self.modo_zonificar = not self.modo_zonificar
 
-                    self.modo_vender = False
+                self.modo_construir = False
 
-                    self.edificio_seleccionado = None
+                self.modo_vender = False
 
-                    self.zona_seleccionada = None
+                self.edificio_seleccionado = None
 
-            
+                self.zona_seleccionada = None
 
-            elif evento.type == pygame.MOUSEBUTTONDOWN:
+        
 
-                self.mouse_click = True  # Marcar que hubo click
+        elif evento.type == pygame.MOUSEBUTTONDOWN:
 
-                grid_x, grid_y = self._obtener_tile_bajo_raton()
+            self.mouse_click = True  # Marcar que hubo click
+
+            grid_x, grid_y = self._obtener_tile_bajo_raton()
 
                 
 

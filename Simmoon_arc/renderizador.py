@@ -114,7 +114,13 @@ class Renderizador:
 
     def cargar_sprite(self, ruta_relativa: str, escala: Optional[Tuple[int, int]] = None) -> pygame.Surface:
 
-        """Carga un sprite desde el directorio de assets, con caché."""
+        """Carga un sprite desde el directorio de assets, con caché.
+
+        Prioriza versiones post-procesadas en postproc/ (auto-contraste, borde,
+
+        paleta indexada) si existen. Si no, cae al sprite original pixelado.
+
+        """
 
         clave = f"{ruta_relativa}_{escala}"
 
@@ -122,9 +128,19 @@ class Renderizador:
 
             return self.sprites_cache[clave]
 
-        
 
-        ruta = self.directorio_assets / ruta_relativa
+
+        # Intentar 1: sprite post-procesado (postproc/{stem}_processed.png)
+
+        ruta_original = self.directorio_assets / ruta_relativa
+
+        ruta_p = Path(ruta_relativa)
+
+        ruta_postproc = self.directorio_assets / ruta_p.parent / "postproc" / f"{ruta_p.stem}_processed.png"
+
+        ruta = ruta_postproc if ruta_postproc.exists() else ruta_original
+
+
 
         if ruta.exists():
 
@@ -551,13 +567,25 @@ class Renderizador:
 
             ("🛣️ Carreteras", "roads"),
 
+            ("👤 Personajes", "characters"),
+
             ("🎨 Decoración", "decorations"),
 
             ("🌱 Invernadero", "greenhouses"),
 
+            ("🌿 Flora Lunar", "lunar_flora"),
+
             ("🏗️ Edificios", "buildings_misc"),
 
+            ("🔧 Infraestructura", "infrastructure"),
+
             ("🏛️ Sitios", "lunar_sites"),
+
+            ("👤 Personajes", "characters"),
+
+            ("🌿 Flora Lunar", "lunar_flora"),
+
+            ("🔧 Infraestructura", "infrastructure"),
 
         ]
 
@@ -669,71 +697,82 @@ class Renderizador:
 
 
 
-        # Scroll: altura disponible para edificios
+        # ── Grid visual de edificios (3 columnas) ──
+        COLUMNAS = 3
+        CELDA_W = 96
+        CELDA_H = 96
+        GAP_X = 4
+        GAP_Y = 6
 
-        altura_disponible = pantalla.get_height() - y_offset - 75
+        total = len(edificios_categoria)
+        renderizados = 0
 
-        for tipo in edificios_categoria:
+        for i, tipo in enumerate(edificios_categoria):
+            fila = i // COLUMNAS
+            col = i % COLUMNAS
 
-            if y_offset > pantalla.get_height() - 80:
+            celda_x = margen + col * (CELDA_W + GAP_X)
+            celda_y = y_offset + fila * (CELDA_H + GAP_Y)
 
-                break  # No renderizar fuera del panel
+            # Si se sale del panel, cortar
+            if celda_y + CELDA_H > pantalla.get_height() - 60:
+                break
 
-            btn_rect = pygame.Rect(margen, y_offset, 298, 42)
+            renderizados += 1
+            rect_celda = pygame.Rect(celda_x, celda_y, CELDA_W, CELDA_H)
 
-
-
-            color_btn = _from_game('Config').COLOR_BOTON_SELECCIONADO if (edificio_seleccionado and edificio_seleccionado.id == tipo.id) else _from_game('Config').COLOR_BOTON
-
-            if btn_rect.collidepoint(mouse_rel_x, mouse_rel_y):
-
-                color_btn = _from_game('Config').COLOR_BOTON_HOVER
-
+            # Color de fondo
+            seleccionado = edificio_seleccionado and edificio_seleccionado.id == tipo.id
+            if seleccionado:
+                color_fondo = _from_game('Config').COLOR_BOTON_SELECCIONADO
+            elif rect_celda.collidepoint(mouse_rel_x, mouse_rel_y):
+                color_fondo = _from_game('Config').COLOR_BOTON_HOVER
                 if mouse_click:
-
                     edificio_clickeado = tipo.id
+            else:
+                color_fondo = _from_game('Config').COLOR_BOTON
 
+            pygame.draw.rect(pantalla, color_fondo, rect_celda, border_radius=6)
 
+            # Sprite 64x64 centrado
+            sprite = self.cargar_sprite(tipo.ruta_sprite, (64, 64))
+            sprite_x = celda_x + (CELDA_W - 64) // 2
+            sprite_y = celda_y + 4
+            pantalla.blit(sprite, (sprite_x, sprite_y))
 
-            pygame.draw.rect(pantalla, color_btn, btn_rect, border_radius=6)
+            # Nombre
+            nombre_mostrar = tipo.nombre if len(tipo.nombre) <= 14 else tipo.nombre[:13] + "…"
+            txt_nombre = self.fuente_pequenia.render(nombre_mostrar, True, _from_game('Config').COLOR_TEXTO)
+            txt_x = celda_x + (CELDA_W - txt_nombre.get_width()) // 2
+            pantalla.blit(txt_nombre, (txt_x, sprite_y + 64 + 2))
 
-
-
-            # Miniatura del sprite
-
-            sprite = self.cargar_sprite(tipo.ruta_sprite, (32, 32))
-
-            pantalla.blit(sprite, (margen + 4, y_offset + 5))
-
-
-
-            # Nombre y coste
-
-            txt_nombre = self.fuente_pequenia.render(tipo.nombre, True, _from_game('Config').COLOR_TEXTO)
-
-            pantalla.blit(txt_nombre, (margen + 42, y_offset + 2))
-
-
-
+            # Coste (mas estrellas si aplica)
             estrellas = votos.get(tipo.id, 0)
+            if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1:
+                info_cost = f"💰{tipo.costo} {tipo.ancho_tiles}x{tipo.alto_tiles}" if estrellas == 0 else f"💰{tipo.costo} {tipo.ancho_tiles}x{tipo.alto_tiles} ⭐{estrellas}"
+            else:
+                info_cost = f"💰{tipo.costo}" if estrellas == 0 else f"💰{tipo.costo} ⭐{estrellas}"
+            txt_coste = self.fuente_pequenia.render(info_cost, True, _from_game('Config').COLOR_TEXTO_AMARILLO)
+            coste_x = celda_x + (CELDA_W - txt_coste.get_width()) // 2
+            pantalla.blit(txt_coste, (coste_x, sprite_y + 64 + 18))
 
-            txt_info = self.fuente_pequenia.render(f"💰{tipo.costo} ⭐{estrellas} {tipo.ancho_tiles}x{tipo.alto_tiles}" if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1 else f"💰{tipo.costo} ⭐{estrellas}", True, _from_game('Config').COLOR_TEXTO_AMARILLO)
-
-            pantalla.blit(txt_info, (margen + 42, y_offset + 20))
-
-
-
-            # Etiqueta de público/privado
-
+            # Etiqueta privado (esquina superior derecha)
             if _from_game('es_edificio_privado')(tipo.id):
+                txt_priv = self.fuente_pequenia.render("📋", True, (255, 180, 50))
+                pantalla.blit(txt_priv, (celda_x + CELDA_W - 24, celda_y + 2))
 
-                txt_priv = self.fuente_pequenia.render("📋Privado", True, (255, 180, 50))
-
-                pantalla.blit(txt_priv, (margen + 230, y_offset + 20))
-
-
-
-            y_offset += 46
+        # ── Indicador de scroll si hay más ──
+        if renderizados < total and renderizados > 0:
+            restantes = total - renderizados
+            txt_mas = self.fuente_pequenia.render(f"▼ {restantes} mas...", True, _from_game('Config').COLOR_TEXTO_AMARILLO)
+            mas_x = margen + (300 - txt_mas.get_width()) // 2
+            ult_fila = (renderizados - 1) // COLUMNAS
+            mas_y = y_offset + (ult_fila + 1) * (CELDA_H + GAP_Y) + 4
+            pantalla.blit(txt_mas, (mas_x, mas_y))
+            y_offset = mas_y + 25
+        elif renderizados > 0:
+            total_filas = (total + COLUMNAS - 1) // COLUMNAS
+            y_offset += total_filas * (CELDA_H + GAP_Y) + 10
 
 
 
@@ -947,6 +986,10 @@ class Renderizador:
 
                         color = (180, 180, 180)  # Gris
 
+                    elif cat == "characters":
+
+                        color = (200, 180, 100)  # Dorado personajes
+
                     elif cat == "decorations":
 
                         color = (100, 180, 100)  # Verde claro
@@ -954,6 +997,10 @@ class Renderizador:
                     elif cat == "greenhouses":
 
                         color = (0, 220, 100)  # Verde
+
+                    elif cat == "lunar_flora":
+
+                        color = (100, 220, 100)  # Verde flora
 
                     elif cat == "buildings_misc":
 
@@ -975,6 +1022,10 @@ class Renderizador:
 
                         color = (180, 120, 50)  # Marrón industria
 
+                    elif cat == "infrastructure":
+
+                        color = (180, 180, 200)  # Gris claro infraestructura
+
                     elif cat == "transport":
 
                         color = (200, 180, 100)  # Ocre transporte
@@ -994,6 +1045,18 @@ class Renderizador:
                     elif cat == "lunar_sites":
 
                         color = (255, 100, 100)  # Rojo
+
+                    elif cat == "characters":
+
+                        color = (200, 180, 100)  # Dorado personajes
+
+                    elif cat == "lunar_flora":
+
+                        color = (100, 220, 100)  # Verde flora
+
+                    elif cat == "infrastructure":
+
+                        color = (180, 180, 200)  # Gris claro infraestructura
 
                 if edif and edif.x == gx and edif.y == gy:
 
