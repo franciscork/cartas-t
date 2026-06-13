@@ -21,7 +21,7 @@ req = urllib.request.Request(url, data=payload,
 try:
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read())
-        reply = data.get("message", {}).get("content", "Sin respuesta")
+        reply = data.get("response", data.get("message", {}).get("content", "Sin respuesta"))
         print("=" * 50)
         print("CLAUDE/Gemma3 ANALISIS DEL JUEGO:")
         print("=" * 50)
