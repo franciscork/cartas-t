@@ -13,3 +13,159 @@
 {"ts": "2026-06-13 12:26:06", "source": "Agatha Actas", "icon": "📋", "message": "Reporte periódico enviado · 6 agente(s) activo(s)"}
 {"ts": "2026-06-13 12:28:51", "source": "Agatha Actas", "icon": "📋", "message": "Reporte periódico enviado · 6 agente(s) activo(s)"}
 {"ts": "2026-06-13 12:29:20", "source": "Agatha Actas", "icon": "📋", "message": "Reporte periódico enviado · 6 agente(s) activo(s)"}
+{"ts": "2026-06-13 12:38:39", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:39", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:39", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:39", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Sistema iniciado"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Agentes registrados: 15"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "[Refactor X] start — Delegando a coding"}
+{"ts": "2026-06-13 12:38:45", "source": "claude-code", "icon": "✅", "message": "[task_456] done — coding (10.0s)"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "[Hola] start — Delegando a llm"}
+{"ts": "2026-06-13 12:38:45", "source": "ollama/model", "icon": "✅", "message": "[task_123] done — llm (1.5s)"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "[businesses] start — Delegando a pipeline"}
+{"ts": "2026-06-13 12:38:45", "source": "pipeline", "icon": "❌", "message": "[task_fail] failed — 1 cats en 1.0m | gen:0 pix:0 db:SKIP"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "[businesses vehicles] start — Delegando a pipeline"}
+{"ts": "2026-06-13 12:38:45", "source": "Pipeline", "icon": "✅", "message": "2 cats, 5.0m, gen:3 pix:2 db:OK"}
+{"ts": "2026-06-13 12:38:45", "source": "pipeline", "icon": "✅", "message": "[task_pipe_1] done — 2 cats en 5.0m | gen:3 pix:2 db:OK"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "[test] start — Delegando a unknown"}
+{"ts": "2026-06-13 12:38:45", "source": "unknown", "icon": "❌", "message": "[task_err] failed — unknown (0.0s)"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Memoria PostgreSQL conectada"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "ObsidianMemory activa — pipeline persistirá localmente"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando todos los servicios caídos..."}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperación: 1 OK, 1 fallidos"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando servicio: ollama"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "✅", "message": "ollama recuperado"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando servicio: nonexistent"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "No se pudo recuperar nonexistent"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "Sesión finalizada"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:45", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:51", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:51", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:38:57", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:38:57", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:04", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:04", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:10", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:10", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:16", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:16", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:22", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:22", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:40", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:40", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:40", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:40", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Sistema iniciado"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Agentes registrados: 15"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "[Refactor X] start — Delegando a coding"}
+{"ts": "2026-06-13 12:39:46", "source": "claude-code", "icon": "✅", "message": "[task_456] done — coding (10.0s)"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "[Hola] start — Delegando a llm"}
+{"ts": "2026-06-13 12:39:46", "source": "ollama/model", "icon": "✅", "message": "[task_123] done — llm (1.5s)"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "[businesses] start — Delegando a pipeline"}
+{"ts": "2026-06-13 12:39:46", "source": "pipeline", "icon": "❌", "message": "[task_fail] failed — 1 cats en 1.0m | gen:0 pix:0 db:SKIP"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "[businesses vehicles] start — Delegando a pipeline"}
+{"ts": "2026-06-13 12:39:46", "source": "Pipeline", "icon": "✅", "message": "2 cats, 5.0m, gen:3 pix:2 db:OK"}
+{"ts": "2026-06-13 12:39:46", "source": "pipeline", "icon": "✅", "message": "[task_pipe_1] done — 2 cats en 5.0m | gen:3 pix:2 db:OK"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "[test] start — Delegando a unknown"}
+{"ts": "2026-06-13 12:39:46", "source": "unknown", "icon": "❌", "message": "[task_err] failed — unknown (0.0s)"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Memoria PostgreSQL conectada"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "ObsidianMemory activa — pipeline persistirá localmente"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando todos los servicios caídos..."}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperación: 1 OK, 1 fallidos"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando servicio: ollama"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "✅", "message": "ollama recuperado"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Recuperando servicio: nonexistent"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "No se pudo recuperar nonexistent"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "Sesión finalizada"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:46", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:52", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:52", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:39:59", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:39:59", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:40:05", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:40:05", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:40:11", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:40:11", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:40:17", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:40:17", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
+{"ts": "2026-06-13 12:40:23", "source": "Orquestador", "icon": "ℹ️", "message": "PostgreSQL no disponible — usando persistencia local"}
+{"ts": "2026-06-13 12:40:23", "source": "Orquestador", "icon": "⚠️", "message": "ObsidianMemory no disponible"}
