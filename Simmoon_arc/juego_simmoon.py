@@ -2171,11 +2171,16 @@ class MercadoInterColonial:
             partes.append(f"{iconos[r]}{self.precios[r]:.0f}{self.tendencia(r)}")
         return " ".join(partes)
 
-    def renderizar(self, pantalla, renderizador, x: int, y: int):
-        """Renderiza el panel de mercado intercolonial."""
+    def renderizar(self, pantalla, renderizador, x: int, y: int,
+                   mouse_pos=None, mouse_click=False):
+        """Renderiza el panel de mercado intercolonial con botones comprar/vender.
+
+        Retorna (accion, recurso, cantidad) si se clickeo un boton,
+        o None si no hubo click.
+        """
         if not self.visible:
-            return
-        ancho, alto = 340, 260
+            return None
+        ancho, alto = 340, 300
         rect_p = pygame.Rect(x, y, ancho, alto)
         pygame.draw.rect(pantalla, (*Config.COLOR_PANEL, 245), rect_p, border_radius=10)
         pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect_p, 2, border_radius=10)
@@ -2188,14 +2193,50 @@ class MercadoInterColonial:
                    "agua": chr(0x1F4A7), "presion": chr(0x1F4A8)}
         nombres = {"energia": "Energia", "oxigeno": "Oxigeno",
                     "agua": "Agua", "presion": "Presion"}
+        mx, my = mouse_pos if mouse_pos else (0, 0)
+        accion = None
         for rec in ["energia", "oxigeno", "agua", "presion"]:
             precio = self.precios[rec]
             tend = self.tendencia(rec)
             color = Config.COLOR_TEXTO_VERDE if precio < self.base[rec] else (
                 Config.COLOR_TEXTO_ROJO if precio > self.base[rec] * 1.3 else Config.COLOR_TEXTO)
-            linea = f"{iconos[rec]} {nombres[rec]}: {precio:.1f} cred/u {tend}"
+            linea = f"{iconos[rec]} {nombres[rec]}: {precio:.1f} c/u {tend}"
             txt = r.fuente_pequenia.render(linea, True, color)
             pantalla.blit(txt, (x + 15, y_off))
+            # Botones comprar/vender (derecha)
+            btn_x = x + 210
+            # Boton vender (-5)
+            btn_v = pygame.Rect(btn_x, y_off, 28, 20)
+            c_v = Config.COLOR_BOTON_HOVER if btn_v.collidepoint(mx - x, my - y) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, c_v, btn_v, border_radius=4)
+            txt_v = r.fuente_pequenia.render("-5", True, Config.COLOR_TEXTO_ROJO)
+            pantalla.blit(txt_v, (btn_x + 3, y_off + 1))
+            if mouse_click and btn_v.collidepoint(mx - x, my - y):
+                accion = ("vender", rec, 5)
+            # Boton vender (-1)
+            btn_v1 = pygame.Rect(btn_x + 32, y_off, 24, 20)
+            c_v1 = Config.COLOR_BOTON_HOVER if btn_v1.collidepoint(mx - x, my - y) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, c_v1, btn_v1, border_radius=4)
+            txt_v1 = r.fuente_pequenia.render("-1", True, Config.COLOR_TEXTO_ROJO)
+            pantalla.blit(txt_v1, (btn_x + 34, y_off + 1))
+            if mouse_click and btn_v1.collidepoint(mx - x, my - y):
+                accion = ("vender", rec, 1)
+            # Boton comprar (+1)
+            btn_c1 = pygame.Rect(btn_x + 62, y_off, 24, 20)
+            c_c1 = Config.COLOR_BOTON_HOVER if btn_c1.collidepoint(mx - x, my - y) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, c_c1, btn_c1, border_radius=4)
+            txt_c1 = r.fuente_pequenia.render("+1", True, Config.COLOR_TEXTO_VERDE)
+            pantalla.blit(txt_c1, (btn_x + 63, y_off + 1))
+            if mouse_click and btn_c1.collidepoint(mx - x, my - y):
+                accion = ("comprar", rec, 1)
+            # Boton comprar (+5)
+            btn_c = pygame.Rect(btn_x + 90, y_off, 28, 20)
+            c_c = Config.COLOR_BOTON_HOVER if btn_c.collidepoint(mx - x, my - y) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, c_c, btn_c, border_radius=4)
+            txt_c = r.fuente_pequenia.render("+5", True, Config.COLOR_TEXTO_VERDE)
+            pantalla.blit(txt_c, (btn_x + 93, y_off + 1))
+            if mouse_click and btn_c.collidepoint(mx - x, my - y):
+                accion = ("comprar", rec, 5)
             y_off += 28
         if self.evento_activo:
             y_off += 5
@@ -2205,8 +2246,9 @@ class MercadoInterColonial:
             pantalla.blit(txt_ev, (x + 15, y_off))
             y_off += 24
         txt_info = r.fuente_pequenia.render(
-            "M: Ocultar | Click: comprar/vender", True, Config.COLOR_TEXTO)
+            "M: Ocultar | -vender +comprar", True, Config.COLOR_TEXTO)
         pantalla.blit(txt_info, (x + 15, y_off + 8))
+        return accion
 
 
 
@@ -4011,20 +4053,6 @@ class JuegoSimmoon:
 
                         self.mostrando_permiso = False
 
-        if evento.type == pygame.QUIT:
-
-            self.ejecutando = False
-
-        # continue removed (not in loop)
-
-
-
-        # ── Salir ──
-
-        if evento.type == pygame.QUIT:
-
-            self.ejecutando = False
-
 
 
         elif evento.type == pygame.KEYDOWN:
@@ -4956,10 +4984,26 @@ class JuegoSimmoon:
 
         # Mercado inter-colonial (M)
         if self.mercado_inter.visible:
-            self.mercado_inter.renderizar(
+            accion = self.mercado_inter.renderizar(
                 self.pantalla, self.renderizador,
                 x=10, y=50,
+                mouse_pos=pygame.mouse.get_pos(),
+                mouse_click=self.mouse_click,
             )
+            if accion and self.mouse_click:
+                acc, rec, cant = accion
+                if acc == "comprar":
+                    ok = self.mercado_inter.comprar(rec, cant, self.recursos)
+                    if ok:
+                        self._mostrar_mensaje(f"Mercado: +{cant} {rec} comprado")
+                    else:
+                        self._mostrar_mensaje(f"Mercado: creditos insuficientes")
+                elif acc == "vender":
+                    ok = self.mercado_inter.vender(rec, cant, self.recursos)
+                    if ok:
+                        self._mostrar_mensaje(f"Mercado: -{cant} {rec} vendido")
+                    else:
+                        self._mostrar_mensaje(f"Mercado: no hay suficiente {rec}")
 
 
         # ── Mensaje temporal ──
