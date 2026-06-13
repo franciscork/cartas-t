@@ -32,6 +32,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Cargar modulo compartido con la unica fuente de verdad para los 3 env vars
+$claudeEnvModule = Join-Path $PSScriptRoot "claude-env.ps1"
+if (-not (Test-Path $claudeEnvModule)) {
+    Write-Err "Falta modulo compartido: $claudeEnvModule"
+    Write-Err "Restaurarlo desde git: claude-env.ps1 debe estar junto a este script"
+    exit 1
+}
+. $claudeEnvModule
+
 function Write-Step { param([string]$T) Write-Host "" ; Write-Host $T -ForegroundColor Cyan }
 function Write-Ok    { param([string]$T) Write-Host "  $T" -ForegroundColor Green }
 function Write-Warn  { param([string]$T) Write-Host "  $T" -ForegroundColor Yellow }
@@ -73,15 +82,10 @@ if (-not $NoVerify) {
 }
 
 # ---------------------------------------------------------------------------
-# Paso 2/3: Exportar las 3 env vars de Claude Code
+# Paso 2/3: Exportar las 3 env vars de Claude Code (via modulo compartido)
 # ---------------------------------------------------------------------------
 Write-Step "2/3  Exportar env vars de Claude Code"
-$env:ANTHROPIC_BASE_URL    = "http://localhost:$OllamaPort"
-$env:ANTHROPIC_AUTH_TOKEN  = "ollama"
-$env:ANTHROPIC_API_KEY     = ""
-Write-Ok "ANTHROPIC_BASE_URL    = $env:ANTHROPIC_BASE_URL"
-Write-Ok "ANTHROPIC_AUTH_TOKEN  = $env:ANTHROPIC_AUTH_TOKEN"
-Write-Ok "ANTHROPIC_API_KEY     = (empty)"
+Set-ClaudeEnv -Port $OllamaPort -Quiet
 
 # ---------------------------------------------------------------------------
 # Paso 3/3: Invocar claude desde el directorio actual

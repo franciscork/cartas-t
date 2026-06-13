@@ -37,29 +37,20 @@ $ErrorActionPreference = "Stop"
 $Distro = "Ubuntu"
 $OllamaPort = 11434
 
+# Cargar modulo compartido con la unica fuente de verdad para los 3 env vars
+$claudeEnvModule = Join-Path $PSScriptRoot "claude-env.ps1"
+if (-not (Test-Path $claudeEnvModule)) {
+    Write-Color "  ❌ Falta modulo compartido: $claudeEnvModule" -Color Red
+    Write-Color "  Descargalo o restaurarlo desde git: claude-env.ps1 debe estar junto a este script" -Color Yellow
+    exit 1
+}
+. $claudeEnvModule
+
 function Write-Color { param([string]$T, [string]$C="White") Write-Host $T -ForegroundColor $C }
 function Test-Ollama { wsl -d $Distro -- bash -c "curl -sf --max-time 2 http://localhost:$OllamaPort/api/tags >/dev/null && echo YES || echo NO" 2>$null }
 
-# Exporta las 3 env vars para que Claude Code use Ollama como backend (API Anthropic en /v1/messages).
-# - Sesion actual: $env:ANTHROPIC_* (vive solo en este proceso de PowerShell).
-# - Persistente (con -Persistent): HKCU\Environment via [System.Environment]::SetEnvironmentVariable.
-function Set-ClaudeEnv {
-    param([bool]$MakePersistent = $false)
-    $env:ANTHROPIC_BASE_URL    = "http://localhost:$OllamaPort"
-    $env:ANTHROPIC_AUTH_TOKEN  = "ollama"
-    $env:ANTHROPIC_API_KEY     = ""
-    if ($MakePersistent) {
-        [System.Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL",   $env:ANTHROPIC_BASE_URL,   "User")
-        [System.Environment]::SetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN", $env:ANTHROPIC_AUTH_TOKEN, "User")
-        [System.Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY",    "",                       "User")
-        Write-Color "  🔒 Env vars persistidas en HKCU\Environment (sobreviven al cerrar PowerShell)" -Color Magenta
-    }
-    Write-Color "  🔧 Env vars exportadas para Claude Code:" -Color Green
-    Write-Color "     `$env:ANTHROPIC_BASE_URL    = '$env:ANTHROPIC_BASE_URL'" -Color Gray
-    Write-Color "     `$env:ANTHROPIC_AUTH_TOKEN  = '$env:ANTHROPIC_AUTH_TOKEN'" -Color Gray
-    Write-Color "     `$env:ANTHROPIC_API_KEY     = ''" -Color Gray
-    Write-Color "  💡 Ahora puedes ejecutar: claude" -Color Cyan
-}
+# NOTA: Set-ClaudeEnv ya NO se define aqui. Vive en claude-env.ps1 (DRY).
+# Los call sites abajo usan la version del modulo (parametros -Port / -Persistent / -Quiet).
 
 switch ($Action) {
     "start" {
@@ -81,7 +72,7 @@ switch ($Action) {
         $models = wsl -d $Distro -- bash -c "curl -sf http://localhost:$OllamaPort/api/tags | python3 -c \"import sys,json; d=json.load(sys.stdin); [print('    '+m['name']) for m in d.get('models',[])]\" 2>/dev/null"
         if ($models) { Write-Color "  Modelos:`n$models" -Color Cyan }
         # Auto-export env vars de Claude Code ahora que Ollama esta corriendo
-        Set-ClaudeEnv -MakePersistent $Persistent
+        Set-ClaudeEnv -Port $OllamaPort -Persistent:$Persistent
     }
     "stop" {
         Write-Color "🧠 Ollama — Deteniendo..." -Color Yellow
@@ -95,7 +86,7 @@ switch ($Action) {
             $models = wsl -d $Distro -- bash -c "curl -sf http://localhost:$OllamaPort/api/tags | python3 -c \"import sys,json; d=json.load(sys.stdin); [print('  • '+m['name']) for m in d.get('models',[])]\" 2>/dev/null" 2>$null
             if ($models) { Write-Color "  Modelos:`n$models" -Color Cyan }
             # Re-export env vars para que el usuario pueda correr 'claude' sin reconfigurar
-            Set-ClaudeEnv -MakePersistent $Persistent
+            Set-ClaudeEnv -Port $OllamaPort -Persistent:$Persistent
         } else {
             Write-Color "🧠 Ollama — INACTIVO" -Color Red
         }
