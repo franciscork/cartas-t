@@ -5561,8 +5561,12 @@ class JuegoSimmoon:
                     self.modo_sandbox = not self.modo_sandbox
                     if self.modo_sandbox:
                         self._activar_sandbox()
+                    self.misiones.agregar_toast(
+                        "🏖️ Modo Sandbox", "Créditos ilimitados activados", "🏖️")
                     else:
                         self._desactivar_sandbox()
+                    self.misiones.agregar_toast(
+                        "🔙 Modo Normal", "Límites restaurados", "🔙")
                 elif evento.key == pygame.K_g:
                     self.guardar_partida()
 
