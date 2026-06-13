@@ -45,6 +45,8 @@ npm install -g @anthropic-ai/claude-code
 
 **Bonus para WSL/Linux:** `launch_claude_ollama.sh` (misma lógica de 3 pasos con `set -euo pipefail`).
 
+> 🧩 **DRY:** Los 2 scripts de la tabla (`launch_ollama.ps1` y `launch_claude_ollama.ps1`) delegan en **`claude-env.ps1`** (módulo compartido) para mantener una sola fuente de verdad de los 3 env vars. Cambios futuros a esos valores se hacen en un solo lugar.
+
 Documentación detallada en [CLAUDE-CODE-OLLAMA.md](./CLAUDE-CODE-OLLAMA.md).
 
 ---
