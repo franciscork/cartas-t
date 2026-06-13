@@ -36,6 +36,7 @@ Controles:
 
   - V: modo vender
   - O: misiones y logros
+  - P: modo sandbox (sin limites)
 
 """
 
@@ -5920,8 +5921,17 @@ class JuegoSimmoon:
             "B:               Modo construir",
             "V:               Modo vender (click en edificio)",
             "Z:               Modo zonificar (pintar zonas)",
+            "R:               Flujo de Recursos (4 zonas x 5 recursos)",
+            "M:               Mercado Inter-Colonial",
+            "C:               Colonos Dinamicos",
+            "X:               Crisis Lunar",
+            "T:               Arbol de Tecnologia",
+            "O:               Misiones y Logros",
+            "P:               Modo Sandbox (sin limites)",
+            "F:               Panel de finanzas",
+            "G:               Guardar partida",
+            "L:               Cargar partida",
             "H:               Alternar esta ayuda",
-            "F:               Panel de finanzas (ultimos 10 turnos)",
             "Espacio:         Siguiente turno",
             "ESC:             Salir / cerrar ventana",
         ]
