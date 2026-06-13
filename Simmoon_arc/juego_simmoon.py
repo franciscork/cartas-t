@@ -3996,7 +3996,7 @@ class JuegoSimmoon:
 
 
 
-        elif self.mostrando_resumen:
+        if self.mostrando_resumen:
 
 
             if self.mostrando_permiso:
@@ -4055,11 +4055,13 @@ class JuegoSimmoon:
 
 
 
-        elif evento.type == pygame.KEYDOWN:
+        if evento.type == pygame.KEYDOWN:
 
             if evento.key == pygame.K_ESCAPE:
-
-                self.ejecutando = False
+                if self.tutorial_activo and self.tutorial_paso == 0:
+                    self.tutorial_paso = 1
+                else:
+                    self.ejecutando = False
 
             elif evento.key == pygame.K_b:
 
@@ -5060,7 +5062,7 @@ class JuegoSimmoon:
 
             self.renderizar_tutorial()
 
-        elif self.mostrando_ayuda:
+        if self.mostrando_ayuda:
 
             self.renderizar_ayuda_estatica()
 
