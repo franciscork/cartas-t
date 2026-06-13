@@ -3828,6 +3828,7 @@ class JuegoSimmoon:
 
         # ── Modo Sandbox (P para toggle) ──
         self.modo_sandbox = False
+        self._pre_sandbox_state = None  # Guarda estado pre-sandbox para restaurar
 
 
 
@@ -3965,6 +3966,11 @@ class JuegoSimmoon:
         data = {
             "version": 1,
             "sandbox": self.modo_sandbox,
+            "_pre_sandbox_state": (
+                {k: (list(v) if isinstance(v, set) else v)
+                 for k, v in self._pre_sandbox_state.items()}
+                if self._pre_sandbox_state is not None else None
+            ),
             "fecha": datetime.now().isoformat(),
             "recursos": {
                 "creditos": self.recursos.creditos,
@@ -4064,7 +4070,23 @@ class JuegoSimmoon:
 
         # ── Sandbox Mode ──
         self.modo_sandbox = estado.get("sandbox", False)
+        self._pre_sandbox_state = estado.get("_pre_sandbox_state", None)
+        if self._pre_sandbox_state:
+            for k in ("tecnologia_completadas", "tecnologia_desbloqueadas"):
+                if k in self._pre_sandbox_state and isinstance(self._pre_sandbox_state[k], list):
+                    self._pre_sandbox_state[k] = set(self._pre_sandbox_state[k])
         if self.modo_sandbox:
+            if self._pre_sandbox_state is not None:
+                # Pre-state ya cargado del save; aplicar sandbox sin sobrescribirlo
+                self.recursos.creditos = 999999
+                self.recursos.energia = self.recursos.energia_total = 9999
+                self.recursos.oxigeno = self.recursos.oxigeno_total = 9999
+                self.recursos.agua = self.recursos.agua_total = 9999
+                self.recursos.presion = self.recursos.presion_total = 9999
+                self.recursos.felicidad = 100
+                self.tecnologia.activar_todo_sandbox()
+            else:
+                self._activar_sandbox()
             self._activar_sandbox()
         self.recursos.felicidad = r["felicidad"]
         self.recursos.bono_produccion = r.get("bono_produccion", 1.0)
@@ -4412,6 +4434,62 @@ class JuegoSimmoon:
 
         self.recursos.turno += 1
 
+
+    def _activar_sandbox(self):
+        """Activa modo sandbox: guarda estado actual, creditos infinitos, todas las tecnologias."""
+        # Guardar estado pre-sandbox para poder restaurar al desactivar
+        self._pre_sandbox_state = {
+            "creditos": self.recursos.creditos,
+            "energia": self.recursos.energia,
+            "energia_total": self.recursos.energia_total,
+            "oxigeno": self.recursos.oxigeno,
+            "oxigeno_total": self.recursos.oxigeno_total,
+            "agua": self.recursos.agua,
+            "agua_total": self.recursos.agua_total,
+            "presion": self.recursos.presion,
+            "presion_total": self.recursos.presion_total,
+            "felicidad": self.recursos.felicidad,
+            "poblacion": self.recursos.poblacion,
+            "tecnologia_completadas": set(self.tecnologia.completadas),
+            "tecnologia_desbloqueadas": set(self.tecnologia.desbloqueadas),
+            "tecnologia_investigando": self.tecnologia.investigando,
+            "tecnologia_turnos_restantes": self.tecnologia.turnos_restantes,
+            "tecnologia_bonos_activos": dict(self.tecnologia.bonos_activos),
+        }
+        # Activar sandbox
+        self.recursos.creditos = 999999
+        self.recursos.energia = self.recursos.energia_total = 9999
+        self.recursos.oxigeno = self.recursos.oxigeno_total = 9999
+        self.recursos.agua = self.recursos.agua_total = 9999
+        self.recursos.presion = self.recursos.presion_total = 9999
+        self.recursos.felicidad = 100
+        self.tecnologia.activar_todo_sandbox()
+
+    def _desactivar_sandbox(self):
+        """Desactiva modo sandbox restaurando el estado previo guardado."""
+        if self._pre_sandbox_state is None:
+            return  # No hay estado previo que restaurar
+        pre = self._pre_sandbox_state
+        # Restaurar recursos
+        self.recursos.creditos = pre["creditos"]
+        self.recursos.energia = pre["energia"]
+        self.recursos.energia_total = pre["energia_total"]
+        self.recursos.oxigeno = pre["oxigeno"]
+        self.recursos.oxigeno_total = pre["oxigeno_total"]
+        self.recursos.agua = pre["agua"]
+        self.recursos.agua_total = pre["agua_total"]
+        self.recursos.presion = pre["presion"]
+        self.recursos.presion_total = pre["presion_total"]
+        self.recursos.felicidad = pre["felicidad"]
+        self.recursos.poblacion = pre.get("poblacion", self.recursos.poblacion)
+        # Restaurar tecnologias
+        self.tecnologia.completadas = pre["tecnologia_completadas"]
+        self.tecnologia.desbloqueadas = pre["tecnologia_desbloqueadas"]
+        self.tecnologia.investigando = pre["tecnologia_investigando"]
+        self.tecnologia.turnos_restantes = pre["tecnologia_turnos_restantes"]
+        self.tecnologia.bonos_activos = pre["tecnologia_bonos_activos"]
+        # Limpiar estado guardado
+        self._pre_sandbox_state = None
         # Sandbox: recursos nunca se agotan
         if self.modo_sandbox:
             self.recursos.creditos = 999999
@@ -5483,6 +5561,8 @@ class JuegoSimmoon:
                     self.modo_sandbox = not self.modo_sandbox
                     if self.modo_sandbox:
                         self._activar_sandbox()
+                    else:
+                        self._desactivar_sandbox()
                 elif evento.key == pygame.K_g:
                     self.guardar_partida()
 
