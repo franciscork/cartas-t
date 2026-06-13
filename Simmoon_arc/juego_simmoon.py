@@ -35,6 +35,7 @@ Controles:
   - B: modo construir
 
   - V: modo vender
+  - O: misiones y logros
 
 """
 
@@ -107,6 +108,7 @@ from renderizador import Renderizador# ─── Configuración ─────�
 from game_sound import SonidoProcedural
 
 
+from simmoon_mecanicas import GestorLogros
 @dataclass
 
 class Config:
@@ -1966,6 +1968,8 @@ class Recursos:
 
     def gastar(self, creditos: int = 0) -> bool:
 
+        if hasattr(self, "_juego") and self._juego and self._juego.modo_sandbox:
+            return True  # Sandbox: creditos ilimitados
         """Intenta gastar créditos. Retorna True si hay suficientes."""
 
         if self.creditos >= creditos:
@@ -3029,6 +3033,261 @@ class CrisisLunar:
 class CicloDiaNoche:
     """Sistema de ciclo dia/noche con efectos en energia solar, visibilidad y colonos."""
 
+# ═══════════════════════════════════════════════════════════════
+# 🎯 SISTEMA DE MISIONES Y LOGROS — Tecla O
+# ═══════════════════════════════════════════════════════════════
+
+class Mision:
+    """Mision activa individual con progreso y recompensa."""
+    __slots__ = ('id', 'tipo', 'objetivo', 'progreso', 'descripcion',
+                 'recompensa_tipo', 'recompensa_cant', 'completada')
+
+    def __init__(self, m_id, m_tipo, objetivo, desc, rec_tipo, rec_cant):
+        self.id = m_id
+        self.tipo = m_tipo
+        self.objetivo = objetivo
+        self.progreso = 0
+        self.descripcion = desc
+        self.recompensa_tipo = rec_tipo
+        self.recompensa_cant = rec_cant
+        self.completada = False
+
+
+class SistemaMisiones:
+    """Gestiona misiones progresivas, logros (GestorLogros) y notificaciones."""
+
+    def __init__(self, renderizador):
+        self.renderizador = renderizador
+        self.visible = False
+        self.gestor_logros = GestorLogros()
+        self.misiones_activas = []
+        self.misiones_completadas = 0
+        self.toasts = []
+        self._turnos_previos = 0
+        self.reponer_misiones()
+
+    def reponer_misiones(self):
+        while len(self.misiones_activas) < 3:
+            self._generar_mision()
+
+    def _generar_mision(self):
+        tipos = ['build_n', 'population_n', 'balance_all', 'happiness_n',
+                 'credits_n', 'survive_n', 'zone_n', 'tech_n', 'export_value']
+        tipo = random.choice(tipos)
+        escala = 1.0 + (self.misiones_completadas * 0.12)
+
+        if tipo == 'build_n':
+            obj = int(random.randint(4, 12) * escala)
+            desc = f'Construye {obj} edificios'
+        elif tipo == 'population_n':
+            obj = int(random.randint(15, 80) * escala)
+            desc = f'Alcanza {obj} de poblacion'
+        elif tipo == 'balance_all':
+            obj, desc = 1, 'Balance positivo en todos los recursos'
+        elif tipo == 'happiness_n':
+            obj = min(100, int(random.randint(55, 85)))
+            desc = f'Alcanza {obj}% de felicidad'
+        elif tipo == 'credits_n':
+            obj = int(random.randint(800, 4000) * escala)
+            desc = f'Acumula {obj} creditos'
+        elif tipo == 'survive_n':
+            obj = int(random.randint(8, 25))
+            desc = f'Sobrevive {obj} turnos'
+        elif tipo == 'zone_n':
+            obj = int(random.randint(15, 45) * escala)
+            desc = f'Zonifica {obj} tiles'
+        elif tipo == 'tech_n':
+            obj = int(random.randint(1, 3) * max(1, escala))
+            desc = f'Investiga {obj} tecnologias'
+        else:
+            obj = int(random.randint(400, 1500) * escala)
+            desc = f'Gana {obj}c en el mercado'
+
+        rec_tipo = random.choice(['creditos', 'poblacion', 'felicidad', 'edificio_gratis'])
+        if rec_tipo == 'creditos':
+            rec_cant = random.randint(100, 800)
+        elif rec_tipo == 'poblacion':
+            rec_cant = random.randint(5, 12)
+        elif rec_tipo == 'felicidad':
+            rec_cant = random.randint(5, 18)
+        else:
+            rec_cant = 1
+
+        m_id = f'm_{self.misiones_completadas}_{len(self.misiones_activas)}_{random.randint(1000,9999)}'
+        self.misiones_activas.append(Mision(m_id, tipo, obj, desc, rec_tipo, rec_cant))
+
+    def agregar_toast(self, titulo, mensaje, icono='\U0001F3C6'):
+        if len(self.toasts) >= 3:
+            self.toasts.pop(0)
+        self.toasts.append({'titulo': titulo, 'mensaje': mensaje, 'icono': icono,
+                            'timer': 180, 'y_offset': 40.0})
+
+    def actualizar(self, recursos, mapa, mercado, tecnologia, turno):
+        # Toast animations run in renderizar() for per-frame smoothness
+        # Evaluar logros
+        nuevos = self.gestor_logros.evaluar_logros(recursos, mapa, turno, 0)
+        for lg in nuevos:
+            self.agregar_toast('Logro Desbloqueado', lg.nombre, lg.icono)
+
+        # Evaluar misiones activas
+        turno_avanzo = (self._turnos_previos != turno)
+        self._turnos_previos = turno
+
+        try:
+            for m in self.misiones_activas:
+                if m.completada:
+                    continue
+                if m.tipo == 'build_n':
+                    m.progreso = len(mapa.edificios)
+                elif m.tipo == 'population_n':
+                    m.progreso = recursos.poblacion
+                elif m.tipo == 'balance_all':
+                    m.progreso = 1 if all([recursos.energia > 0, recursos.oxigeno > 0,
+                                           recursos.agua > 0, recursos.presion > 0]) else 0
+                elif m.tipo == 'happiness_n':
+                    m.progreso = recursos.felicidad
+                elif m.tipo == 'credits_n':
+                    m.progreso = recursos.creditos
+                elif m.tipo == 'survive_n':
+                    if turno_avanzo:
+                        m.progreso += 1
+                elif m.tipo == 'zone_n':
+                    m.progreso = len(mapa.tiles_zonificados())
+                elif m.tipo == 'tech_n':
+                    m.progreso = len(tecnologia.completadas) if tecnologia else 0
+                elif m.tipo == 'export_value':
+                    m.progreso += 5  # +5c per turn (export simulation)
+
+                if m.progreso >= m.objetivo:
+                    m.progreso = m.objetivo
+                    m.completada = True
+                    self.misiones_completadas += 1
+                    self._entregar_recompensa(m, recursos)
+
+        except Exception:
+            pass  # Mission evaluation error, skip this turn
+        self.misiones_activas = [m for m in self.misiones_activas if not m.completada]
+        self.reponer_misiones()
+
+    def _entregar_recompensa(self, m, recursos):
+        rec_str = ''
+        if m.recompensa_tipo == 'creditos':
+            recursos.creditos += m.recompensa_cant
+            rec_str = f'+{m.recompensa_cant}c'
+        elif m.recompensa_tipo == 'poblacion':
+            recursos.poblacion += m.recompensa_cant
+            rec_str = f'+{m.recompensa_cant} Pob'
+        elif m.recompensa_tipo == 'felicidad':
+            recursos.felicidad = min(100, recursos.felicidad + m.recompensa_cant)
+            rec_str = f'+{m.recompensa_cant} Fel'
+        elif m.recompensa_tipo == 'edificio_gratis':
+            b_id = random.choice(list(CATALOGO_EDIFICIOS.keys()))
+            recursos.creditos += CATALOGO_EDIFICIOS[b_id].costo
+            rec_str = f'Planos: {CATALOGO_EDIFICIOS[b_id].nombre}'
+        self.agregar_toast('\U0001F3AF Mision Completa!',
+                          f'{m.descripcion}  |  {rec_str}', '\u2705')
+
+    def renderizar(self, pantalla, recursos):
+
+        for t in self.toasts:
+            t['timer'] -= 1
+            if t['y_offset'] > 0:
+                t['y_offset'] -= max(0.3, t['y_offset'] * 0.08)
+        self.toasts = [t for t in self.toasts if t['timer'] > 0]
+        # === Toasts (parte superior central) ===
+        tx = Config.ANCHO_VENTANA // 2 - 140
+        for i, t in enumerate(self.toasts):
+            alpha = min(255, int((t['timer'] / 180.0) * 300))
+            if alpha <= 0:
+                continue
+            toast_s = pygame.Surface((280, 50), pygame.SRCALPHA)
+            pygame.draw.rect(toast_s, (*Config.COLOR_PANEL, min(255, alpha)),
+                            (0, 0, 280, 50), border_radius=8)
+            pygame.draw.rect(toast_s, (*Config.COLOR_PANEL_BORDE, min(255, alpha)),
+                            (0, 0, 280, 50), 2, border_radius=8)
+            tit = self.renderizador.fuente_pequenia.render(
+                f'{t["icono"]} {t["titulo"]}', True,
+                (*Config.COLOR_TEXTO_AMARILLO[:3], min(255, alpha)))
+            toast_s.blit(tit, (8, 6))
+            msg = self.renderizador.fuente_pequenia.render(
+                t['mensaje'], True,
+                (*Config.COLOR_TEXTO[:3], min(255, alpha)))
+            toast_s.blit(msg, (8, 26))
+            pantalla.blit(toast_s, (tx, int(60 - t['y_offset'] + i * 55)))
+
+        # === Panel Misiones (tecla O) ===
+        if not self.visible:
+            return
+        ancho, alto = 350, 440
+        x = Config.ANCHO_VENTANA - ancho - 15
+        y = 55
+        panel = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+        panel.fill((*Config.COLOR_PANEL, 245))
+        pantalla.blit(panel, (x, y))
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, (x, y, ancho, alto), 2, border_radius=10)
+
+        r = self.renderizador
+        head = r.fuente_mediana.render('\U0001F3AF Misiones y Logros', True, Config.COLOR_TEXTO_AMARILLO)
+        pantalla.blit(head, (x + 12, y + 12))
+        y_off = y + 50
+
+        # Misiones activas
+        sub = r.fuente_pequenia.render('\U0001F4CB Misiones Activas', True, Config.COLOR_TEXTO_VERDE)
+        pantalla.blit(sub, (x + 12, y_off))
+        y_off += 22
+
+        for m in self.misiones_activas:
+            nombre = r.fuente_pequenia.render(m.descripcion[:34], True, Config.COLOR_TEXTO)
+            pantalla.blit(nombre, (x + 14, y_off))
+            pct = min(1.0, m.progreso / max(1, m.objetivo))
+            bars = '\u2588' * int(pct * 10) + '\u2591' * (10 - int(pct * 10))
+            prog = r.fuente_pequenia.render(f'{bars} {int(pct*100)}%', True, Config.COLOR_TEXTO_VERDE)
+            pantalla.blit(prog, (x + 14, y_off + 18))
+            y_off += 40
+
+        y_off += 8
+        pygame.draw.line(pantalla, Config.COLOR_PANEL_BORDE, (x + 10, y_off), (x + ancho - 10, y_off))
+        y_off += 12
+
+        # Logros
+        desbloqueados = [l for l in self.gestor_logros.logros if l.desbloqueado]
+        sub2 = r.fuente_pequenia.render(
+            f'\U0001F3C6 Logros ({len(desbloqueados)}/{len(self.gestor_logros.logros)})',
+            True, Config.COLOR_TEXTO_VERDE)
+        pantalla.blit(sub2, (x + 12, y_off))
+        y_off += 22
+
+        for l in desbloqueados[-6:]:
+            txt = r.fuente_pequenia.render(f'{l.icono} {l.nombre}', True, Config.COLOR_TEXTO)
+            pantalla.blit(txt, (x + 14, y_off))
+            y_off += 20
+
+        if not desbloqueados:
+            tip = r.fuente_pequenia.render('   Ninguno aun... sigue jugando!', True, Config.COLOR_PANEL_BORDE)
+            pantalla.blit(tip, (x + 14, y_off))
+
+    def a_serializable(self):
+        return {
+            'misiones': [{'id': m.id, 'tipo': m.tipo, 'objetivo': m.objetivo,
+                          'progreso': m.progreso, 'descripcion': m.descripcion,
+                          'recompensa_tipo': m.recompensa_tipo,
+                          'recompensa_cant': m.recompensa_cant}
+                         for m in self.misiones_activas],
+            'logros': self.gestor_logros.a_serializable(),
+            'completadas': self.misiones_completadas,
+            'turnos_previos': self._turnos_previos,
+        }
+
+    def desde_serializable(self, datos):
+        self.misiones_activas = []
+        for d in datos.get('misiones', []):
+            m = Mision(d['id'], d['tipo'], d['objetivo'], d['descripcion'],
+                       d['recompensa_tipo'], d['recompensa_cant'])
+            m.progreso = d.get('progreso', 0)
+            self.misiones_activas.append(m)
+        self.gestor_logros.desde_serializable(datos.get('logros', []))
+        self.misiones_completadas = datos.get('completadas', 0)
+        self.reponer_misiones()
     def __init__(self, ancho: int, alto: int):
         self.turno_actual = 0
         self.es_de_noche = False
@@ -3240,6 +3499,18 @@ class ArbolTecnologia:
         if self.investigando is not None:
             return False
         return True
+
+
+    def activar_todo_sandbox(self):
+        """Desbloquea e investiga instantaneamente todas las tecnologias."""
+        # Marcar todas como investigadas
+        for tid in self.tecnologias:
+            self.completadas.add(tid)
+            for bid in self.tecnologias[tid].get('desbloquea', []):
+                self.desbloqueadas.add(bid)
+        self.investigando = None
+        self.turnos_restantes = 9999
+        self._recalcular_bonos()
 
     def investigar(self, tech_id: str, recursos) -> bool:
         tech = TECNOLOGIAS[tech_id]
@@ -3549,6 +3820,13 @@ class JuegoSimmoon:
         # Mercado inter-colonial
         self.mercado_inter = MercadoInterColonial()
         self.crisis_lunar = CrisisLunar()
+        self.crisis_lunar.tecnologia = self.tecnologia  # Referencia cruzada
+
+        # ── Sistema de Misiones y Logros (tecla O) ──
+        self.misiones = SistemaMisiones(self.renderizador)
+
+        # ── Modo Sandbox (P para toggle) ──
+        self.modo_sandbox = False
 
 
 
@@ -3685,6 +3963,7 @@ class JuegoSimmoon:
 
         data = {
             "version": 1,
+            "sandbox": self.modo_sandbox,
             "fecha": datetime.now().isoformat(),
             "recursos": {
                 "creditos": self.recursos.creditos,
@@ -3738,6 +4017,7 @@ class JuegoSimmoon:
             "ciclo": {
                 "turno_actual": self.ciclo.turno_actual,
             },
+                "misiones": self.misiones.a_serializable(),
         }
 
         with open(archivo, "w", encoding="utf-8") as f:
@@ -3780,6 +4060,11 @@ class JuegoSimmoon:
         self.recursos.presion_total = r["presion_total"]
         self.recursos.poblacion = r["poblacion"]
         self.recursos.turno = r["turno"]
+
+        # ── Sandbox Mode ──
+        self.modo_sandbox = estado.get("sandbox", False)
+        if self.modo_sandbox:
+            self._activar_sandbox()
         self.recursos.felicidad = r["felicidad"]
         self.recursos.bono_produccion = r.get("bono_produccion", 1.0)
 
@@ -3848,6 +4133,13 @@ class JuegoSimmoon:
         self.ciclo.turno_actual = cl.get("turno_actual", 0)
         self.ciclo.es_de_noche = self.ciclo.turno_actual >= 14
         self.ciclo.alpha_objetivo = 160.0 if self.ciclo.es_de_noche else 0.0
+
+        # ── Misiones y Logros ──
+        if "misiones" in estado:
+            try:
+                self.misiones.desde_serializable(estado["misiones"])
+            except Exception:
+                pass
 
         # Refiltrar catalogo
         self.catalogo = filtrar_catalogo_por_votos(self.votos) if self.votos else filtrar_catalogo_por_votos({})
@@ -4118,10 +4410,20 @@ class JuegoSimmoon:
         """Avanza un turno: producción, consumo, mantenimiento y crecimiento poblacional."""
 
         self.recursos.turno += 1
+
+        # Sandbox: recursos nunca se agotan
+        if self.modo_sandbox:
+            self.recursos.creditos = 999999
+            self.recursos.energia = self.recursos.energia_total = 9999
+            self.recursos.oxigeno = self.recursos.oxigeno_total = 9999
+            self.recursos.agua = self.recursos.agua_total = 9999
+            self.recursos.presion = self.recursos.presion_total = 9999
+            self.recursos.felicidad = 100
         self.ciclo.avanzar()
         self.tecnologia.actualizar(self.recursos, self.recursos.turno)
         self.mercado_inter.actualizar(self.recursos.turno)
         self.crisis_lunar.actualizar(self.recursos, self.sistema_colonos, self.mapa, self.recursos.turno)
+        self.misiones.actualizar(self.recursos, self.mapa, self.mercado_inter, self.tecnologia, self.recursos.turno)
         self.recursos.actualizar_balance(self.mapa.edificios, self.ciclo.es_de_noche)
 
 
@@ -5171,9 +5473,15 @@ class JuegoSimmoon:
                 elif evento.key == pygame.K_m:
                     self.mercado_inter.visible = not self.mercado_inter.visible
 
+                elif evento.key == pygame.K_o:
+                    self.misiones.visible = not self.misiones.visible
                 elif evento.key == pygame.K_t:
                     self.tecnologia.visible = not self.tecnologia.visible
 
+                elif evento.key == pygame.K_p:
+                    self.modo_sandbox = not self.modo_sandbox
+                    if self.modo_sandbox:
+                        self._activar_sandbox()
                 elif evento.key == pygame.K_g:
                     self.guardar_partida()
 
@@ -5674,6 +5982,13 @@ class JuegoSimmoon:
         self.renderizador.renderizar_mapa(self.pantalla, self.mapa, self.camara)
 
 
+        # ── Sandbox indicator ──
+        if self.modo_sandbox:
+            sbox = self.renderizador.fuente_mediana.render(
+                "🏖️ SANDBOX", True, (255, 200, 50))
+            self.pantalla.blit(sbox, (Config.ANCHO_VENTANA - 155, 12))
+
+
 
         # Renderizar cursor de zonificacion
 
@@ -5860,6 +6175,9 @@ class JuegoSimmoon:
             )
 
         # Mercado inter-colonial (M)
+
+        # Misiones y Logros (tecla O)
+        self.misiones.renderizar(self.pantalla, self.recursos)
         if self.mercado_inter.visible:
             accion = self.mercado_inter.renderizar(
                 self.pantalla, self.renderizador,
