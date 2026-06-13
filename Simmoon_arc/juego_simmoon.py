@@ -2804,6 +2804,193 @@ class Camara:
 
 
 
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💥 CRISIS LUNAR - Eventos catastroficos aleatorios
+# ═══════════════════════════════════════════════════════════════
+
+class CrisisLunar:
+    """Sistema de emergencias y catastrofes para la colonia lunar (tecla X)."""
+
+    def __init__(self):
+        self.visible = False
+        self.evento_activo = None
+        self.enfriamiento = 5
+        self.historial = []
+        self.particulas = []
+
+        self.TIPOS_EVENTOS = {
+            "meteorito": {"nombre": "Impacto de Meteorito", "emoji": "Meteorito", "severidades": 3, "color": (255, 80, 50)},
+            "tormenta_solar": {"nombre": "Tormenta Solar", "emoji": "Tormenta", "severidades": 3, "color": (255, 210, 80)},
+            "fuga_oxigeno": {"nombre": "Fuga de Oxigeno", "emoji": "Fuga", "severidades": 2, "color": (50, 180, 255)},
+            "plaga": {"nombre": "Plaga Botanica/Virica", "emoji": "Plaga", "severidades": 3, "color": (150, 50, 200)},
+            "motin": {"nombre": "Motin de Colonos", "emoji": "Motin", "severidades": 2, "color": (220, 40, 40)},
+            "fallo_reactor": {"nombre": "Fallo de Reactor", "emoji": "Reactor", "severidades": 3, "color": (50, 255, 50)},
+        }
+
+    def actualizar(self, recursos, sistema_colonos, mapa, turno):
+        """Actualiza el sistema de crisis cada turno."""
+        if self.evento_activo:
+            self.evento_activo["duracion"] -= 1
+            tipo = self.evento_activo["tipo"]
+            sev = self.evento_activo["severidad"]
+            if tipo == "tormenta_solar":
+                recursos.energia = int(recursos.energia * 0.5)
+            elif tipo == "fuga_oxigeno":
+                recursos.oxigeno -= 30 * sev
+            elif tipo == "fallo_reactor":
+                recursos.energia = int(recursos.energia * 0.2)
+            if self.evento_activo["duracion"] <= 0:
+                self.historial.insert(0, "Resuelto: " + self.evento_activo["mensaje"])
+                self.evento_activo = None
+                self.enfriamiento = random.randint(3, 5)
+            return
+
+        if self.enfriamiento > 0:
+            self.enfriamiento -= 1
+            return
+
+        probabilidad = 0.10 + (len(mapa.edificios) / 10.0) * 0.01
+        if random.random() < min(probabilidad, 0.35):
+            self._generar_evento(recursos, sistema_colonos, mapa)
+
+    def _generar_evento(self, recursos, sistema_colonos, mapa):
+        tipo_k = random.choice(list(self.TIPOS_EVENTOS.keys()))
+        info = self.TIPOS_EVENTOS[tipo_k]
+        severidad = random.randint(1, info["severidades"])
+        duracion = random.randint(1, 4)
+
+        self.evento_activo = {
+            "tipo": tipo_k, "severidad": severidad, "duracion": duracion,
+            "mensaje": f"{info['nombre']} Nivel {severidad}",
+            "zona_x": random.randint(0, mapa.tamanio - 1),
+            "zona_y": random.randint(0, mapa.tamanio - 1),
+            "costo": severidad * 400,
+        }
+        self.visible = True
+
+        if tipo_k == "meteorito":
+            recursos.oxigeno -= 20
+            if mapa.edificios:
+                objetivo = random.choice(mapa.edificios)
+                self.evento_activo["zona_x"] = objetivo.x
+                self.evento_activo["zona_y"] = objetivo.y
+                mapa.vender_edificio(objetivo.x, objetivo.y)
+        elif tipo_k == "plaga":
+            n = max(1, int(len(sistema_colonos.colonos) * 0.3))
+            for c in random.sample(sistema_colonos.colonos, n) if sistema_colonos.colonos else []:
+                c.salud = max(0, c.salud - 15)
+        elif tipo_k == "motin":
+            recursos.felicidad = max(0, recursos.felicidad - 20)
+            n = max(1, int(len(sistema_colonos.colonos) * 0.5))
+            if sistema_colonos.colonos:
+                for c in random.sample(sistema_colonos.colonos, min(n, len(sistema_colonos.colonos))):
+                    c.tarea_actual = "protestar"
+
+    def resolver(self, recursos):
+        if not self.evento_activo:
+            return False
+        coste = self.evento_activo.get("costo", 500)
+        if recursos.gastar(coste):
+            self.historial.insert(0, "Resuelto: " + self.evento_activo["mensaje"])
+            self.evento_activo = None
+            self.enfriamiento = 3
+            return True
+        return False
+
+    def renderizar(self, pantalla, renderizador, mouse_pos, mouse_click, recursos):
+        if not self.visible:
+            return
+        ancho, alto = 400, 250
+        x = (Config.ANCHO_VENTANA - ancho) // 2
+        y = (Config.ALTO_VENTANA - alto) // 2
+
+        if self.evento_activo:
+            fondo_color = (60, 10, 10)
+        else:
+            fondo_color = Config.COLOR_PANEL
+        rect = pygame.Rect(x, y, ancho, alto)
+        pygame.draw.rect(pantalla, (*fondo_color, 240), rect, border_radius=10)
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect, 2, border_radius=10)
+
+        r = renderizador
+        mx, my = mouse_pos
+
+        if self.evento_activo:
+            evt = self.evento_activo
+            info = self.TIPOS_EVENTOS[evt["tipo"]]
+            txt_tit = r.fuente_mediana.render("CRISIS LUNAR", True, Config.COLOR_TEXTO_ROJO)
+            pantalla.blit(txt_tit, (x + 20, y + 20))
+
+            txt_desc = r.fuente_pequenia.render(evt["mensaje"], True, info["color"])
+            pantalla.blit(txt_desc, (x + 20, y + 60))
+
+            txt_dur = r.fuente_pequenia.render("Duracion: " + str(evt["duracion"]) + " turnos", True, Config.COLOR_TEXTO)
+            pantalla.blit(txt_dur, (x + 20, y + 85))
+
+            # Boton Resolver
+            btn_res = pygame.Rect(x + 20, y + 180, 150, 40)
+            cbtn = Config.COLOR_BOTON_HOVER if btn_res.collidepoint(mx, my) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, cbtn, btn_res, border_radius=5)
+            txt_r = r.fuente_pequenia.render("Resolver C$" + str(evt["costo"]), True, Config.COLOR_TEXTO_VERDE)
+            pantalla.blit(txt_r, (x + 30, y + 190))
+
+            # Boton Ignorar
+            btn_ign = pygame.Rect(x + 230, y + 180, 150, 40)
+            cbtn_i = Config.COLOR_BOTON_HOVER if btn_ign.collidepoint(mx, my) else Config.COLOR_BOTON
+            pygame.draw.rect(pantalla, cbtn_i, btn_ign, border_radius=5)
+            txt_i = r.fuente_pequenia.render("Ignorar", True, Config.COLOR_TEXTO_ROJO)
+            pantalla.blit(txt_i, (x + 270, y + 190))
+
+            if mouse_click:
+                if btn_res.collidepoint(mx, my):
+                    self.resolver(recursos)
+                    self.visible = False
+                elif btn_ign.collidepoint(mx, my):
+                    self.visible = False
+        else:
+            txt_tit = r.fuente_mediana.render("Centro de Crisis (Historial)", True, Config.COLOR_TEXTO_AMARILLO)
+            pantalla.blit(txt_tit, (x + 20, y + 20))
+            y_off = y + 60
+            for h in self.historial[:5]:
+                txt_h = r.fuente_pequenia.render(h, True, Config.COLOR_TEXTO)
+                pantalla.blit(txt_h, (x + 20, y_off))
+                y_off += 25
+            if not self.historial:
+                txt_h = r.fuente_pequenia.render("Sin incidentes... por ahora.", True, Config.COLOR_TEXTO)
+                pantalla.blit(txt_h, (x + 20, y_off))
+
+        txt_x = r.fuente_pequenia.render("X: Cerrar panel", True, Config.COLOR_PANEL_BORDE)
+        pantalla.blit(txt_x, (x + 20, y + alto - 25))
+
+    def dibujar_en_mapa(self, pantalla, camara):
+        """Efectos visuales en el mapa."""
+        if not self.evento_activo:
+            return
+        tipo = self.evento_activo["tipo"]
+
+        if tipo == "tormenta_solar":
+            alpha = int((math.sin(pygame.time.get_ticks() * 0.005) + 1) * 30)
+            overlay = pygame.Surface((camara.ancho_ventana, camara.alto_ventana), pygame.SRCALPHA)
+            overlay.fill((255, 210, 80, alpha))
+            pantalla.blit(overlay, (0, 0))
+
+        x, y = self.evento_activo["zona_x"], self.evento_activo["zona_y"]
+        px, py = camara.iso_a_pantalla(x, y)
+        if 0 <= px <= camara.ancho_ventana and 0 <= py <= camara.alto_ventana:
+            color = self.TIPOS_EVENTOS[tipo]["color"]
+            if tipo == "meteorito":
+                pulse = int(abs(math.sin(pygame.time.get_ticks() * 0.01)) * 20 * camara.zoom)
+                pygame.draw.circle(pantalla, color, (int(px), int(py)), pulse, 2)
+            elif tipo == "fuga_oxigeno":
+                particle_y = int(py - (pygame.time.get_ticks() % 1000) / 20)
+                pygame.draw.circle(pantalla, color, (int(px), particle_y), 5, 2)
+            elif tipo == "plaga":
+                pygame.draw.circle(pantalla, color, (int(px), int(py)), int(8 * camara.zoom), 2)
+
+
+
 class JuegoSimmoon:
 
     """Motor principal del juego SIMMOON."""
@@ -2909,6 +3096,7 @@ class JuegoSimmoon:
         self.panel_flujo = PanelFlujoRecursos(self.renderizador)
         # Mercado inter-colonial
         self.mercado_inter = MercadoInterColonial()
+        self.crisis_lunar = CrisisLunar()
 
 
 
@@ -3265,6 +3453,7 @@ class JuegoSimmoon:
 
         self.recursos.turno += 1
         self.mercado_inter.actualizar(self.recursos.turno)
+        self.crisis_lunar.actualizar(self.recursos, self.sistema_colonos, self.mapa, self.recursos.turno)
 
         self.recursos.actualizar_balance(self.mapa.edificios)
 
@@ -4309,6 +4498,8 @@ class JuegoSimmoon:
                     self.zona_seleccionada = None
                     if self.tutorial_activo and self.tutorial_paso == 2:
                         self.tutorial_paso = 3
+                elif evento.key == pygame.K_x:
+                    self.crisis_lunar.visible = not self.crisis_lunar.visible
                 elif evento.key == pygame.K_c:
                     self.sistema_colonos.visible = not self.sistema_colonos.visible
                 elif evento.key == pygame.K_m:
@@ -5005,12 +5196,17 @@ class JuegoSimmoon:
                     else:
                         self._mostrar_mensaje(f"Mercado: no hay suficiente {rec}")
 
+        # Crisis panel (tecla X)
+        mx, my = pygame.mouse.get_pos()
+        self.crisis_lunar.renderizar(self.pantalla, self.renderizador, (mx, my), self.mouse_click, self.recursos)
+
         # Colonos panel (tecla C)
         if self.sistema_colonos.visible:
             self.sistema_colonos.renderizar(self.pantalla, self.renderizador)
 
         # Colonos en el mapa
         self.sistema_colonos.dibujar_en_mapa(self.pantalla, self.camara)
+        self.crisis_lunar.dibujar_en_mapa(self.pantalla, self.camara)
 
         # ── Mensaje temporal ──
 
