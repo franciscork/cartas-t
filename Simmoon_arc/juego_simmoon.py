@@ -1941,6 +1941,20 @@ class Recursos:
 
         self.agua = int(self.agua_total * self.bono_produccion)
         self.presion = int(self.presion_total * self.bono_produccion)
+        # Aplicar bonos del arbol de tecnologia
+        if hasattr(self, '_juego') and self._juego:
+            tech = self._juego.tecnologia
+            b = tech.bonos_activos
+            if b.get('energia_factor', 0) > 0:
+                self.energia = int(self.energia * (1 + b['energia_factor']))
+            if b.get('oxigeno_factor', 0) > 0:
+                self.oxigeno = int(self.oxigeno * (1 + b['oxigeno_factor']))
+            if b.get('agua_factor', 0) > 0:
+                self.agua = int(self.agua * (1 + b['agua_factor']))
+            if b.get('felicidad_factor', 0) > 0:
+                self.felicidad = min(100, int(self.felicidad * (1 + b['felicidad_factor'])))
+
+
 
 
     def gastar(self, creditos: int = 0) -> bool:
@@ -2822,6 +2836,7 @@ class CrisisLunar:
         self.enfriamiento = 5
         self.historial = []
         self.particulas = []
+        self.tecnologia = None  # Referencia al arbol (se asigna externamente)
 
         self.TIPOS_EVENTOS = {
             "meteorito": {"nombre": "Impacto de Meteorito", "emoji": "Meteorito", "severidades": 3, "color": (255, 80, 50)},
@@ -2839,7 +2854,8 @@ class CrisisLunar:
             tipo = self.evento_activo["tipo"]
             sev = self.evento_activo["severidad"]
             if tipo == "tormenta_solar":
-                recursos.energia = int(recursos.energia * 0.5)
+                factor = 0.75 if (self.tecnologia and self.tecnologia.bonos_activos.get('tormenta_proteccion')) else 0.5
+                recursos.energia = int(recursos.energia * factor)
             elif tipo == "fuga_oxigeno":
                 recursos.oxigeno -= 30 * sev
             elif tipo == "fallo_reactor":
@@ -2879,7 +2895,10 @@ class CrisisLunar:
                 objetivo = random.choice(mapa.edificios)
                 self.evento_activo["zona_x"] = objetivo.x
                 self.evento_activo["zona_y"] = objetivo.y
-                mapa.vender_edificio(objetivo.x, objetivo.y)
+                if not (self.tecnologia and self.tecnologia.bonos_activos.get('meteorito_inmune')):
+                    mapa.vender_edificio(objetivo.x, objetivo.y)
+                else:
+                    pass  # Protegido por Red de Refugios
         elif tipo_k == "plaga":
             n = max(1, int(len(sistema_colonos.colonos) * 0.3))
             for c in random.sample(sistema_colonos.colonos, n) if sistema_colonos.colonos else []:
@@ -3190,6 +3209,19 @@ class ArbolTecnologia:
         self.turnos_restantes: int = 0
         self.bonos_activos: dict = {}
 
+        # Edificios iniciales disponibles desde el turno 0
+        self.desbloqueadas = {
+            "sol_01", "sol_04", "sol_08",  # Energia basica
+            "biz_02", "biz_04", "biz_11",  # Negocios basicos
+            "hou_01", "hou_02",  # Alojamiento basico
+            "gh_01", "gh_03", "gh_06",  # Invernaderos basicos
+            "misc_01", "misc_04", "misc_06", "misc_08",  # Servicios basicos
+            "veh_01", "veh_07",  # Vehiculos basicos
+            "dec_01", "dec_02", "dec_03", "dec_04",  # Decoracion basica
+            "road_01", "road_02", "road_03", "road_04",  # Carreteras basicas
+            "life_01", "life_03",  # Soporte vital basico
+        }
+
     def esta_desbloqueada(self, tech_id: str) -> bool:
         return tech_id in self.completadas
 
@@ -3219,7 +3251,7 @@ class ArbolTecnologia:
             self.investigando = None
             self.turnos_restantes = 0
 
-    def completar_investigacion(self):
+    def completar_investigacion(self, recursos=None):
         if not self.investigando:
             return
         tech = TECNOLOGIAS[self.investigando]
@@ -3228,6 +3260,12 @@ class ArbolTecnologia:
         for bid in tech.get("desbloquea", []):
             self.desbloqueadas.add(bid)
         self._recalcular_bonos()
+        # Aplicar poblacion_extra una sola vez
+        if recursos and self.bonos_activos.get("poblacion_extra", 0) > 0:
+            recursos.poblacion += int(self.bonos_activos["poblacion_extra"])
+        # Aplicar poblacion_extra una sola vez
+        if self.bonos_activos.get("poblacion_extra", 0) > 0:
+            pass  # Se aplicara externamente via _juego
         self.investigando = None
         self.turnos_restantes = 0
 
@@ -3243,7 +3281,7 @@ class ArbolTecnologia:
         if self.investigando:
             self.turnos_restantes -= 1
             if self.turnos_restantes <= 0:
-                self.completar_investigacion()
+                self.completar_investigacion(recursos)
 
     def edificio_desbloqueado(self, edificio_id: str) -> bool:
         return edificio_id in self.desbloqueadas
@@ -3379,108 +3417,6 @@ class ArbolTecnologia:
 # 🔬 ÁRBOL DE TECNOLOGÍA — Investigación y desbloqueo de edificios
 # ═══════════════════════════════════════════════════════════════
 
-TECNOLOGIAS = {
-    # ── Energía ⚡ ──
-    "energia_1": {
-        "nombre": "Paneles Solares Avanzados", "rama": "energia", "tier": 1,
-        "costo": 800, "turnos": 3, "emoji": chr(0x26A1),
-        "descripcion": "Mejora la eficiencia solar +25%.",
-        "desbloquea": ["sol_02", "sol_08"],
-        "bono": {"energia_factor": 0.25},
-        "requiere": None,
-    },
-    "energia_2": {
-        "nombre": "Fusion Helio-3", "rama": "energia", "tier": 2,
-        "costo": 2500, "turnos": 5, "emoji": chr(0x2622) + chr(0xFE0F),
-        "descripcion": "Reactores de fusion avanzados.",
-        "desbloquea": ["sol_07", "site_07"],
-        "bono": {},
-        "requiere": "energia_1",
-    },
-    "energia_3": {
-        "nombre": "Energia de Fusion Total", "rama": "energia", "tier": 3,
-        "costo": 5000, "turnos": 8, "emoji": chr(0x1F30C),
-        "descripcion": "Planta de fusion para megacolonias.",
-        "desbloquea": ["sol_10", "site_11"],
-        "bono": {"energia_noche_factor": 0.5},
-        "requiere": "energia_2",
-    },
-    # ── Habitabilidad 🏠 ──
-    "hab_1": {
-        "nombre": "Sistemas de Soporte Vital", "rama": "habitabilidad", "tier": 1,
-        "costo": 600, "turnos": 2, "emoji": chr(0x1F3E0),
-        "descripcion": "Extraccion de agua y reciclaje de aire.",
-        "desbloquea": ["life_01", "life_03", "misc_02"],
-        "bono": {"oxigeno_factor": 0.10},
-        "requiere": None,
-    },
-    "hab_2": {
-        "nombre": "Agricultura Lunar Avanzada", "rama": "habitabilidad", "tier": 2,
-        "costo": 1800, "turnos": 4, "emoji": chr(0x1F331),
-        "descripcion": "Invernaderos masivos y acuaponia.",
-        "desbloquea": ["gh_02", "gh_05", "gh_07"],
-        "bono": {"agua_factor": 0.15},
-        "requiere": "hab_1",
-    },
-    "hab_3": {
-        "nombre": "Terraformacion Lunar", "rama": "habitabilidad", "tier": 3,
-        "costo": 4000, "turnos": 7, "emoji": chr(0x1F30D),
-        "descripcion": "Agricultura a escala planetaria.",
-        "desbloquea": ["site_06", "life_02", "site_08"],
-        "bono": {"felicidad_factor": 0.10, "poblacion_extra": 10},
-        "requiere": "hab_2",
-    },
-    # ── Industria 🏭 ──
-    "ind_1": {
-        "nombre": "Mineria Lunar Basica", "rama": "industria", "tier": 1,
-        "costo": 1000, "turnos": 3, "emoji": chr(0x26CF) + chr(0xFE0F),
-        "descripcion": "Excavacion y fundicion de regolito.",
-        "desbloquea": ["site_01", "ind_01", "veh_02"],
-        "bono": {},
-        "requiere": None,
-    },
-    "ind_2": {
-        "nombre": "Manufactura Avanzada 3D", "rama": "industria", "tier": 2,
-        "costo": 3000, "turnos": 5, "emoji": chr(0x1F3ED),
-        "descripcion": "Impresion 3D y exportacion.",
-        "desbloquea": ["ind_02", "ind_04", "ind_05"],
-        "bono": {"alquiler_factor": 0.20},
-        "requiere": "ind_1",
-    },
-    "ind_3": {
-        "nombre": "Economia Espacial", "rama": "industria", "tier": 3,
-        "costo": 6000, "turnos": 8, "emoji": chr(0x1F680),
-        "descripcion": "Puerto espacial y comercio interplanetario.",
-        "desbloquea": ["site_04", "site_05", "ind_03"],
-        "bono": {"ingreso_factor": 0.20},
-        "requiere": "ind_2",
-    },
-    # ── Defensa 🛡️ ──
-    "def_1": {
-        "nombre": "Blindaje y Presurizacion", "rama": "defensa", "tier": 1,
-        "costo": 700, "turnos": 2, "emoji": chr(0x1F6E1) + chr(0xFE0F),
-        "descripcion": "Proteccion basica contra emergencias.",
-        "desbloquea": ["rsk_01", "misc_10", "misc_11"],
-        "bono": {},
-        "requiere": None,
-    },
-    "def_2": {
-        "nombre": "Escudos de Radiacion", "rama": "defensa", "tier": 2,
-        "costo": 2000, "turnos": 4, "emoji": chr(0x1F300),
-        "descripcion": "Proteccion contra tormentas solares.",
-        "desbloquea": ["rsk_02", "civ_01"],
-        "bono": {"tormenta_proteccion": True},
-        "requiere": "def_1",
-    },
-    "def_3": {
-        "nombre": "Red de Refugios Subterraneos", "rama": "defensa", "tier": 3,
-        "costo": 4500, "turnos": 7, "emoji": chr(0x26F0) + chr(0xFE0F),
-        "descripcion": "Evacuacion y refugios anti-catastrofes.",
-        "desbloquea": ["rsk_03", "hou_04", "civ_02"],
-        "bono": {"meteorito_inmune": True},
-        "requiere": "def_2",
-    },
-}
 
 COLORES_RAMA = {
     "energia": (255, 210, 80),
@@ -3495,213 +3431,6 @@ ICONOS_RAMA = {
     "industria": chr(0x1F3ED),
     "defensa": chr(0x1F6E1) + chr(0xFE0F),
 }
-
-
-class ArbolTecnologia:
-    """Sistema de investigacion y desbloqueo progresivo de edificios (tecla T)."""
-
-    def __init__(self):
-        self.visible = False
-        self.completadas: set = set()
-        self.desbloqueadas: set = set()
-        self.investigando: Optional[str] = None
-        self.turnos_restantes: int = 0
-        self.bonos_activos: dict = {}
-
-    def esta_desbloqueada(self, tech_id: str) -> bool:
-        return tech_id in self.completadas
-
-    def puede_investigar(self, tech_id: str) -> bool:
-        tech = TECNOLOGIAS[tech_id]
-        req = tech.get("requiere")
-        if req and not self.esta_desbloqueada(req):
-            return False
-        if self.investigando is not None:
-            return False
-        return True
-
-    def investigar(self, tech_id: str, recursos) -> bool:
-        tech = TECNOLOGIAS[tech_id]
-        if not self.puede_investigar(tech_id):
-            return False
-        if not recursos.gastar(tech["costo"]):
-            return False
-        self.investigando = tech_id
-        self.turnos_restantes = tech["turnos"]
-        return True
-
-    def cancelar_investigacion(self, recursos):
-        if self.investigando:
-            tech = TECNOLOGIAS[self.investigando]
-            recursos.ingresar(tech["costo"] // 2)
-            self.investigando = None
-            self.turnos_restantes = 0
-
-    def completar_investigacion(self):
-        if not self.investigando:
-            return
-        tech = TECNOLOGIAS[self.investigando]
-        tid = self.investigando
-        self.completadas.add(tid)
-        for bid in tech.get("desbloquea", []):
-            self.desbloqueadas.add(bid)
-        self._recalcular_bonos()
-        self.investigando = None
-        self.turnos_restantes = 0
-
-    def _recalcular_bonos(self):
-        self.bonos_activos = {}
-        for tid in self.completadas:
-            for k, v in TECNOLOGIAS[tid].get("bono", {}).items():
-                if k not in self.bonos_activos:
-                    self.bonos_activos[k] = 0
-                self.bonos_activos[k] += v
-
-    def actualizar(self, recursos, turno):
-        if self.investigando:
-            self.turnos_restantes -= 1
-            if self.turnos_restantes <= 0:
-                self.completar_investigacion()
-
-    def edificio_desbloqueado(self, edificio_id: str) -> bool:
-        return edificio_id in self.desbloqueadas
-
-    def renderizar(self, pantalla, renderizador, mouse_pos, mouse_click, recursos):
-        if not self.visible:
-            return
-        ancho, alto = 580, 380
-        x = (Config.ANCHO_VENTANA - ancho) // 2
-        y = (Config.ALTO_VENTANA - alto) // 2
-
-        rect = pygame.Rect(x, y, ancho, alto)
-        pygame.draw.rect(pantalla, (*Config.COLOR_PANEL, 245), rect, border_radius=10)
-        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect, 2, border_radius=10)
-
-        r = renderizador
-        mx, my = mouse_pos
-
-        txt_tit = r.fuente_mediana.render(chr(0x1F52C) + " Arbol de Tecnologia", True, Config.COLOR_TEXTO_AMARILLO)
-        pantalla.blit(txt_tit, (x + 15, y + 10))
-
-        # ── Investigacion activa ──
-        if self.investigando:
-            tech = TECNOLOGIAS[self.investigando]
-            inv_y = y + 38
-            inv_txt = r.fuente_pequenia.render(
-                f"Investigando: {tech['emoji']} {tech['nombre']} ({self.turnos_restantes} turnos restantes)",
-                True, (100, 200, 255))
-            pantalla.blit(inv_txt, (x + 15, inv_y))
-
-            btn_cancel = pygame.Rect(x + 450, inv_y - 2, 110, 22)
-            c_c = Config.COLOR_BOTON_HOVER if btn_cancel.collidepoint(mx, my) else Config.COLOR_BOTON
-            pygame.draw.rect(pantalla, c_c, btn_cancel, border_radius=4)
-            ct = r.fuente_pequenia.render("Cancelar", True, Config.COLOR_TEXTO_ROJO)
-            pantalla.blit(ct, (x + 465, inv_y + 1))
-            if mouse_click and btn_cancel.collidepoint(mx, my):
-                self.cancelar_investigacion(recursos)
-
-        # ── 4 ramas en 4 columnas ──
-        columnas = ["energia", "habitabilidad", "industria", "defensa"]
-        col_w = 130
-        col_x_start = x + 15
-        col_y_start = y + 70
-
-        rama_nombres = {
-            "energia": "Energia", "habitabilidad": "Habitar",
-            "industria": "Industria", "defensa": "Defensa",
-        }
-
-        for ci, rama_id in enumerate(columnas):
-            cx = col_x_start + ci * col_w
-            cy = col_y_start
-
-            color = COLORES_RAMA[rama_id]
-            icono = ICONOS_RAMA[rama_id]
-
-            encabezado = f"{icono} {rama_nombres[rama_id]}"
-            txt_enc = r.fuente_pequenia.render(encabezado, True, color)
-            pantalla.blit(txt_enc, (cx, cy))
-
-            # Dibujar 3 tiers
-            for tier in range(1, 4):
-                tid = f"{rama_id}_{tier}"
-                if tid not in TECNOLOGIAS:
-                    continue
-                tech = TECNOLOGIAS[tid]
-                ty = cy + 22 + (tier - 1) * 72
-
-                # Linea conectora vertical
-                if tier > 1:
-                    lx = cx + 60
-                    pygame.draw.line(pantalla, color, (lx, ty - 10), (lx, ty), 1)
-
-                completada = self.esta_desbloqueada(tid)
-                investigando_esta = self.investigando == tid
-                req = tech.get("requiere")
-                req_cumplida = req is None or self.esta_desbloqueada(req)
-                puede = req_cumplida and not self.investigando and not completada
-
-                if completada:
-                    bg = (20, 60, 20)
-                elif investigando_esta:
-                    bg = (20, 40, 80)
-                elif puede:
-                    bg = Config.COLOR_BOTON
-                else:
-                    bg = (30, 30, 50)
-
-                btn = pygame.Rect(cx, ty, 122, 60)
-                hover = btn.collidepoint(mx, my)
-                if hover and puede:
-                    bg = Config.COLOR_BOTON_HOVER
-                pygame.draw.rect(pantalla, bg, btn, border_radius=5)
-                pygame.draw.rect(pantalla, color if completada else Config.COLOR_PANEL_BORDE, btn, 1, border_radius=5)
-
-                nombre = tech["nombre"][:14]
-                t1 = r.fuente_pequenia.render(f"{tech['emoji']} {nombre}", True,
-                    Config.COLOR_TEXTO_VERDE if completada else Config.COLOR_TEXTO)
-                pantalla.blit(t1, (cx + 4, ty + 3))
-
-                if completada:
-                    t2 = r.fuente_pequenia.render("COMPLETADO", True, (60, 180, 60))
-                elif investigando_esta:
-                    t2 = r.fuente_pequenia.render(f"{self.turnos_restantes}t rest", True, (100, 200, 255))
-                elif not req_cumplida:
-                    t2 = r.fuente_pequenia.render("Bloqueado", True, Config.COLOR_TEXTO_ROJO)
-                else:
-                    t2 = r.fuente_pequenia.render(f"C${tech['costo']} · {tech['turnos']}t", True, Config.COLOR_TEXTO)
-                pantalla.blit(t2, (cx + 4, ty + 22))
-
-                t3 = r.fuente_pequenia.render(tech["descripcion"][:22], True, Config.COLOR_PANEL_BORDE)
-                pantalla.blit(t3, (cx + 4, ty + 40))
-
-                if mouse_click and hover and puede:
-                    self.investigar(tid, recursos)
-
-        # ── Bonos activos ──
-        bonos_y = y + alto - 55
-        if self.bonos_activos:
-            partes = []
-            for k, v in self.bonos_activos.items():
-                partes.append(f"{k}: +{v*100:.0f}%")
-            txt_bonos = r.fuente_pequenia.render("Bonos: " + " | ".join(partes[:4]), True, Config.COLOR_TEXTO_VERDE)
-            pantalla.blit(txt_bonos, (x + 15, bonos_y))
-
-        # ── Pie ──
-        pie_txt = r.fuente_pequenia.render(
-            "T: Cerrar  |  " + str(len(self.completadas)) + "/12 tecnologias  |  " +
-            str(len(self.desbloqueadas)) + " edificios desbloqueados",
-            True, Config.COLOR_PANEL_BORDE)
-        pantalla.blit(pie_txt, (x + 15, y + alto - 28))
-
-
-
-
-
-
-
-
-
 
 
 class JuegoSimmoon:
@@ -3739,6 +3468,8 @@ class JuegoSimmoon:
         self.votos = votos or {}
 
         self.catalogo = filtrar_catalogo_por_votos(self.votos) if votos else filtrar_catalogo_por_votos({})
+        # Filtrar tambien por tecnologias desbloqueadas
+        self.catalogo = {k: v for k, v in self.catalogo.items() if self.tecnologia.edificio_desbloqueado(k) or not es_edificio_privado(k)}
 
 
 
@@ -3747,6 +3478,7 @@ class JuegoSimmoon:
         self.mapa = Mapa(Config.TAMANIO_GRID)
 
         self.recursos = Recursos()
+        self.recursos._juego = self  # Para acceder a tecnologia desde Recursos
 
         self.camara = Camara(Config.ANCHO_VENTANA, Config.ALTO_VENTANA)
 
@@ -3838,7 +3570,7 @@ class JuegoSimmoon:
 
         self.ciclo = CicloDiaNoche(Config.ANCHO_VENTANA, Config.ALTO_VENTANA)
         self.tecnologia = ArbolTecnologia()
-        self.tecnologia = ArbolTecnologia()
+        self.crisis_lunar.tecnologia = self.tecnologia
 
 
 
@@ -4166,7 +3898,6 @@ class JuegoSimmoon:
 
         self.recursos.turno += 1
         self.ciclo.avanzar()
-        self.tecnologia.actualizar(self.recursos, self.recursos.turno)
         self.tecnologia.actualizar(self.recursos, self.recursos.turno)
         self.mercado_inter.actualizar(self.recursos.turno)
         self.crisis_lunar.actualizar(self.recursos, self.sistema_colonos, self.mapa, self.recursos.turno)
