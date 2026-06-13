@@ -42,10 +42,23 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$MarkerStart = "# >>> claude-ollama-env (do not edit this line) <<<"
-$MarkerEnd   = "# <<< claude-ollama-env"
 $ProfilePath = $PROFILE.CurrentUserAllHosts
 $Utf8NoBom   = [System.Text.UTF8Encoding]::new($false)
+
+# Cargar modulo compartido (unica fuente de verdad para los 3 env vars + el bloque
+# de profile). Sin esto, los env vars se duplican aqui y en launch_ollama.ps1.
+$claudeEnvModule = Join-Path $PSScriptRoot "claude-env.ps1"
+if (-not (Test-Path $claudeEnvModule)) {
+    Write-Host "ERROR: no se encontro el modulo compartido:" -ForegroundColor Red
+    Write-Host "  $claudeEnvModule" -ForegroundColor Red
+    Write-Host "Este script debe estar junto a claude-env.ps1." -ForegroundColor Red
+    exit 1
+}
+. $claudeEnvModule
+
+# Usar los marcadores del modulo (NO redefinir localmente: DRY)
+$MarkerStart = $script:ClaudeEnvMarkerStart
+$MarkerEnd   = $script:ClaudeEnvMarkerEnd
 
 function Write-Step { param([string]$T) Write-Host "" ; Write-Host $T -ForegroundColor Cyan }
 function Write-Ok    { param([string]$T) Write-Host "  $T" -ForegroundColor Green }
@@ -69,24 +82,9 @@ if ($ListProfiles) {
 }
 
 # ---------------------------------------------------------------------------
-# Construir el bloque a insertar (here-string LITERAL @'...'@: cero interpolacion,
-# cero escapes, cero listas. El puerto se inyecta via .Replace despues).
+# Construir el bloque a insertar — delegado al modulo compartido (DRY).
+# Get-ClaudeEnvBlock encapsula el here-string + el placeholder del puerto.
 # ---------------------------------------------------------------------------
-function New-ClaudeEnvBlock {
-    param([int]$Port)
-    $block = @'
-
-# >>> claude-ollama-env (do not edit this line) <<<
-# Claude Code + Ollama backend (instalado por install-claude-ollama-env.ps1)
-# Ollama expone /v1/messages (formato Anthropic Messages API) desde v0.14.0 (ene-2026).
-# Para desinstalar: ejecuta este script con -Uninstall
-$env:ANTHROPIC_BASE_URL    = "http://localhost:__PORT__"
-$env:ANTHROPIC_AUTH_TOKEN  = "ollama"
-$env:ANTHROPIC_API_KEY     = ""
-# <<< claude-ollama-env
-'@
-    return $block.Replace('__PORT__', [string]$Port)
-}
 
 Write-Host "============================================" -ForegroundColor Magenta
 Write-Host " install-claude-ollama-env.ps1" -ForegroundColor Magenta
@@ -166,9 +164,9 @@ if (-not (Test-Path $profileDir)) {
 }
 
 # ---------------------------------------------------------------------------
-# 2) Construir el bloque nuevo
+# 2) Construir el bloque nuevo (delegado a Get-ClaudeEnvBlock en claude-env.ps1)
 # ---------------------------------------------------------------------------
-$newBlock = New-ClaudeEnvBlock -Port $OllamaPort
+$newBlock = Get-ClaudeEnvBlock -Port $OllamaPort
 $lineCount = ($newBlock -split "`n").Count
 Write-Step "Bloque a insertar ($lineCount lineas, $($newBlock.Length) chars)"
 
@@ -224,16 +222,12 @@ if ($newContent.Trim().Length -gt 0) {
 }
 
 # ---------------------------------------------------------------------------
-# 6) Aplicar env vars en la sesion actual (NO dot-source: re-ejecutaria
-#    side-effects del usuario como chcp, Set-Location, prompts, etc.)
+# 6) Aplicar env vars en la sesion actual (delegado a Set-ClaudeEnv en el
+#    modulo compartido). NO dot-source del profile: re-ejecutaria
+#    side-effects del usuario como chcp, Set-Location, prompts, etc.
 # ---------------------------------------------------------------------------
 Write-Step "Aplicando env vars en esta sesion..."
-$env:ANTHROPIC_BASE_URL    = "http://localhost:$OllamaPort"
-$env:ANTHROPIC_AUTH_TOKEN  = "ollama"
-$env:ANTHROPIC_API_KEY     = ""
-Write-Ok "ANTHROPIC_BASE_URL    = $env:ANTHROPIC_BASE_URL"
-Write-Ok "ANTHROPIC_AUTH_TOKEN  = $env:ANTHROPIC_AUTH_TOKEN"
-Write-Ok "ANTHROPIC_API_KEY     = (empty)"
+Set-ClaudeEnv -Port $OllamaPort
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green

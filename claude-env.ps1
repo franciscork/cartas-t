@@ -76,6 +76,40 @@ function Set-ClaudeEnv {
     }
 }
 
+# ---------------------------------------------------------------------------
+# Get-ClaudeEnvBlock: devuelve el bloque (string) que se persiste en $PROFILE.
+# Usado por install-claude-ollama-env.ps1 para tener UNA sola fuente de verdad
+# (los 3 env vars viven solo en Set-ClaudeEnv; este bloque los materializa).
+# Marcadores compartidos para deteccion idempotente en $PROFILE.
+# ---------------------------------------------------------------------------
+$script:ClaudeEnvMarkerStart = "# >>> claude-ollama-env (do not edit this line) <<<"
+$script:ClaudeEnvMarkerEnd   = "# <<< claude-ollama-env"
+
+function Get-ClaudeEnvBlock {
+    [CmdletBinding()]
+    param(
+        [int]$Port = $script:ClaudeEnvPort
+    )
+
+    # Literal here-string (cero interpolacion, cero escapes). El puerto se
+    # inyecta via .Replace. Esto evita fragilidad ante $ o ` futuros.
+    $block = @'
+
+CLAUDEENVBLOCK_MARKER_START
+# Claude Code + Ollama backend (instalado por install-claude-ollama-env.ps1)
+# Ollama expone /v1/messages (formato Anthropic Messages API) desde v0.14.0 (ene-2026).
+# Para desinstalar: ejecuta este script con -Uninstall
+$env:ANTHROPIC_BASE_URL    = "http://localhost:__PORT__"
+$env:ANTHROPIC_AUTH_TOKEN  = "ollama"
+$env:ANTHROPIC_API_KEY     = ""
+CLAUDEENVBLOCK_MARKER_END
+'@
+
+    $block = $block.Replace('CLAUDEENVBLOCK_MARKER_START', $script:ClaudeEnvMarkerStart)
+    $block = $block.Replace('CLAUDEENVBLOCK_MARKER_END',   $script:ClaudeEnvMarkerEnd)
+    return $block.Replace('__PORT__', [string]$Port)
+}
+
 if ($MyInvocation.InvocationName -ne '.' -and $Host.Name -eq 'ConsoleHost') {
     Write-Host "claude-env.ps1 cargado. Usar: Set-ClaudeEnv -Port <p> [-Persistent] [-Quiet]" -ForegroundColor Cyan
 }
