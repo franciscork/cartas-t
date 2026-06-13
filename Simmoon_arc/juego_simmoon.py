@@ -2041,6 +2041,175 @@ class PanelFlujoRecursos:
         pantalla.blit(txt_info, (x + 15, y_off + 10))
 
 
+
+
+# --- Mercado Inter-Colonial Lunar ---
+
+class MercadoInterColonial:
+    """Mercado de import/export entre colonias con precios fluctuantes.
+
+    Precios independientes del MercadoDinamico local. Fluctuan cada turno
+    con random walks y eventos globales. El jugador puede comprar/vender
+    recursos para equilibrar su economia.
+
+    Tecla 'M' para mostrar/ocultar el panel.
+    """
+
+    def __init__(self):
+        self.precios = {"energia": 4.0, "oxigeno": 6.0, "agua": 5.0, "presion": 3.0}
+        self.base = dict(self.precios)
+        self.visible = False
+        self.turno = 0
+        self.evento_activo = ""
+        self.evento_duracion = 0
+        self.historial = {r: [] for r in self.precios}
+        # Limites: evita precios absurdos
+        self.min_precio = {r: b * 0.2 for r, b in self.base.items()}
+        self.max_precio = {r: b * 5.0 for r, b in self.base.items()}
+
+    def actualizar(self, turno: int):
+        """Actualiza precios cada turno con random walk y eventos."""
+        self.turno = turno
+        # Random walk: cada recurso fluctua +-15%
+        for r in self.precios:
+            cambio = random.uniform(-0.15, 0.15) * self.base[r]
+            self.precios[r] += cambio
+            # Reversion a la media (10% hacia el precio base)
+            self.precios[r] += (self.base[r] - self.precios[r]) * 0.05
+
+        # Evento activo?
+        if self.evento_duracion > 0:
+            self.evento_duracion -= 1
+            if self.evento_duracion == 0:
+                self.evento_activo = ""
+
+        # Nuevo evento? (15% probabilidad, solo si no hay evento activo)
+        if not self.evento_activo and random.random() < 0.15:
+            self._generar_evento()
+
+        # Clampear precios
+        for r in self.precios:
+            self.precios[r] = round(
+                max(self.min_precio[r], min(self.max_precio[r], self.precios[r])), 1
+            )
+            self.historial[r].append(self.precios[r])
+            if len(self.historial[r]) > 20:
+                self.historial[r] = self.historial[r][-20:]
+
+    def _generar_evento(self):
+        """Genera un evento global que afecta los precios."""
+        eventos = [
+            ("Demanda terrestre de energia", "energia", 1.5, 3),
+            ("Crisis de oxigeno en Marte", "oxigeno", 1.8, 4),
+            ("Descubrimiento de acuifero lunar", "agua", 0.4, 5),
+            ("Embargo comercial intercolonial", "presion", 1.6, 3),
+            ("Auge del turismo espacial", "oxigeno", 1.4, 2),
+            ("Sobrestock de paneles solares", "energia", 0.5, 4),
+            ("Colapso de colonia vecina", "agua", 2.0, 3),
+            ("Nueva ruta comercial abierta", "presion", 0.6, 5),
+        ]
+        nombre, recurso, factor, duracion = random.choice(eventos)
+        self.precios[recurso] *= factor
+        self.evento_activo = f"{nombre} ({recurso} x{factor:.1f})"
+        self.evento_duracion = duracion
+
+    def comprar(self, recurso: str, cantidad: int, recursos) -> bool:
+        """Compra recursos del mercado intercolonial. Retorna True si exitoso."""
+        if recurso not in self.precios:
+            return False
+        coste = int(cantidad * self.precios[recurso])
+        if recursos.creditos >= coste:
+            recursos.creditos -= coste
+            if recurso == "energia":
+                recursos.energia_total += cantidad
+            elif recurso == "oxigeno":
+                recursos.oxigeno_total += cantidad
+            elif recurso == "agua":
+                recursos.agua_total += cantidad
+            elif recurso == "presion":
+                recursos.presion_total += cantidad
+            return True
+        return False
+
+    def vender(self, recurso: str, cantidad: int, recursos) -> bool:
+        """Vende recursos al mercado intercolonial. Retorna True si exitoso."""
+        if recurso not in self.precios:
+            return False
+        disponible = getattr(recursos, f"{recurso}_total", 0)
+        if disponible >= cantidad and cantidad > 0:
+            ingreso = int(cantidad * self.precios[recurso] * 0.8)
+            recursos.creditos += ingreso
+            if recurso == "energia":
+                recursos.energia_total -= cantidad
+            elif recurso == "oxigeno":
+                recursos.oxigeno_total -= cantidad
+            elif recurso == "agua":
+                recursos.agua_total -= cantidad
+            elif recurso == "presion":
+                recursos.presion_total -= cantidad
+            recursos.actualizar_balance([])
+            return True
+        return False
+
+    def tendencia(self, recurso: str) -> str:
+        """Flecha de tendencia de precios."""
+        h = self.historial.get(recurso, [])
+        if len(h) < 3:
+            return chr(0x27A1) + chr(0xFE0F)  # ->
+        if h[-1] > h[-3] * 1.02:
+            return chr(0x2B06) + chr(0xFE0F)  # up
+        if h[-1] < h[-3] * 0.98:
+            return chr(0x2B07) + chr(0xFE0F)  # down
+        return chr(0x27A1) + chr(0xFE0F)  # ->
+
+    def linea_indicador(self) -> str:
+        """Linea compacta para el panel."""
+        iconos = {"energia": chr(0x26A1), "oxigeno": chr(0x1FEC1),
+                   "agua": chr(0x1F4A7), "presion": chr(0x1F4A8)}
+        partes = ["Mercado Intercolonial:"]
+        for r in ["energia", "oxigeno", "agua", "presion"]:
+            partes.append(f"{iconos[r]}{self.precios[r]:.0f}{self.tendencia(r)}")
+        return " ".join(partes)
+
+    def renderizar(self, pantalla, renderizador, x: int, y: int):
+        """Renderiza el panel de mercado intercolonial."""
+        if not self.visible:
+            return
+        ancho, alto = 340, 260
+        rect_p = pygame.Rect(x, y, ancho, alto)
+        pygame.draw.rect(pantalla, (*Config.COLOR_PANEL, 245), rect_p, border_radius=10)
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect_p, 2, border_radius=10)
+        r = renderizador
+        titulo = chr(0x1F30D) + " Mercado Inter-Colonial"
+        txt_tit = r.fuente_mediana.render(titulo, True, Config.COLOR_TEXTO_AMARILLO)
+        pantalla.blit(txt_tit, (x + 15, y + 12))
+        y_off = y + 45
+        iconos = {"energia": chr(0x26A1), "oxigeno": chr(0x1FEC1),
+                   "agua": chr(0x1F4A7), "presion": chr(0x1F4A8)}
+        nombres = {"energia": "Energia", "oxigeno": "Oxigeno",
+                    "agua": "Agua", "presion": "Presion"}
+        for rec in ["energia", "oxigeno", "agua", "presion"]:
+            precio = self.precios[rec]
+            tend = self.tendencia(rec)
+            color = Config.COLOR_TEXTO_VERDE if precio < self.base[rec] else (
+                Config.COLOR_TEXTO_ROJO if precio > self.base[rec] * 1.3 else Config.COLOR_TEXTO)
+            linea = f"{iconos[rec]} {nombres[rec]}: {precio:.1f} cred/u {tend}"
+            txt = r.fuente_pequenia.render(linea, True, color)
+            pantalla.blit(txt, (x + 15, y_off))
+            y_off += 28
+        if self.evento_activo:
+            y_off += 5
+            txt_ev = r.fuente_pequenia.render(
+                f"Evento: {self.evento_activo} ({self.evento_duracion}t)",
+                True, Config.COLOR_TEXTO_AMARILLO)
+            pantalla.blit(txt_ev, (x + 15, y_off))
+            y_off += 24
+        txt_info = r.fuente_pequenia.render(
+            "M: Ocultar | Click: comprar/vender", True, Config.COLOR_TEXTO)
+        pantalla.blit(txt_info, (x + 15, y_off + 8))
+
+
+
 @dataclass
 
 class EdificioColocado:
@@ -2456,6 +2625,8 @@ class JuegoSimmoon:
 
         # Panel de flujo de recursos
         self.panel_flujo = PanelFlujoRecursos(self.renderizador)
+        # Mercado inter-colonial
+        self.mercado_inter = MercadoInterColonial()
 
 
 
@@ -2811,6 +2982,7 @@ class JuegoSimmoon:
         """Avanza un turno: producción, consumo, mantenimiento y crecimiento poblacional."""
 
         self.recursos.turno += 1
+        self.mercado_inter.actualizar(self.recursos.turno)
 
         self.recursos.actualizar_balance(self.mapa.edificios)
 
@@ -2953,62 +3125,59 @@ class JuegoSimmoon:
 
 
 
-        # 4. Auto-settlement: emprendedores ocupan terrenos zonificados
+        # 4. Auto-settlement: priorizar zonas segun deficits de recursos
+
+        # Calcular prioridad de cada zona basado en deficits criticos
+        prioridad = {z: 0 for z in CATALOGO_ZONAS}
+        if self.recursos.oxigeno_total < 15:
+            prioridad["ecologico"] += 3  # Invernaderos producen O2
+        if self.recursos.agua_total < 15:
+            prioridad["ecologico"] += 2  # Extractores producen agua
+        if self.recursos.felicidad < 40:
+            prioridad["comercial"] += 3   # Servicios y ocio aumentan felicidad
+        if self.recursos.energia_total > 15:
+            prioridad["industrial"] += 2  # Solo expandir industria si hay energia
+        if self.recursos.poblacion > empleos_totales * 0.8:
+            prioridad["comercial"] += 1
+            prioridad["alojamiento"] += 1
 
         asentamientos = 0
-
         asentamientos_nombres: List[str] = []
-
-        for zona_id, zona in CATALOGO_ZONAS.items():
-
+        zonas_ordenadas = sorted(CATALOGO_ZONAS.items(),
+                                 key=lambda x: prioridad.get(x[0], 0), reverse=True)
+        for zona_id, zona in zonas_ordenadas:
             tiles_libres = self.mapa.tiles_zonificados(zona_id)
-
             if not tiles_libres:
-
                 continue
-
             candidatos = edificios_para_zona(zona_id)
-
             if not candidatos:
-
                 continue
-
             max_asentamientos = min(2, len(tiles_libres) // 3 + 1)
-
-            intentos = random.randint(0, max_asentamientos)
+            score = prioridad.get(zona_id, 0)
+            if score >= 3:
+                intentos = max_asentamientos  # Prioridad alta: max intentos
+            elif score >= 1:
+                intentos = random.randint(1, max_asentamientos)
+            else:
+                intentos = random.randint(0, max_asentamientos)  # Sin deficit: aleatorio
 
             if asentamientos >= 5:
-
                 break
 
             for _ in range(intentos):
-
                 if not tiles_libres:
-
                     break
-
                 gx, gy = random.choice(tiles_libres)
-
                 tiles_libres.remove((gx, gy))
-
                 aid = random.choice(candidatos)
-
                 tipo = CATALOGO_EDIFICIOS[aid]
-
                 if self.mapa.tile_valido(gx, gy, tipo.ancho_tiles, tipo.alto_tiles):
-
                     sprite = self.renderizador.cargar_sprite(tipo.ruta_sprite, (64, 64))
-
                     if self.mapa.colocar_edificio(gx, gy, tipo, sprite):
-
                         prima = random.randint(zona.prima_min, zona.prima_max)
-
                         primas_turno += prima
-
                         asentamientos += 1
-
                         asentamientos_nombres.append(f"{zona.icono} {tipo.nombre} (+{prima}💰)")
-
                         tiles_libres = self.mapa.tiles_zonificados(zona_id)
 
 
@@ -3957,6 +4126,11 @@ class JuegoSimmoon:
                 if self.panel_flujo.visible:
                     self.panel_flujo.frames = 29
 
+            elif evento.key == pygame.K_m:
+
+                # Alternar mercado inter-colonial
+                self.mercado_inter.visible = not self.mercado_inter.visible
+
             elif evento.key == pygame.K_z:
 
                 # Alternar modo zonificar
@@ -4778,6 +4952,13 @@ class JuegoSimmoon:
                 self.pantalla,
                 x=10, y=self.pantalla.get_height() // 2 - 120,
                 ancho=310, alto=230,
+            )
+
+        # Mercado inter-colonial (M)
+        if self.mercado_inter.visible:
+            self.mercado_inter.renderizar(
+                self.pantalla, self.renderizador,
+                x=10, y=50,
             )
 
 
