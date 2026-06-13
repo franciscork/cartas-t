@@ -1961,6 +1961,85 @@ class Recursos:
         self.creditos += creditos
 
 
+# --- Panel de Flujo de Recursos ---
+
+class PanelFlujoRecursos:
+    def __init__(self, renderizador):
+        self.renderizador = renderizador
+        self.visible = False
+        self.frames = 0
+        self.recursos_nombres = ["energia", "oxigeno", "agua", "presion", "felicidad"]
+        self.iconos = {
+            "energia": chr(0x26A1), "oxigeno": chr(0x1FEC1),
+            "agua": chr(0x1F4A7), "presion": chr(0x1F4A8),
+            "felicidad": chr(0x1F60A),
+        }
+        self.datos = {}
+
+    def actualizar(self, mapa) -> None:
+        self.frames += 1
+        if self.frames % 30 != 0:
+            return
+        self.datos = {
+            z: {r: 0 for r in self.recursos_nombres}
+            for z in list(CATALOGO_ZONAS.keys()) + ["sin_zona"]
+        }
+        for edif in mapa.edificios:
+            if not edif.activo:
+                continue
+            zona_str = mapa.zonas[edif.y][edif.x] if (
+                0 <= edif.y < len(mapa.zonas)
+                and 0 <= edif.x < len(mapa.zonas[0])
+            ) else None
+            z_id = zona_str if zona_str in self.datos else "sin_zona"
+            self.datos[z_id]["energia"] += edif.tipo.produce_energia
+            self.datos[z_id]["oxigeno"] += edif.tipo.produce_oxigeno
+            self.datos[z_id]["agua"] += edif.tipo.produce_agua
+            self.datos[z_id]["presion"] += edif.tipo.produce_presion
+            self.datos[z_id]["felicidad"] += edif.tipo.produce_felicidad
+
+    def renderizar(self, pantalla, x, y, ancho, alto):
+        if not self.visible:
+            return
+        pulse = (math.sin(self.frames * 0.15) + 1) / 2
+        rect_p = pygame.Rect(x, y, ancho, alto)
+        pygame.draw.rect(pantalla, (*Config.COLOR_PANEL, 245), rect_p, border_radius=10)
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect_p, 2, border_radius=10)
+        r = self.renderizador
+        titulo = chr(0x1F4CA) + " Flujo de Recursos"
+        txt_tit = r.fuente_mediana.render(titulo, True, Config.COLOR_TEXTO_AMARILLO)
+        pantalla.blit(txt_tit, (x + 15, y + 12))
+        y_off = y + 45
+        col_w = 42
+        xs = x + 80
+        for i, res in enumerate(self.recursos_nombres):
+            txt_col = r.fuente_pequenia.render(self.iconos[res], True, Config.COLOR_TEXTO)
+            pantalla.blit(txt_col, (xs + i * col_w, y_off))
+        y_off += 25
+        pygame.draw.line(pantalla, Config.COLOR_PANEL_BORDE, (x + 10, y_off), (x + ancho - 10, y_off))
+        y_off += 8
+        for z_id in list(CATALOGO_ZONAS.keys()) + ["sin_zona"]:
+            if not self.datos:
+                break
+            nombre_zona = CATALOGO_ZONAS[z_id].nombre.upper() if z_id in CATALOGO_ZONAS else "SIN ZONA"
+            txt_z = r.fuente_pequenia.render(nombre_zona[:9], True, Config.COLOR_TEXTO)
+            pantalla.blit(txt_z, (x + 12, y_off))
+            for i, res in enumerate(self.recursos_nombres):
+                val = self.datos.get(z_id, {}).get(res, 0)
+                color = Config.COLOR_TEXTO
+                if val > 0:
+                    color = Config.COLOR_TEXTO_VERDE
+                elif val < 0:
+                    color = (min(255, 180 + int(75 * pulse)), 50, 50)
+                txt_val = r.fuente_pequenia.render(f"{val:+d}" if val != 0 else "0", True, color)
+                pantalla.blit(txt_val, (xs + i * col_w, y_off))
+                if val <= -10:
+                    warn = r.fuente_pequenia.render(chr(0x26A0) + chr(0xFE0F), True, (255, 200, 0))
+                    pantalla.blit(warn, (xs + i * col_w - 18, y_off - 2))
+            y_off += 22
+        txt_info = r.fuente_pequenia.render("R: Ocultar panel", True, Config.COLOR_TEXTO)
+        pantalla.blit(txt_info, (x + 15, y_off + 10))
+
 
 @dataclass
 
@@ -2375,6 +2454,8 @@ class JuegoSimmoon:
 
         self.mostrando_info_zona = False
 
+        # Panel de flujo de recursos
+        self.panel_flujo = PanelFlujoRecursos(self.renderizador)
 
 
 
@@ -3868,6 +3949,14 @@ class JuegoSimmoon:
 
                 self.mostrando_finanzas = not self.mostrando_finanzas
 
+            elif evento.key == pygame.K_r:
+
+                # Alternar panel de flujo de recursos
+
+                self.panel_flujo.visible = not self.panel_flujo.visible
+                if self.panel_flujo.visible:
+                    self.panel_flujo.frames = 29
+
             elif evento.key == pygame.K_z:
 
                 # Alternar modo zonificar
@@ -4683,6 +4772,13 @@ class JuegoSimmoon:
 
             self.renderizar_panel_finanzas()
 
+        # Panel de flujo (R)
+        if self.panel_flujo.visible:
+            self.panel_flujo.renderizar(
+                self.pantalla,
+                x=10, y=self.pantalla.get_height() // 2 - 120,
+                ancho=310, alto=230,
+            )
 
 
         # ── Mensaje temporal ──
@@ -4759,6 +4855,7 @@ class JuegoSimmoon:
             self.manejar_eventos()
 
             self.actualizar()
+            self.panel_flujo.actualizar(self.mapa)
 
             self.renderizar()
 
