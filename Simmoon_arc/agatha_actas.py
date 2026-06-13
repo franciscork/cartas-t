@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -48,6 +48,48 @@ except ImportError as e:
     _MONITOR_OK = False
     _MONITOR_ERR = str(e)
 
+# ── Single source of truth: shared_services_agents.py ───────────────
+# Este módulo es el ÚNICO que contiene las definiciones canónicas de
+# servicios, agentes y workstations. connect_agents_to_memory re-exporta
+# para retrocompatibilidad, pero los imports directos deben venir de aquí.
+try:
+    from shared_services_agents import (
+        WORKSTATIONS,
+        SERVICE_DEFINITIONS, SERVICE_DISPLAY, AGENT_DEFINITIONS,
+    )
+    _DEF_OK = True
+    _WORKSTATIONS_OK = True
+except ImportError as e:
+    _DEF_OK = False
+    _WORKSTATIONS_OK = False
+    print(f"  ⚠️  shared_services_agents no disponible: {e}")
+
+
+def _is_agent_alive(key: str, health_url: Optional[str], check_type: str) -> bool:
+    """Helper: chequea si un agente está vivo despachando según check_type.
+
+    Convención de nombres de sesión tmux: las claves en AGENT_DEFINITIONS usan
+    guion_bajo (telegram_bot) pero las sesiones tmux usan guion (telegram-bot),
+    por eso hacemos `key.replace("_", "-")` en el fallback.
+
+    Args:
+        key: clave del agente (p.ej. "telegram_bot"). Se usa para buscar
+             el proceso Windows o la sesión tmux.
+        health_url: URL HTTP del servicio (sólo se usa si check_type == "wsl").
+        check_type: estrategia de comprobación ("windows_process" o "wsl").
+
+    Returns:
+        True si el agente responde según su check_type, False en caso contrario.
+    """
+    if check_type == "windows_process":
+        return (check_windows_process(key)
+                or check_tmux_session(key.replace("_", "-")))
+    if check_type in ("wsl", "wsl_http") and health_url:
+        return check_wsl_http(health_url, timeout=5)
+    if check_type == "http" and health_url:
+        return check_http(health_url, timeout=3)
+    return False
+
 # ── System Logger ────────────────────────────────────────────────────────
 try:
     from system_logger import log as syslog
@@ -72,198 +114,10 @@ TELEGRAM_API = f"https://api.telegram.org/bot{AGATHA_TOKEN}"
 DEFAULT_INTERVAL = 14400  # 4 hours in seconds
 
 # ── FactoryGames — Puestos de Trabajo ─────────────────────────────────────
-FACTORY_WORKSTATIONS = [
-    # (key, name, emoji, role, type, check_fn_name, production_order)
-    {
-        "key": "agatha_actas",
-        "name": "Agatha Actas",
-        "emoji": "📋",
-        "role": "Supervisora General",
-        "type": "management",
-        "order": 0,
-        "check": lambda: True,  # Siempre activa (este script)
-    },
-    {
-        "key": "simmoon_agent",
-        "name": "Director de Arte",
-        "emoji": "🎨",
-        "role": "Recomienda qué assets generar vía IA",
-        "type": "design",
-        "order": 0,
-        "check": lambda: (SCRIPT_DIR / "simmoon_agent.py").exists(),
-    },
-    {
-        "key": "simmoon_autogen",
-        "name": "Diseñador Colaborativo",
-        "emoji": "🤝",
-        "role": "AutoGen: Generator + Critic + Curator",
-        "type": "design",
-        "order": 1,
-        "check": lambda: (SCRIPT_DIR / "simmoon_autogen.py").exists(),
-    },
-    {
-        "key": "simmoon_generator",
-        "name": "Generador Multi-Backend",
-        "emoji": "🖼️",
-        "role": "Genera assets con ComfyUI / HuggingFace",
-        "type": "production",
-        "order": 0,
-        "check": lambda: (SCRIPT_DIR / "simmoon_generator.py").exists(),
-    },
-    {
-        "key": "simmoon_diffusers",
-        "name": "Generador Diffusers",
-        "emoji": "🧪",
-        "role": "Genera assets vía Diffusers en WSL2",
-        "type": "production",
-        "order": 1,
-        "check": lambda: (SCRIPT_DIR / "simmoon_diffusers.py").exists(),
-    },
-    {
-        "key": "simmoon_pixelator",
-        "name": "Pixelador",
-        "emoji": "🎮",
-        "role": "Convierte assets a pixel-art retro",
-        "type": "production",
-        "order": 2,
-        "check": lambda: (SCRIPT_DIR / "simmoon_pixelator.py").exists(),
-    },
-    {
-        "key": "simmoon_pipeline",
-        "name": "Pipeline Completo",
-        "emoji": "🏭",
-        "role": "LangGraph: Prompt → Generar → Pixelar → DB",
-        "type": "production",
-        "order": 3,
-        "check": lambda: (SCRIPT_DIR / "simmoon_pipeline.py").exists(),
-    },
-    {
-        "key": "generator_factory",
-        "name": "Generator Factory",
-        "emoji": "🏗️",
-        "role": "Fábrica de backends con fallback chain",
-        "type": "production",
-        "order": 4,
-        "check": lambda: (SCRIPT_DIR / "generator_factory.py").exists(),
-    },
-    {
-        "key": "postgresql",
-        "name": "PostgreSQL",
-        "emoji": "🗄️",
-        "role": "Base de datos compartida / memoria persistente",
-        "type": "storage",
-        "order": 0,
-        "check": lambda: bool(get_db_conn()),
-    },
-    {
-        "key": "ollama",
-        "name": "Ollama",
-        "emoji": "🧠",
-        "role": "Motor de LLM local (modelos AI)",
-        "type": "engine",
-        "order": 0,
-        "check": lambda: check_http("http://localhost:11434", timeout=2),
-    },
-    {
-        "key": "comfyui",
-        "name": "ComfyUI",
-        "emoji": "🎨",
-        "role": "Generación de imágenes con workflow visual",
-        "type": "engine",
-        "order": 1,
-        "check": lambda: check_http("http://localhost:8188", timeout=2),
-    },
-    {
-        "key": "hermes",
-        "name": "Hermes Agent",
-        "emoji": "🧠",
-        "role": "Agente Nous Research con memoria",
-        "type": "agent",
-        "order": 0,
-        "check": lambda: check_wsl_http("http://localhost:9119", timeout=5),
-    },
-    {
-        "key": "openhuman",
-        "name": "OpenHuman",
-        "emoji": "🤖",
-        "role": "Agente open-source",
-        "type": "agent",
-        "order": 1,
-        "check": lambda: check_wsl_http("http://localhost:7788", timeout=5),
-    },
-    {
-        "key": "creativo_juegos",
-        "name": "Creativo de Juegos",
-        "emoji": "🎮",
-        "role": "Dirección Creativa y Diseño de Mecánicas",
-        "type": "design",
-        "order": 2,
-        "check": lambda: (SCRIPT_DIR / "factory" / "agent_creativo.py").exists(),
-    },
-    {
-        "key": "guionista",
-        "name": "Guionista",
-        "emoji": "✍️",
-        "role": "Narrativa, Diálogos y World-Building",
-        "type": "design",
-        "order": 3,
-        "check": lambda: (SCRIPT_DIR / "factory" / "agent_guionista.py").exists(),
-    },
-    {
-        "key": "reuniones",
-        "name": "Sistema de Reuniones",
-        "emoji": "🏢",
-        "role": "Brainstorming semanal y actas en Obsidian",
-        "type": "management",
-        "order": 1,
-        "check": lambda: (SCRIPT_DIR / "simmoon_reuniones.py").exists(),
-    },
-    {
-        "key": "quality_inspector",
-        "name": "Quality Inspector",
-        "emoji": "🎯",
-        "role": "Control de calidad: verifica assets, detecta corruptos",
-        "type": "monitoring",
-        "order": 0,
-        "check": lambda: (SCRIPT_DIR / "simmoon_quality_inspector.py").exists(),
-    },
-    {
-        "key": "telegram_bot",
-        "name": "Telegram Bot",
-        "emoji": "📱",
-        "role": "Interfaz de chat con agentes",
-        "type": "communication",
-        "order": 0,
-        "check": lambda: check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
-    },
-    {
-        "key": "monitor_sistema",
-        "name": "Monitor Sistema",
-        "emoji": "📊",
-        "role": "Monitoreo de GPU/RAM/disco/servicios",
-        "type": "monitoring",
-        "order": 1,
-        "check": lambda: _MONITOR_OK and bool(collect_report()),
-    },
-    {
-        "key": "gimp",
-        "name": "GIMP",
-        "emoji": "🖌️",
-        "role": "Edición y post-procesado de assets",
-        "type": "design",
-        "order": 4,
-        "check": lambda: os.path.isdir(r"C:\Users\docus\AppData\Local\Programs\GIMP 3"),
-    },
-    {
-        "key": "blender",
-        "name": "Blender",
-        "emoji": "🏗️",
-        "role": "Modelado 3D, renders y animaciones",
-        "type": "design",
-        "order": 5,
-        "check": lambda: os.path.isdir(r"C:\Program Files\Blender Foundation\Blender 5.1"),
-    },
-]
+# Las definiciones viven en shared_services_agents.WORKSTATIONS.
+# La lista hardcodeada FACTORY_WORKSTATIONS fue eliminada en favor del
+# módulo único canónico. El dispatcher en _check_workstation (más abajo)
+# evalúa cada workstation según su campo `check_type`.
 
 # ── File helpers ─────────────────────────────────────────────────────────
 def load_config() -> dict:
@@ -455,16 +309,13 @@ def collect_activity() -> dict:
     else:
         system = {"error": "monitor_sistema.py no disponible"}
 
-    # ── Agent status ──
+    # ── Agent status ── (lee de AGENT_DEFINITIONS canónico)
+    # Si el import falló, el warning ya se imprimió al cargar el módulo.
     agents = []
-    agent_checks = {
-        "Telegram Bot": check_windows_process("telegram_bot") or check_tmux_session("telegram-bot"),
-        "Hermes Agent": check_wsl_http("http://localhost:9119", timeout=5),
-        "OpenHuman": check_wsl_http("http://localhost:7788", timeout=5),
-        "PostgreSQL": check_http("http://localhost:5432", timeout=2),
-    }
-    for name, running in agent_checks.items():
-        agents.append({"name": name, "running": running})
+    if _DEF_OK:
+        for key, name, _type, health_url, check_type in AGENT_DEFINITIONS:
+            running = _is_agent_alive(key, health_url, check_type)
+            agents.append({"name": name, "running": running})
 
     # Add Python agents
     py_agents = ["simmoon_agent.py", "simmoon_autogen.py", "simmoon_pipeline.py"]
@@ -614,18 +465,16 @@ def format_report(data: dict) -> str:
     lines.append("━" * 30)
 
     services = system.get("services", {})
-    service_labels = {
-        "ollama": ("🧠 Ollama", ":11434"),
-        "comfyui": ("🎨 ComfyUI", ":8188"),
-        "postgresql": ("🗄️ PostgreSQL", ":5432"),
-        "openhuman": ("🤖 OpenHuman", ":7788"),
-
-    }
-    for key, (label, port) in service_labels.items():
-        svc = services.get(key, {})
-        icon = "✅" if svc.get("healthy") else "❌"
-        latency = svc.get("latency_ms", "?")
-        lines.append(f"{icon} {label} {port}  [{latency}ms]")
+    # Iterar sobre SERVICE_DEFINITIONS + SERVICE_DISPLAY (single source of truth)
+    if _DEF_OK:
+        for key, name, _url, _type in SERVICE_DEFINITIONS:
+            display = SERVICE_DISPLAY.get(key, {})
+            emoji = display.get("emoji", "📡")
+            port = display.get("port", "?")
+            svc = services.get(key, {})
+            icon = "✅" if svc.get("healthy") else "❌"
+            latency = svc.get("latency_ms", "?")
+            lines.append(f"{icon} {emoji} {name} :{port}  [{latency}ms]")
 
     # ── AGENTES ──
     lines.append("")
@@ -747,13 +596,72 @@ def format_report(data: dict) -> str:
 
 
 # ── FactoryGames Supervisor ────────────────────────────────────────────
+# Timeout por defecto según check_type. Preserva la semántica original
+# donde wsl_http usaba 5s (no 3s como las demás verificaciones HTTP).
+_DEFAULT_TIMEOUT_BY_CHECK = {
+    "http": 3,
+    "wsl_http": 5,
+}
+
+
+def _has_target(ws: dict) -> bool:
+    """True si la workstation tiene check_target no vacío."""
+    return bool(ws.get("check_target"))
+
+
+def _run_workstation_check(ws: dict) -> bool:
+    """Ejecuta el chequeo apropiado para una workstation según su `check_type`.
+
+    Reemplaza las lambdas hardcodeadas que vivían en FACTORY_WORKSTATIONS.
+    Los check_types definidos en shared_services_agents.WORKSTATIONS son:
+      - "always_on"        → siempre True (servicio central)
+      - "script_exists"    → SCRIPT_DIR/<target>.exists() (soporta subdirs)
+      - "db_conn"          → get_db_conn() no-None
+      - "http"             → check_http(target, check_timeout) [default 3s]
+      - "wsl_http"         → check_wsl_http(target, check_timeout) [default 5s]
+      - "windows_process"  → check_windows_process(target) OR
+                             check_tmux_session(target.replace("_", "-"))
+      - "path_exists"      → os.path.isdir(target)
+      - "monitor_ok"       → _MONITOR_OK and bool(collect_report())
+    """
+    check_type = ws.get("check_type", "")
+    target = ws.get("check_target")
+
+    if check_type == "always_on":
+        return True
+    if check_type == "script_exists":
+        return _has_target(ws) and (SCRIPT_DIR / target).exists()
+    if check_type == "db_conn":
+        return bool(get_db_conn())
+    if check_type in ("http", "wsl_http"):
+        if not _has_target(ws):
+            return False
+        timeout = ws.get("check_timeout", _DEFAULT_TIMEOUT_BY_CHECK[check_type])
+        check_fn = check_http if check_type == "http" else check_wsl_http
+        return check_fn(target, timeout=timeout)
+    if check_type == "windows_process":
+        if not _has_target(ws):
+            return False
+        # Convención: claves con guion_bajo (telegram_bot) se prueban también
+        # como sesión tmux con guion (telegram-bot).
+        return (check_windows_process(target)
+                or check_tmux_session(target.replace("_", "-")))
+    if check_type == "path_exists":
+        # Mantener semántica original: solo directorios, no archivos sueltos.
+        return _has_target(ws) and os.path.isdir(target)
+    if check_type == "monitor_ok":
+        return _MONITOR_OK and bool(collect_report())
+    # check_type desconocido → no asumimos nada
+    return False
+
+
 def _check_workstation(ws: dict) -> dict:
     """Check a single workstation and return its live status."""
     try:
-        running = ws["check"]()
+        running = _run_workstation_check(ws)
     except Exception:
         running = False
-    
+
     return {
         **ws,
         "running": running,
@@ -763,11 +671,16 @@ def _check_workstation(ws: dict) -> dict:
 
 def supervise_agents() -> list:
     """Supervisar todos los puestos de trabajo de FactoryGames.
-    
+
     Returns list of workstation dicts with live status.
+
+    Si shared_services_agents no se pudo importar, devuelve lista vacía
+    (el warning ya se imprimió al cargar el módulo).
     """
     results = []
-    for ws in FACTORY_WORKSTATIONS:
+    if not _WORKSTATIONS_OK:
+        return results
+    for ws in WORKSTATIONS:
         checked = _check_workstation(ws)
         results.append(checked)
     return results
@@ -1059,6 +972,27 @@ def sync_memory_to_agents():
         except Exception as e:
             print(f"  ⚠️  No se pudo guardar daily_summary: {e}")
         
+        # ── Guardar en Obsidian ──
+        try:
+            from obsidian_memory import ObsidianMemory
+            obs_mem = ObsidianMemory(agent_name="Buffy", project="SIMMOON")
+            # Guardar estado horario como contexto
+            obs_mem.save_context(
+                'hourly_status',
+                f"Agatha reporte 4h: {services_active}/{len(services)} servicios activos",
+                tags=['status', '4hourly', 'services'],
+                importance=2,
+            )
+            # Guardar síntesis diaria en Diarias/
+            obs_mem.save_diaria(
+                summary['date'],
+                summary['title'],
+                summary['content'],
+                summary['metadata'],
+            )
+        except Exception as e:
+            print(f"  ⚠️  Obsidian no disponible: {e}")
+        
         return True
     except Exception as e:
         print(f"[WARN] No se pudo sincronizar memoria: {e}")
@@ -1241,18 +1175,19 @@ def generate_daily_summary() -> dict:
     for cat in asset_categories:
         cat_dir = SCRIPT_DIR / cat
         if cat_dir.is_dir():
-            total_assets += len(list(cat_dir.glob("*.png")))
-    
-    # Services status
+            total_assets += len(list(cat_dir.glob("*.png")))    # Services status
     services = system.get("services", {})
     services_active = sum(1 for s in services.values() if s.get('healthy'))
-    
-    # Agents status
-    agents_status = [
-        ("Telegram Bot", check_windows_process("telegram_bot") or check_tmux_session("telegram-bot")),
-        ("Hermes Agent", check_wsl_http("http://localhost:9119", timeout=5)),
-        ("OpenHuman", check_wsl_http("http://localhost:7788", timeout=5)),
-    ]
+
+    # Agents status (desde AGENT_DEFINITIONS canónico).
+    # Si el import falló, el warning ya se imprimió al cargar el módulo
+    # y la lista queda vacía (no se reintroducen magic numbers).
+    agents_status = []
+    if _DEF_OK:
+        agents_status = [
+            (name, _is_agent_alive(key, health_url, check_type))
+            for key, name, _type, health_url, check_type in AGENT_DEFINITIONS
+        ]
     agents_active = sum(1 for _, running in agents_status if running)
     
     # Alerts
@@ -1289,6 +1224,14 @@ def generate_daily_summary() -> dict:
             lines.append(f"  • {a}")
     
     lines.append("")
+    lines.append("🏭 *FactoryGames — Contexto*")
+    lines.append("  Estudio indie con 15 agentes IA open-source | "
+                 "Ollama + Freebuff + Claude Code + Hermes")
+    lines.append("  Bundles: /simmoon (8 skills) + /factorygames (12 skills)")
+    lines.append("  Stack: Blender · InvokeAI · ComfyUI · GIMP · 5 Bots Telegram")
+    lines.append("  Pipeline: Concepto → Diseño → Arte → 3D → Código → QA → Marketing → Release")
+    
+    lines.append("")
     lines.append(f"_Generado por Agatha Actas · {now.strftime('%H:%M')}_")
     
     content = "\n".join(lines)
@@ -1314,7 +1257,7 @@ def generate_daily_summary() -> dict:
 
 
 def send_daily_summary() -> bool:
-    """Generate and send daily summary to Telegram + save to PostgreSQL."""
+    """Generate and send daily summary to Telegram + save to PostgreSQL + Obsidian."""
     print(f"  📝 Generando síntesis diaria...")
     
     summary = generate_daily_summary()
@@ -1331,6 +1274,23 @@ def send_daily_summary() -> bool:
     else:
         print(f"  ⚠️  No se pudo guardar en PostgreSQL (¿está corriendo?)")
     
+    # Save to Obsidian vault (Diarias/)
+    try:
+        from obsidian_memory import ObsidianMemory
+        obs_mem = ObsidianMemory(agent_name="Buffy", project="SIMMOON")
+        obs_saved = obs_mem.save_diaria(
+            summary['date'],
+            summary['title'],
+            summary['content'],
+            summary['metadata'],
+        )
+        if obs_saved:
+            print(f"  ✅ Resumen guardado en Obsidian (Diarias/)")
+        else:
+            print(f"  ⚠️  No se pudo guardar en Obsidian")
+    except Exception as e:
+        print(f"  ⚠️  Obsidian no disponible: {e}")
+    
     # Send to Telegram
     print(f"  📤 Enviando síntesis a Telegram...")
     if send_telegram(summary['content']):
@@ -1344,6 +1304,175 @@ def send_daily_summary() -> bool:
     else:
         print(f"  ❌ Error al enviar síntesis a Telegram")
         return False
+
+
+
+def send_factorygames_summary() -> bool:
+    """Envía el resumen ejecutivo de FactoryGames a Telegram.
+    
+    Pensado para ejecutarse cada lunes a las 9am como recordatorio
+    semanal de la misión del estudio.
+    También intenta publicar en el canal público vía PR Bot.
+    """
+    msg = _get_factorygames_telegram_msg()
+    print(f"  🏭 Enviando resumen ejecutivo FactoryGames...")
+    ok = send_telegram(msg)
+    if ok:
+        print(f"  ✅ Resumen FactoryGames enviado a Telegram (chat privado)")
+        if _LOG_OK:
+            syslog("Agatha Actas", "🏭", "Resumen ejecutivo FactoryGames enviado")
+    else:
+        print(f"  ❌ Error al enviar resumen FactoryGames")
+    
+    # ── Publicar también en canal público vía PR Bot ──
+    try:
+        from factorygames_pr_bot import load_config as pr_load_config, \
+            send_to_channel as pr_send_to_channel, \
+            build_factorygames_summary as pr_build_summary
+        pr_cfg = pr_load_config()
+        pr_token = pr_cfg.get("bot_token", "")
+        pr_channel = pr_cfg.get("channel", "")
+        if pr_token and pr_channel:
+            print(f"  📡 Publicando en canal público {pr_channel}...")
+            channel_msg = pr_build_summary()
+            if pr_send_to_channel(pr_token, pr_channel, channel_msg):
+                print(f"  ✅ Publicado en canal público")
+                if _LOG_OK:
+                    syslog("Agatha Actas", "📡", f"Resumen FactoryGames publicado en {pr_channel}")
+            else:
+                print(f"  ⚠️  No se pudo publicar en canal público")
+        else:
+            print(f"  ℹ️  PR Bot no configurado (sin token o canal). "
+                  f"Ejecuta: python factorygames_pr_bot.py --setup")
+    except ImportError:
+        print(f"  ℹ️  factorygames_pr_bot.py no disponible")
+    except Exception as e:
+        print(f"  ⚠️  Error al publicar en canal: {e}")
+    
+    return ok
+
+
+def _should_send_weekly_summary() -> bool:
+    """Determina si toca enviar el resumen semanal (lunes, una vez por semana).
+    
+    Usa el config para recordar la fecha del último envío y evitar duplicados.
+    Funciona con cualquier intervalo de daemon (no depende de ventana horaria).
+    """
+    now = datetime.now()
+    # Solo lunes (weekday 0)
+    if now.weekday() != 0:
+        return False
+    # Verificar si ya se envió esta semana
+    cfg = load_config()
+    last_weekly = cfg.get("last_weekly_summary", "")
+    today_str = now.strftime('%Y-%m-%d')
+    if last_weekly == today_str:
+        return False
+    return True
+
+
+def cargar_ayer_en_obsidian(target_date: Optional[str] = None) -> bool:
+    """Carga el resumen de ayer (o `target_date`) en Obsidian ejecutando
+    `_cargar_ayer_obsidian.py` como subproceso.
+
+    Pensado para ejecutarse automáticamente cada mañana desde el daemon
+    de Agatha Actas (ver `daemon_loop`) o manualmente con
+    `python agatha_actas.py --cargar-ayer`.
+
+    Args:
+        target_date: Fecha a cargar en formato YYYY-MM-DD.
+                     Si es None, usa ayer (datetime.now() - 1 día).
+
+    Returns:
+        True si la carga fue exitosa, False si falló.
+    """
+    script = SCRIPT_DIR / "_cargar_ayer_obsidian.py"
+    if not script.exists():
+        print(f"  ❌ No se encontró {script}")
+        return False
+
+    cmd = [sys.executable, str(script)]
+    if target_date:
+        cmd += ["--date", target_date]
+
+    print(f"  🌙 Cargando resumen en Obsidian ({'ayer' if not target_date else target_date})...")
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(SCRIPT_DIR),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if result.returncode == 0:
+            # Mostrar últimas líneas de la salida
+            for line in result.stdout.strip().split("\n")[-6:]:
+                if line.strip():
+                    print(f"     {line.strip()}")
+            if _LOG_OK:
+                date_str = target_date or (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                syslog("Agatha Actas", "🌙", f"Cargado resumen de {date_str} en Obsidian")
+            return True
+        else:
+            print(f"  ❌ Error en el script (exit {result.returncode}):")
+            print(result.stderr[-500:] if result.stderr else "(sin stderr)")
+            return False
+    except subprocess.TimeoutExpired:
+        print(f"  ❌ Timeout (>60s) ejecutando _cargar_ayer_obsidian.py")
+        return False
+    except Exception as e:
+        print(f"  ❌ Error inesperado: {e}")
+        return False
+
+
+def _should_load_yesterday_today() -> bool:
+    """Determina si toca cargar el resumen de ayer en Obsidian.
+
+    Configurable vía `agatha_config.json` → `yesterday_load_hour` (default 9).
+    Recuerda la última carga en `last_yesterday_load` para evitar duplicados.
+    Funciona con cualquier intervalo de daemon (no depende de ventana horaria).
+    """
+    now = datetime.now()
+    cfg = load_config()
+    target_hour = cfg.get("yesterday_load_hour", 9)
+
+    # Solo después de la hora objetivo
+    if now.hour < target_hour:
+        return False
+
+    # Verificar si ya se cargó hoy
+    last_load = cfg.get("last_yesterday_load", "")
+    today_str = now.strftime('%Y-%m-%d')
+    if last_load == today_str:
+        return False
+
+    return True
+
+
+def _get_factorygames_telegram_msg() -> str:
+    """Construye el mensaje ejecutivo de FactoryGames para Telegram."""
+    now = datetime.now()
+    return (
+        "🏭 *FACTORYGAMES — Resumen Ejecutivo*\n"
+        f"📅 Semana del {now.strftime('%d/%m/%Y')}\n\n"
+        "*FactoryGames* es un estudio indie de videojuegos impulsado por "
+        "*15 agentes IA open-source* que colaboran sin coste de API externo "
+        "—Ollama local, Freebuff (Buffy), Claude Code y Hermes Agent "
+        "(8 agentes autónomos: Guionista, Creativo, Propaganda, Coordinación, "
+        "QA, Historiador, Build, Diseño de Juego)— para cubrir todo el ciclo creativo.\n\n"
+        "📊 *Stack Tecnológico*\n"
+        "🧠 IA: Ollama + Freebuff + Claude Code + Hermes Agent\n"
+        "🎨 Arte: Blender 3D · InvokeAI · ComfyUI · GIMP\n"
+        "📡 Comunicación: 5 Bots Telegram (Director, Build, PR, Community, Monitor)\n"
+        "⚙️ Orquestación: CrewAI / LangGraph\n\n"
+        "🎮 *Pipeline 8 fases*\n"
+        "Concepto → Diseño → Arte → 3D → Código → QA → Marketing → Release\n\n"
+        "💡 *Ventaja:* Primer estudio indie con producción 100% local, gratuita y completa. "
+        "SimMoon es el proyecto piloto.\n\n"
+        f"_🤖 Agatha Actas · Lunes {now.strftime('%H:%M')}_"
+    )
 
 
 # ── Main ──────────────────────────────────────────────────────────────────
@@ -1457,6 +1586,24 @@ def daemon_loop(interval: int = DEFAULT_INTERVAL):
         sync_memory_to_agents()
         
         # Supervise factory every 2 reports
+        # ── Resumen semanal FactoryGames (lunes 9am) ──
+        if _should_send_weekly_summary():
+            print(f"\n  🏭 Lunes {datetime.now().strftime('%H:%M')} — Enviando resumen semanal FactoryGames...")
+            send_factorygames_summary()
+            # Registrar que ya se envió esta semana
+            cfg = load_config()
+            cfg["last_weekly_summary"] = datetime.now().strftime('%Y-%m-%d')
+            save_config(cfg)
+
+        # ── Carga diaria de ayer en Obsidian (mañanas) ──
+        if _should_load_yesterday_today():
+            print(f"\n  🌙 {datetime.now().strftime('%H:%M')} — Cargando resumen de ayer en Obsidian...")
+            if cargar_ayer_en_obsidian():
+                cfg = load_config()
+                cfg["last_yesterday_load"] = datetime.now().strftime('%Y-%m-%d')
+                save_config(cfg)
+                print(f"     ✅ Carga de ayer registrada en config")
+
         if sync_counter % 2 == 0:
             print(f"\n  🏭 Supervisando puestos de trabajo FactoryGames...")
             try:
@@ -1540,6 +1687,12 @@ def main():
                         help="Sugerir próximas tareas según estado de la fábrica")
     parser.add_argument("--supervise-report", action="store_true",
                         help="Enviar reporte de supervisión a Telegram")
+    parser.add_argument("--factorygames-summary", action="store_true",
+                        help="Enviar resumen ejecutivo de FactoryGames a Telegram")
+    parser.add_argument("--cargar-ayer", action="store_true",
+                        help="Cargar resumen de ayer en Obsidian (--cargar-ayer --date YYYY-MM-DD para fecha específica)")
+    parser.add_argument("--date", default=None,
+                        help="Fecha a cargar (usado con --cargar-ayer). Default: ayer")
     args = parser.parse_args()
 
     if args.setup:
@@ -1606,6 +1759,20 @@ def main():
             print(f"  ❌ Error al enviar reporte de supervisión")
         return
     
+    if args.factorygames_summary:
+        send_factorygames_summary()
+        return
+
+    if args.cargar_ayer:
+        ok = cargar_ayer_en_obsidian(target_date=args.date)
+        if ok:
+            # Registrar en config para que el daemon no lo repita
+            cfg = load_config()
+            cfg["last_yesterday_load"] = datetime.now().strftime('%Y-%m-%d')
+            save_config(cfg)
+            print(f"\n  🎉 Resumen cargado en Obsidian")
+        return
+
     if args.synthesis:
         summaries = get_recent_summaries(args.days)
         

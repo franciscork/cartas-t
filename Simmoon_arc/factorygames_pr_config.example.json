@@ -1,0 +1,8 @@
+{
+  "bot_token": "TU_TOKEN_DE_BOTFATHER_AQUI",
+  "bot_name": "FactoryGamesPR_bot",
+  "channel": "@FactoryGamesNews",
+  "channel_name": "FactoryGames Noticias",
+  "last_publish": null,
+  "auto_publish_weekly": true
+}

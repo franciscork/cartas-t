@@ -38,6 +38,27 @@ HERMES_API = "http://localhost:9119"
 OPENHUMAN_API = "http://localhost:7788"
 DEFAULT_INTERVAL = 300  # 5 minutes in daemon mode
 
+# ── Source of truth para servicios y agentes del sistema ───────────────────
+# Las definiciones viven en shared_services_agents.py (UN solo módulo canónico).
+# Este archivo re-exporta para mantener retrocompatibilidad con todos los
+# consumers existentes (agatha_actas, _cargar_ayer_obsidian, dashboard, ...).
+from shared_services_agents import (
+    SERVICES,                  # vista derivada (list[dict])
+    AGENTS,                    # vista derivada (list[dict])
+    WORKSTATIONS,              # vista derivada (list[dict])
+    SERVICE_BY_KEY,            # lookup
+    AGENT_BY_KEY,              # lookup
+    WORKSTATION_BY_KEY,        # lookup
+    SERVICE_DEFINITIONS,       # tuplas de 4 (legacy, consumido por _cargar_ayer_obsidian)
+    SERVICE_DISPLAY,           # dict legacy
+    AGENT_DEFINITIONS,         # tuplas de 5 (legacy)
+    KNOWN_SERVICES_TOTAL,
+    KNOWN_AGENTS_TOTAL,
+    KNOWN_WORKSTATIONS_TOTAL,
+    KNOWN_ENTITIES_TOTAL,
+    ENTITIES,                  # lista unificada completa
+)
+
 
 # ── Agent Memory Import ────────────────────────────────────────────────────
 try:

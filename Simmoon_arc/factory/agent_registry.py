@@ -77,7 +77,14 @@ def _binary_available(name: str) -> bool:
 
 
 def _tmux_session_exists(name: str) -> bool:
-    """Check if a tmux session exists."""
+    """Check if a tmux session exists.
+
+    En Windows tmux no está disponible nativamente (solo vía WSL).
+    Si estamos en Windows, retorna False porque los procesos
+    Windows se chequean con otros métodos (check_windows_process).
+    """
+    if sys.platform == "win32":
+        return False
     try:
         r = subprocess.run(
             ["tmux", "has-session", "-t", name],
@@ -137,10 +144,19 @@ def _check_openhuman() -> bool:
 def _launch_ollama() -> bool:
     """Start Ollama server."""
     try:
-        subprocess.Popen(
-            ["nohup", "ollama", "serve"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        cmd = ["ollama", "serve"]
+        if sys.platform == "win32":
+            # Windows: Popen ya es detached, no necesita nohup
+            subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
+            )
+        else:
+            subprocess.Popen(
+                ["nohup"] + cmd,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
         return True
     except Exception:
         return False
@@ -152,11 +168,22 @@ def _launch_comfyui() -> bool:
         comfy_dir = Path.home() / "ComfyUI"
         if not (comfy_dir / "main.py").exists():
             return False
-        subprocess.Popen(
-            ["nohup", str(comfy_dir / "venv/bin/python"), "main.py", "--listen"],
-            cwd=str(comfy_dir),
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        if sys.platform == "win32":
+            python_path = comfy_dir / "venv" / "Scripts" / "python.exe"
+        else:
+            python_path = comfy_dir / "venv" / "bin" / "python"
+        cmd = [str(python_path), "main.py", "--listen"]
+        if sys.platform == "win32":
+            subprocess.Popen(
+                cmd, cwd=str(comfy_dir),
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
+            )
+        else:
+            subprocess.Popen(
+                ["nohup"] + cmd, cwd=str(comfy_dir),
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
         return True
     except Exception:
         return False
@@ -165,10 +192,21 @@ def _launch_comfyui() -> bool:
 def _launch_postgres() -> bool:
     """Start PostgreSQL service."""
     try:
-        subprocess.run(
-            ["sudo", "service", "postgresql", "start"],
-            capture_output=True, timeout=10
-        )
+        if sys.platform == "win32":
+            # Windows: PostgreSQL corre como servicio Windows
+            for svc in ["postgresql-16", "postgresql-15", "postgresql-14",
+                        "postgresql-x64-16", "postgresql-x64-15"]:
+                r = subprocess.run(
+                    ["net", "start", svc],
+                    capture_output=True, timeout=10
+                )
+                if r.returncode == 0:
+                    break
+        else:
+            subprocess.run(
+                ["sudo", "service", "postgresql", "start"],
+                capture_output=True, timeout=10
+            )
         return _pg_isready()
     except Exception:
         return False
@@ -307,16 +345,6 @@ class AgentRegistry:
             launch_fn=_launch_comfyui,
         ))
 
-        self.register(AgentCapability(
-            agent_type="image",
-            name="invokeai",
-            endpoint="http://localhost:9090",
-            capabilities=["generate"],
-            priority=2,
-            description="InvokeAI — generación de imágenes alternativa",
-            health_check_fn=_check_invokeai,
-        ))
-
         # ── LLM / Inference Agents ──
         self.register(AgentCapability(
             agent_type="llm",
@@ -430,7 +458,7 @@ class AgentRegistry:
                          "mood_concept", "feature_design", "game_balance"],
             priority=2,
             description="🎮 Creativo de Juegos — diseño de mecánicas y brainstorming",
-            health_check_fn=lambda: (SCRIPT_DIR / "agent_creativo.py").exists(),
+            health_check_fn=lambda: (SCRIPT_DIR / "factory" / "agent_creativo.py").exists(),
         ))
 
         # ── Scriptwriter ──
@@ -442,7 +470,19 @@ class AgentRegistry:
                          "world_building", "character_creation", "descriptive_text"],
             priority=3,
             description="✍️ Guionista — narrativa, diálogos y world-building",
-            health_check_fn=lambda: (SCRIPT_DIR / "agent_guionista.py").exists(),
+            health_check_fn=lambda: (SCRIPT_DIR / "factory" / "agent_guionista.py").exists(),
+        ))
+
+        # ── QA Agent ──
+        self.register(AgentCapability(
+            agent_type="testing",
+            name="qa-agent",
+            endpoint="factory/agent_qa.py",
+            capabilities=["code_review", "syntax_check", "test_runner",
+                         "bug_detection", "regression_check", "import_verifier"],
+            priority=2,
+            description="🎯 QA Agent — control de calidad y testing autónomo",
+            health_check_fn=lambda: (SCRIPT_DIR / "factory" / "agent_qa.py").exists(),
         ))
 
         # ── Meeting System ──

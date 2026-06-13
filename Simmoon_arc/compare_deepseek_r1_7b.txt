@@ -1,14 +1,11 @@
-Eres un asistente de código experto trabajando en el proyecto SIMMOON. Analizaré y completaré la tarea de manera automática.
 
----
 
-**Clase `TaskQueue` en Python:**
+Analizaré y completaré la tarea solicitada. Aquí está el código completo con las funcionalidades requeridas:
 
 ```python
-import time
 import json
+from datetime import datetime, timedelta
 import logging
-from contextlib import suppress
 
 class TaskQueue:
     def __init__(self, max_retries=3, retry_delay=1.0, persist_path=None):
@@ -16,193 +13,311 @@ class TaskQueue:
         self.retry_delay = retry_delay
         selfpersist_path = persist_path
         self.tasks = {}
-        self.task_counter = 0
+        self.last_execution_time = None
+
+        # Configuración de logging
+        logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+
+    def add_task(self, name: str, function: callable, args: tuple, kwargs: dict) -> str:
+        """ agrega una nueva tarea al cuaderno """
+        task_id = str(uuid.uuid4()) if not name else name
+        start_time = datetime.now()
         
-    def add_task(self, name, fn, *args, **kwargs):
-        """Add a new task to the queue with its parameters."""
-        task_id = f"task_{self.task_counter}"
-        self.tasks[task_id] = {
-            'name': name,
-            'function': fn,
-            'args': args,
-            'kwargs': kwargs,
-            'status': 'pending',
-            'start_time': time.time(),
-            'result': None
-        }
-        self.logger.info(f"Added task '{name}' with function '{fn.__name__}' to queue.")
-        self.task_counter += 1
-        
-    def run_all(self, *, force Retry=False):
-        """Run all pending tasks with retries and handle KeyboardInterrupt."""
-        if not isinstance(force Retry, bool) or force Retry:
+        try:
+            self.tasks[task_id] = {
+                'name': name,
+                'function': function,
+                'args': args,
+                'kwargs': kwargs,
+                'start_time': start_time,
+                'status': 'pending',
+                'logs': []
+            }
+            
+            if self.persist_path is not None:
+                with open(self.persist_path, 'w') as f:
+                    json.dump(self.tasks, f)
+                    
+            return task_id
+        except Exception as e:
+            self.logger.error(f"Error al agregar tarea: {str(e)}")
+            raise
+
+    def run_all(self) -> None:
+        """ ejecute todas las tareas con reintentos """
+        try:
             for _ in range(self.max_retries):
-                try:
-                    for task_id in list(self.tasks.keys()):
-                        self.logger.debug(f"Attempting to run task '{task_id}'")
-                        result = self.run_one(task_id)
-                        yield result
-                except KeyboardInterrupt:
-                    self.logger.info("Caught KeyboardInterrupt, exiting gracefully.")
-                    return
-                except Exception as e:
-                    self.logger.error(f"Error running task '{task_id}': {str(e)}", exc_info=True)
-                    time.sleep(self.retry_delay)
-        else:
-            for task_id in self.tasks:
-                self.logger.debug(f"Attempting to run task '{task_id}'")
-                result = self.run_one(task_id)
-                yield result
+                if not self.tasks:
+                    break
                 
-    def run_one(self, task_id):
-        """Run a specific task by ID."""
-        if task_id not in self.tasks or 'result' in self.tasks[task_id]:
-            raise ValueError(f"Task '{task_id}' does not exist.")
+                task_ids = list(self.tasks.keys())
+                
+                for task_id in task_ids.copy():
+                    try:
+                        start_time = datetime.now()
+                        
+                        result = None
+                        status = 'pending'
+                        logs = []
+                        
+                        try:
+                            result = self._run_task(task_id)
+                            status = 'completed'
+                            
+                        except Exception as e:
+                            self.logger.error(f"Error ejecutando tarea {task_id}: {str(e)}")
+                            status = 'failed'
+                            
+                        if status == 'completed':
+                            logs.append({'timestamp': datetime.now(), 'result': result})
+                        else:
+                            logs.append({'timestamp': datetime.now(), 'error': str(e)})
+                        
+                        self.tasks[task_id]['status'] = status
+                        self.tasks[task_id]['logs'] = logs
+                        
+                    except KeyboardInterrupt:
+                        self.logger.info("Interceptado por interrupción del usuario")
+                        break
+                    
+                else:
+                    break  # Si no hubo interrupción, salta al siguiente bucle outer
+
+        except Exception as e:
+            self.logger.error(f"Error en run_all: {str(e)}")
+
+    def _run_task(self, task_id) -> Any:
+        """ Ejecuta una tarea específica """
+        if task_id not in self.tasks or 'function' not in self.tasks[task_id]:
+            raise ValueError(f"Tarea {task_id} no existe")
             
         try:
-            start_time = time.time()
-            result = self.tasks[task_id]['function'](*self.tasks[task_id]['args'], **self.tasks[task_id]['kwargs'])
-            execution_time = time.time() - start_time
-            self.tasks[task_id]['status'] = 'completed'
-            self.tasks[task_id]['result'] = result
-            self.logger.info(f"Task '{task_id}' completed successfully at {execution_time:.2f}s")
+            start_time = datetime.now()
+            result = self.tasks[task_id]['function'](*(self.tasks[task_id]['args'],))
+            end_time = datetime.now()
+            
+            duration = (end_time - start_time).total_seconds()
+            
+            logs = [
+                {
+                    'timestamp': start_time,
+                    'status': 'started',
+                    'duration': duration
+                },
+                {
+                    'timestamp': end_time,
+                    'status': 'completed'
+                }
+            ]
+            
+            self.tasks[task_id]['logs'].append(logs)
             return result
+            
         except Exception as e:
-            execution_time = time.time() - start_time
-            self.tasks[task_id]['status'] = 'failed'
-            self.tasks[task_id]['result'] = str(e)
-            self.logger.error(f"Task '{task_id}' failed with error: {e}, took {execution_time:.2f}s")
+            error_log = {
+                'timestamp': datetime.now(),
+                'error': str(e),
+                'task_id': task_id
+            }
+            self.tasks[task_id]['logs'].append(error_log)
+            raise
+
+    def run_one(self, task_id: str) -> dict:
+        """ Ejecuta una sola tarea """
+        try:
+            if task_id not in self.tasks or 'function' not in self.tasks[task_id]:
+                raise ValueError(f"Tarea {task_id} no existe")
+                
+            result = None
+            logs = []
+            
+            start_time = datetime.now()
+            try:
+                result = self.tasks[task_id]['function'](*(self.tasks[task_id]['args'],))
+                end_time = datetime.now()
+                
+                duration = (end_time - start_time).total_seconds()
+                
+                logs.append({
+                    'timestamp': start_time,
+                    'duration': duration
+                })
+                logs.append({'timestamp': end_time, 'status': 'completed'})
+                
+            except Exception as e:
+                logs.append({
+                    'timestamp': datetime.now(),
+                    'error': str(e)
+                })
+                
+            self.tasks[task_id]['logs'] = logs
+            
+            return {
+                'task_id': task_id,
+                'result': result,
+                'status': 'completed'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error ejecutando tarea {task_id}: {str(e)}")
+            raise
+
+    def get_status(self, task_id: str) -> dict:
+        """ Obtiene el estado actual de una tarea """
+        if task_id not in self.tasks or 'logs' not in self.tasks[task_id]:
             return None
             
-    def get_status(self, task_id):
-        """Get the status of a specific task."""
-        if task_id not in self.tasks:
-            raise ValueError(f"Task '{task_id}' does not exist.")
+        logs = self.tasks[task_id]['logs']
+        
+        last_log = next(reversed(logs), None)
+        if last_log and last_log['status'] == 'completed':
+            completed_at = last_log['timestamp']
             
-        status = self.tasks[task_id]['status']
-        completed_time = time.time() - self.tasks[task_id]['start_time']
-        result = self.tasks[task_id]['result']
+            duration = (datetime.now() - completed_at).total_seconds()
+            
+            return {
+                'task_id': task_id,
+                'name': self.tasks[task_id]['name'],
+                'status': 'completed',
+                'duration': duration
+            }
         
-        return {
-            'task_id': task_id,
-            'status': status,
-            'completed_time': completed_time,
-            'success': (status == 'completed'),
-            'result': result if status != 'failed' else None
-        }
+        failed_log = next((log for log in logs if log['error']), None)
+        if failed_log:
+            return {
+                'task_id': task_id,
+                'name': self.tasks[task_id]['name'],
+                'status': 'failed',
+                'error': failed_log['error']
+            }
         
-    def summary(self):
-        """Generate a summary of the TaskQueue's performance."""
+        pending_log = next((log for log in logs if log['status'] == 'started'), None)
+        if pending_log:
+            return {
+                'task_id': task_id,
+                'name': self.tasks[task_id]['name'],
+                'status': 'pending',
+                'duration': pending_log['duration']
+            }
+        
+        return None
+
+    def summary(self) -> dict:
+        """ Resumen de las tareas """
         stats = {
             'total_tasks': len(self.tasks),
-            'completed_tasks': sum(1 for task in self.tasks.values() if task['status'] == 'completed'),
-            'pending_tasks': sum(1 for task in self.tasks.values() if task['status'] == 'pending'),
-            'failed_tasks': sum(1 for task in self.tasks.values() if task['status'] == 'failed'),
-            'total_time': time.time() - self.start_time
+            'completed_tasks': 0,
+            'pending_tasks': 0,
+            'failed_tasks': 0,
+            'total_time': 0.0
         }
         
-        return stats
-        
-    def persist(self):
-        """Save the TaskQueue state to a JSON file."""
-        try:
-            with open(self.persist_path, 'w') as f:
-                json.dump(self.tasks, f, indent=2)
-            self.logger.info(f"Saved TaskQueue state to '{self.persist_path}'")
-        except Exception as e:
-            self.logger.error(f"Failed to persist TaskQueue: {e}")
+        for task_id in self.tasks:
+            task = self.tasks[task_id]
+            logs = task['logs']
             
-    def __enter__(self):
-        return self
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None and (exc_type is KeyboardInterrupt or exc_val is not None):
-            self.logger.info("Task queue exiting due to exception.")
-            self.close()
-        else:
-            self.logger.info("Task queue completed normally.")
-            self.close()
-            
-    def close(self):
-        """Close the TaskQueue and clean up."""
-        if hasattr(self, 'persist_path') and self.persist_path is not None:
-            try:
-                with suppress(OSError) as _:
-                    self.persist()
-            except Exception as e:
-                self.logger.error(f"Error persisting TaskQueue: {e}")
+            if logs and logs[-1]['status'] == 'completed':
+                stats['completed_tasks'] += 1
                 
-    def __str__(self):
-        return f"TaskQueue with {len(self.tasks)} pending tasks"
+                completed_at = logs[-2]['timestamp']
+                duration = (datetime.now() - completed_at).total_seconds()
+                
+                stats['total_time'] += duration
+                
+            elif logs:
+                stats['pending_tasks'] += 1
+                stats['failed_tasks'] += 1
         
-    def __repr__(self):
-        return self.__str__()
+        return stats
 
-# Ejemplo de uso
-if __name__ == "__main__":
-    from contextlib import suppress
-
-    # Crear una instancia del TaskQueue
-    queue = TaskQueue(max_retries=3, retry_delay=1.0)
-
-    # Agregar tareas
-    with queue:
-        queue.add_task("tarea1", lambda: 42, "arg1")
-        queue.add_task("tarea2", lambda: 37, "arg2")
-
-    # Ejecutar las tareas con reintentos
-    results = []
-    try:
-        for result in queue.run_all():
-            print(f"Resulto de tarea '{result}' es {result}")
-            results.append(result)
-    except KeyboardInterrupt:
-        print("\nOperación interrumpida por el usuario.")
-        
-    # Verificar estado de tareas
-    task_id = "task_0"
-    status = queue.get_status(task_id)
-    print(f"Estado de tarea '{task_id}': {status}")
+    def persist(self) -> None:
+        """ Persiste los datos en el archivo JSON """
+        if self.persist_path is not None and len(self.tasks) > 0:
+            try:
+                with open(selfpersist_path, 'w') as f:
+                    json.dump(self.tasks, f)
+            except Exception as e:
+                self.logger.error(f"Error persistir: {str(e)}")
     
-    # Resumen general
-    summary = queue.summary()
-    print("Resumen del TaskQueue:")
-    print(f"- Total tasks: {summary['total_tasks']}")
-    print(f"- Completed: {summary['completed_tasks']}")
-    print(f"- Pending: {summary['pending_tasks']}")
-    print(f"- Failed: {summary['failed_tasks']}")
-    print(f"- Total time: {summary['total_time']} segundos")
+    @classmethod
+    def load(cls, path: str) -> dict:
+        """ Carga los datos desde el archivo JSON """
+        try:
+            with open(path, 'r') as f:
+                tasks = json.load(f)
+                
+            queue = cls()
+            for task_id in tasks:
+                if 'logs' not in tasks[task_id] or len(tasks[task_id]['logs']) == 0:
+                    continue
+                
+                logs = tasks[task_id]['logs']
+                last_log = next(reversed(logs), None)
+                if not last_log or last_log['status'] != 'completed':
+                    continue
+                    
+                task = {
+                    'name': None,
+                    'function': None,
+                    'args': tuple(),
+                    'kwargs': dict()
+                }
+                
+                for log in logs:
+                    if log['status'] == 'started':
+                        task['start_time'] = str(log['timestamp'])
+                        task['duration'] = str((log['end_time'] - log['start_time']).total_seconds())
+                    elif log['status'] == 'completed':
+                        task['end_time'] = str(log['timestamp'])
+                        task['result'] = str(log.get('result', ''))
+                        task['error'] = str(log.get('error', ''))
 
-# EJECUTABLE EN UNA LINEA
+                if name := next((k for k, v in tasks[task_id].items() if isinstance(v, dict) and 'name' in v), None):
+                    task['name'] = name
+                
+                queue.tasks[task_id] = task
+            
+            return queue
+        
+        except Exception as e:
+            self.logger.error(f"Error al cargar el cuaderno: {str(e)}")
+            raise
+
 if __name__ == "__main__":
-    pass
+    import uuid
+    from datetime import timedelta
+    
+    # Ejemplo de uso
+    task_queue = TaskQueue()
+    
+    # Agregar tareas
+    task1_id = task_queue.add_task("Tarea 1", lambda: None, (), {})
+    task2_id = task_queue.add_task("Tarea 2", lambda: 42, (), {})
+    
+    # Ejecutar tareas
+    results = []
+    for _ in range(3):
+        try:
+            result = task_queue.run_all()
+            results.append(result)
+        except Exception as e:
+            print(f"Error ejecutando tareas: {str(e)}")
+            break
+    
+    # Obtener estado de tareas
+    stats = task_queue.summary()
+    
+    print("\nResumen:")
+    print(f"Total tareas: {stats['total_tasks']}")
+    print(f"Completadas: {stats['completed_tasks']}")
+    print(f"En espera: {stats['pending_tasks']}")
+    print(f"Fallos: {stats['failed_tasks']}")
+    print(f"Tiempo total: {stats['total_time']} segundos")
+    
+    # Elegir
 ```
 
----
-
 **RESUMEN:**
-
-Este código implementa una clase `TaskQueue` que maneja una secuencia de tareas a ejecutar con reintentos y persistencia. Incluye:
-
-- **Funcionalidades principales:**
-  - Añadir tareas con personalización.
-  - Ejecutar tareas con reintentos limitados.
-  - Verificar el estado de cada tarea.
-  - Generar resúmenes estadísticos.
-  - Persistir los estados en JSON.
-
-- **Características principales:**
-  - Soporte para logging y excepciones.
-  - Tiempos de ejecución y status detallados.
-  - Mecanismos de reintentos con espera temporal.
-  - Manejo del tiempo desde el último inicio.
-
-- **Ejemplo de uso:**
-  - Crea una instancia del TaskQueue.
-  - Añade tareas con funciones anónimas.
-  - Ejecuta las tareas con reintentos.
-  - Verifica el estado de cada tarea.
-  - Genera un resumen del desempeño.
-
-La clase es versátil y puede ser adaptada a diferentes escenarios, incluyendo la integración con otros módulos o sistemas.
+Hice un sistema de caja de tareas (TaskQueue) que permite agregar, ejecutar y monitorear tareas de forma secuencial con reintentos. Incluye persistencia JSON, logging, y manejo de errores. Cada tarea tiene su estado actual y una lista de logs con detalles del ejecución. El sistema también calcula estadísticas globales sobre las tareas ejecutadas.
+```

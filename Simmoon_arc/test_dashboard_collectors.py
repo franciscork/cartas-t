@@ -231,15 +231,15 @@ class TestCollectAgentStatus:
     def test_basic_structure(self):
         """Should return a dict with expected top-level keys."""
         with \
-            patch("dashboard_collectors._tmux_session_exists") as mock_tmux, \
-            patch("dashboard_collectors._http_healthy") as mock_http, \
-            patch("dashboard_collectors._try_import") as mock_import, \
-            patch("dashboard_collectors._wsl_has_binary") as mock_bin, \
-            patch("dashboard_collectors._file_exists_in_wsl") as mock_file_wsl, \
-            patch("dashboard_collectors.collect_obsidian_status") as mock_obsidian, \
-            patch("dashboard_collectors.collect_claude_status") as mock_claude, \
+            patch.object(dashboard_collectors, '_tmux_session_exists') as mock_tmux, \
+            patch.object(dashboard_collectors, '_http_healthy') as mock_http, \
+            patch.object(dashboard_collectors, '_try_import') as mock_import, \
+            patch.object(dashboard_collectors, '_wsl_has_binary') as mock_bin, \
+            patch.object(dashboard_collectors, '_file_exists_in_wsl') as mock_file_wsl, \
+            patch.object(dashboard_collectors, 'collect_obsidian_status') as mock_obsidian, \
+            patch.object(dashboard_collectors, 'collect_claude_status') as mock_claude, \
             patch.object(dashboard_collectors, "_MONITOR_OK", False), \
-            patch("pathlib.Path.exists", return_value=False), \
+            patch.object(dashboard_collectors, "SCRIPT_DIR", Path("/nonexistent/factory/test")), \
             patch("shutil.which", return_value=None):
 
             mock_tmux.return_value = False
@@ -264,20 +264,21 @@ class TestCollectAgentStatus:
         # Should have 15 agents
         assert result["total_agents"] == 15
         assert len(result["agents"]) == 15
-        assert result["total_running"] == 0  # all mocked to False
+        running_agents = [a["name"] for a in result["agents"] if a["running"]]
+        assert result["total_running"] == 0, f"Running agents: {running_agents}"
 
     def test_agent_names_present(self):
         """Should include all 15 agents with name, icon, and running fields."""
         with \
-            patch("dashboard_collectors._tmux_session_exists") as mock_tmux, \
-            patch("dashboard_collectors._http_healthy") as mock_http, \
-            patch("dashboard_collectors._try_import") as mock_import, \
-            patch("dashboard_collectors._wsl_has_binary") as mock_bin, \
-            patch("dashboard_collectors._file_exists_in_wsl") as mock_file_wsl, \
-            patch("dashboard_collectors.collect_obsidian_status") as mock_obsidian, \
-            patch("dashboard_collectors.collect_claude_status") as mock_claude, \
+            patch.object(dashboard_collectors, '_tmux_session_exists') as mock_tmux, \
+            patch.object(dashboard_collectors, '_http_healthy') as mock_http, \
+            patch.object(dashboard_collectors, '_try_import') as mock_import, \
+            patch.object(dashboard_collectors, '_wsl_has_binary') as mock_bin, \
+            patch.object(dashboard_collectors, '_file_exists_in_wsl') as mock_file_wsl, \
+            patch.object(dashboard_collectors, 'collect_obsidian_status') as mock_obsidian, \
+            patch.object(dashboard_collectors, 'collect_claude_status') as mock_claude, \
             patch.object(dashboard_collectors, "_MONITOR_OK", False), \
-            patch("pathlib.Path.exists", return_value=False), \
+            patch.object(dashboard_collectors, "SCRIPT_DIR", Path("/nonexistent/factory/test")), \
             patch("shutil.which", return_value=None):
 
             mock_tmux.return_value = False

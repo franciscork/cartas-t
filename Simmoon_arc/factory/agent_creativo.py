@@ -6,11 +6,20 @@ factory/agent_creativo.py — 🎮 Creativo de Juegos
 Especialista en diseño de juegos, mecánicas, dirección creativa y 
 brainstorming. Genera ideas innovadoras para SIMMOON y otros proyectos.
 
+Ahora con MODO AUTÓNOMO (--daemon): decide qué debe hacer Claude y delega.
+
 Uso:
-    from agent_creativo import CreativoJuegos
-    creativo = CreativoJuegos()
-    ideas = creativo.brainstorm_mecanicas("cultivos lunares")
-    print(creativo.evaluar_idea("nueva mecánica de riego con asteroides"))
+    # Modo interactivo (existente)
+    python factory/agent_creativo.py brainstorm 'cultivos lunares'
+    python factory/agent_creativo.py evaluar 'mineria de asteroides'
+    python factory/agent_creativo.py mood 'base lunar al atardecer'
+    python factory/agent_creativo.py features economia
+    python factory/agent_creativo.py health
+
+    # Modo autónomo (NUEVO)
+    python factory/agent_creativo.py daemon
+    python factory/agent_creativo.py daemon --interval 60
+    python factory/agent_creativo.py status
 """
 
 import json
@@ -19,10 +28,15 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 SCRIPT_DIR = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(SCRIPT_DIR))
+
+from factory.agent_base import AgentDaemon, _consulta_llm, _extraer_json
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+DEFAULT_MODEL = "gemma3:latest"
 
 # ── System prompt ─────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """Eres un **Creativo de Juegos** experto, parte del equipo FactoryGames.
@@ -40,66 +54,47 @@ Tono: entusiasta, creativo, concreto. Usa emojis de juegos (🎮 🎲 🎯 🕹�
 Siempre da ideas ACCIONABLES, no genéricas. Piensa en "¿cómo se implementa esto?"
 """
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-DEFAULT_MODEL = "gemma3:latest"
 
+class CreativoJuegos(AgentDaemon):
+    """Agente Creativo de Juegos — brainstorming, diseño y ahora autónomo.
 
-class CreativoJuegos:
-    """Agente Creativo de Juegos — brainstorming y diseño de mecánicas."""
+    Extiende AgentDaemon para operar en modo autónomo: decide qué tareas
+    delegar a Claude Code y supervisa su progreso.
+    """
 
-    def __init__(self, model: str = DEFAULT_MODEL, verbose: bool = True):
-        self.model = model
-        self.verbose = verbose
-        self.name = "Creativo de Juegos"
-        self.emoji = "🎮"
-        self.role = "Dirección Creativa y Diseño de Mecánicas"
+    def __init__(self, model: str = DEFAULT_MODEL, verbose: bool = True,
+                 interval_minutos: int = 30):
+        # Inicializar la parte AgentDaemon
+        super().__init__(
+            name="Creativo de Juegos",
+            emoji="🎮",
+            role="Dirección Creativa y Diseño de Mecánicas",
+            model=model,
+            system_prompt=SYSTEM_PROMPT,
+            verbose=verbose,
+            interval_minutos=interval_minutos,
+        )
+        # Atributos específicos del creativo
         self.capabilities = [
             "game_design", "mechanics_innovation", "creative_brainstorming",
             "mood_concept", "feature_design", "game_balance"
         ]
 
-    # ── LLM call ─────────────────────────────────────────────────────────
+    # ── LLM call (legacy) ─────────────────────────────────────────────
 
     def _consulta(self, prompt: str, temperature: float = 0.8,
                   max_tokens: int = 2048) -> Optional[str]:
-        """Consultar el LLM local con el system prompt del creativo."""
-        full_prompt = f"{SYSTEM_PROMPT}\n\n{prompt}"
-        payload = json.dumps({
-            "model": self.model,
-            "prompt": full_prompt,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-                "num_predict": max_tokens,
-            }
-        }).encode("utf-8")
+        """Consultar el LLM local con el system prompt del creativo.
+        Mantenido por retrocompatibilidad.
+        """
+        return _consulta_llm(
+            SYSTEM_PROMPT, prompt, self.model, temperature, max_tokens
+        )
 
-        try:
-            req = urllib.request.Request(
-                OLLAMA_URL, data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                return result.get("response", "").strip()
-        except Exception as e:
-            if self.verbose:
-                print(f"  [WARN] Error consultando LLM: {e}")
-            return None
-
-    # ── Brainstorming ────────────────────────────────────────────────────
+    # ── Brainstorming (legacy) ─────────────────────────────────────────
 
     def brainstorm_mecanicas(self, tema: str, cantidad: int = 5) -> str:
-        """Generar ideas de mecánicas de juego para un tema específico.
-
-        Args:
-            tema: Tema o área del juego (ej: "cultivos lunares", "transporte")
-            cantidad: Número de ideas a generar
-
-        Returns:
-            Texto formateado con las ideas
-        """
+        """Generar ideas de mecánicas de juego para un tema específico."""
         prompt = (
             f"Genera {cantidad} ideas de mecánicas de juego para: **{tema}**\n\n"
             f"Cada idea debe incluir:\n"
@@ -115,14 +110,7 @@ class CreativoJuegos:
         return "❌ No se pudo generar brainstorming ahora."
 
     def evaluar_idea(self, idea: str) -> str:
-        """Evaluar una idea de juego desde perspectiva de game design.
-
-        Args:
-            idea: Descripción de la idea a evaluar
-
-        Returns:
-            Texto formateado con evaluación
-        """
+        """Evaluar una idea de juego desde perspectiva de game design."""
         prompt = (
             f"Evalúa esta idea de juego como un diseñador senior:\n\n"
             f"**Idea:** {idea}\n\n"
@@ -137,14 +125,7 @@ class CreativoJuegos:
         return self._consulta(prompt, temperature=0.4) or "❌ No se pudo evaluar."
 
     def generar_mood_concept(self, descripcion: str) -> str:
-        """Generar descripción de mood/concepto visual para un escenario.
-
-        Args:
-            descripcion: Descripción del escenario o elemento visual
-
-        Returns:
-            Descripción detallada del concepto visual
-        """
+        """Generar descripción de mood/concepto visual para un escenario."""
         prompt = (
             f"Crea una descripción detallada de concepto visual para:\n\n"
             f"**{descripcion}**\n\n"
@@ -159,15 +140,7 @@ class CreativoJuegos:
         return self._consulta(prompt, temperature=0.75) or "❌ No se pudo generar concepto."
 
     def proponer_features(self, area: str, limitaciones: str = "") -> str:
-        """Proponer nuevas features para un área del juego.
-
-        Args:
-            area: Área del juego (ej: "economía", "combate", "construcción")
-            limitaciones: Limitaciones técnicas o de diseño a considerar
-
-        Returns:
-            Propuesta de features
-        """
+        """Proponer nuevas features para un área del juego."""
         prompt = (
             f"Propón 3 nuevas features para el área de **{area}** "
             f"en nuestro juego SIMMOON.\n\n"
@@ -175,7 +148,7 @@ class CreativoJuegos:
         if limitaciones:
             prompt += f"Considera estas limitaciones: {limitaciones}\n\n"
         prompt += (
-            "Para cada feature:\n"
+            f"Para cada feature:\n"
             f"1. Nombre atractivo\n"
             f"2. Qué problema resuelve o qué diversión aporta\n"
             f"3. Implementación simplificada (2-3 pasos)\n"
@@ -184,7 +157,73 @@ class CreativoJuegos:
         )
         return self._consulta(prompt, temperature=0.8) or "❌ No se pudieron generar features."
 
-    # ── Utilidad ─────────────────────────────────────────────────────────
+    # ── Lógica autónoma ───────────────────────────────────────────────
+
+    def decidir_siguiente_tarea(self) -> Optional[Dict[str, Any]]:
+        """Decidir qué tarea creativa delegar a Claude.
+
+        Evalúa el estado actual del proyecto y propone la siguiente
+        tarea de diseño/creatividad que debería abordar Claude.
+        """
+        pendientes = self.memoria.pending_tasks()
+        recientes = self.memoria.recent_tasks(3)
+
+        contexto_pendientes = ""
+        if pendientes:
+            contexto_pendientes = (
+                f"Tareas pendientes de Claude: "
+                f"{', '.join(t['description'][:60] for t in pendientes[:3])}"
+            )
+
+        contexto_recientes = ""
+        if recientes:
+            contexto_recientes = (
+                f"Últimas tareas delegadas: "
+                f"{', '.join(t['description'][:60] for t in recientes)}"
+            )
+
+        prompt = (
+            f"Eres el Director Creativo de FactoryGames. "
+            f"Debes decidir QUÉ tarea delegar a Claude Code a continuación.\n\n"
+            f"Contexto actual del proyecto:\n"
+            f"- SimMoon: constructor de colonia lunar (PyGame, isométrico)\n"
+            f"- 131 edificios en 22 categorías\n"
+            f"- Sistema de turnos con recursos (créditos, energía, O2, agua, presión)\n"
+            f"- Zonificación: 4 zonas (alojamiento, comercial, industrial, ecológico)\n\n"
+            f"{contexto_pendientes}\n"
+            f"{contexto_recientes}\n\n"
+            f"Elige UNA tarea concreta de diseño/mecánicas para delegar a Claude.\n"
+            f"Debe ser:\n"
+            f"- Algo que MEJORE el juego (no mantenerlo igual)\n"
+            f"- Implementable en 1-2 horas de trabajo\n"
+            f"- Que use las capacidades de Claude (refactor, implementar, debuggear)\n\n"
+            f"Responde SOLO con JSON:\n"
+            f"{{\n"
+            f'  "task": "descripción clara de la tarea (máx 200 chars)",\n'
+            f'  "context": "contexto adicional para Claude (máx 300 chars)",\n'
+            f'  "files": ["archivo1.py", "archivo2.py"],\n'
+            f'  "razon": "por qué esta tarea es prioritaria"\n'
+            f"}}\n\n"
+            f"Si no hay nada que hacer, responde: {{\"task\": \"\"}}"
+        )
+
+        respuesta = self._preguntar(prompt, temperature=0.6)
+        if not respuesta:
+            return None
+
+        decision = _extraer_json(respuesta)
+        if not decision or not decision.get("task"):
+            if self.verbose:
+                print(f"     ⚠️  Respuesta no parseable como JSON")
+                print(f"     Raw (primeros 200c): {respuesta[:200]}...")
+            return None
+        return {
+            "task": decision["task"],
+            "context": decision.get("context", ""),
+            "files": decision.get("files", []),
+        }
+
+    # ── Utilidad ─────────────────────────────────────────────────────
 
     def resumen(self) -> dict:
         """Resumen del agente para registro."""
@@ -195,6 +234,8 @@ class CreativoJuegos:
             "model": self.model,
             "capabilities": self.capabilities,
             "available": self._consulta("Responde SOLO: OK", temperature=0.1) is not None,
+            "modo_autonomo": True,
+            "bridge_disponible": self.bridge is not None,
         }
 
     def __str__(self):
@@ -206,13 +247,14 @@ def main():
     """Interfaz CLI para el Creativo de Juegos."""
     import argparse
     parser = argparse.ArgumentParser(
-        description=f"🎮 Creativo de Juegos — Brainstorming y Diseño de Mecánicas"
+        description="🎮 Creativo de Juegos — Brainstorming y Diseño Autónomo"
     )
     parser.add_argument("--model", default=DEFAULT_MODEL, help="Modelo Ollama")
     parser.add_argument("--quiet", "-q", action="store_true", help="Modo silencioso")
 
     sub = parser.add_subparsers(dest="command")
 
+    # Comandos existentes
     p_brain = sub.add_parser("brainstorm", help="Brainstorming de mecánicas")
     p_brain.add_argument("tema", help="Tema para brainstormear")
 
@@ -227,6 +269,15 @@ def main():
     p_feat.add_argument("--limitaciones", "-l", default="", help="Limitaciones")
 
     p_health = sub.add_parser("health", help="Verificar disponibilidad")
+
+    # Comandos nuevos (modo autónomo)
+    p_daemon = sub.add_parser("daemon", help="🧠 Modo autónomo (decide y delega a Claude)")
+    p_daemon.add_argument("--interval", "-i", type=int, default=30,
+                          help="Intervalo entre ciclos en minutos (default: 30)")
+
+    p_status = sub.add_parser("status", help="Estado del agente autónomo")
+
+    p_once = sub.add_parser("once", help="Ejecutar un ciclo de decisión ahora")
 
     args = parser.parse_args()
 
@@ -247,13 +298,31 @@ def main():
         print(f"   Role: {info['role']}")
         print(f"   Modelo: {info['model']}")
         print(f"   Capacidades: {', '.join(info['capabilities'])}")
+        print(f"   🧠 Modo autónomo: {'✅' if info['modo_autonomo'] else '❌'}")
+        print(f"   🔗 Bridge Claude: {'✅' if info['bridge_disponible'] else '❌'}")
+
+    # ── Nuevos comandos autónomos ──
+    elif args.command == "daemon":
+        print(creativo.status_text())
+        creativo.run_daemon(interval_minutos=args.interval)
+
+    elif args.command == "status":
+        print(creativo.status_text())
+
+    elif args.command == "once":
+        ok = creativo.run_once()
+        print(f"\n  {'✅' if ok else 'ℹ️'} Ciclo completado")
+        print(creativo.memoria.summary())
+
     else:
         parser.print_help()
         print("\n  Ejemplos:")
         print("    python factory/agent_creativo.py brainstorm 'cultivos lunares'")
         print("    python factory/agent_creativo.py evaluar 'mineria de asteroides'")
-        print("    python factory/agent_creativo.py mood 'base lunar al atardecer'")
-        print("    python factory/agent_creativo.py features economia")
+        print("    python factory/agent_creativo.py daemon          # 🆕 Autónomo")
+        print("    python factory/agent_creativo.py daemon -i 60    # Cada 60 min")
+        print("    python factory/agent_creativo.py once            # Un ciclo")
+        print("    python factory/agent_creativo.py status          # Estado")
         print("    python factory/agent_creativo.py health")
 
 

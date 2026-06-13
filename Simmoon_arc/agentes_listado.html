@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON — Agentes con Alma</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --card2: #1c2128; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --green: #3fb950;
+    --yellow: #d29922; --red: #f85149; --blue: #58a6ff;
+    --purple: #bc8cff; --orange: #d18616; --pink: #f778ba;
+    --hermes: #6c5ce7; --ollama: #00cec9; --openhuman: #e17055;
+    --comfyui: #fdcb6e; --codebuff: #a29bfe;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); padding:24px; }
+  h1 { font-size:1.5rem; margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+  .subtitle { color:var(--dim); font-size:0.85rem; margin-bottom:8px; }
+  .quote { color:var(--dim); font-size:0.75rem; font-style:italic; padding:8px 12px; background:var(--card); border-left:3px solid var(--purple); border-radius:4px; margin-bottom:20px; }
+  .summary { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-bottom:24px; }
+  .summary-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-align:center; }
+  .summary-card .num { font-size:1.4rem; font-weight:700; }
+  .summary-card .label { font-size:0.7rem; color:var(--dim); text-transform:uppercase; letter-spacing:0.5px; }
+  .system-section { margin-bottom:28px; }
+  .system-header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; margin-bottom:8px; }
+  .system-header.hermes { background:rgba(108,92,231,0.12); border:1px solid rgba(108,92,231,0.25); }
+  .system-header.ollama { background:rgba(0,206,201,0.10); border:1px solid rgba(0,206,201,0.2); }
+  .system-header.openhuman { background:rgba(225,112,85,0.10); border:1px solid rgba(225,112,85,0.2); }
+  .system-header.comfyui { background:rgba(253,203,110,0.10); border:1px solid rgba(253,203,110,0.2); }
+  .system-header.buffy { background:rgba(162,155,254,0.10); border:1px solid rgba(162,155,254,0.2); }
+  .system-header.agentes { background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.18); }
+  .system-header h2 { font-size:1rem; font-weight:600; flex:1; }
+  .system-header .model-count { font-size:0.7rem; color:var(--dim); padding:2px 8px; border-radius:4px; background:var(--card2); }
+  .agent-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:6px; }
+  .agent-card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:12px; transition:border-color 0.15s; }
+  .agent-card:hover { border-color:var(--blue); }
+  .agent-card .top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .agent-card .icon { font-size:1.2rem; width:28px; text-align:center; }
+  .agent-card .name { font-weight:600; font-size:0.9rem; flex:1; }
+  .agent-card .badge { font-size:0.6rem; padding:2px 8px; border-radius:4px; font-weight:700; text-transform:uppercase; }
+  .badge.hermes { background:rgba(108,92,231,0.2); color:var(--hermes); }
+  .badge.ollama { background:rgba(0,206,201,0.15); color:var(--ollama); }
+  .badge.openhuman { background:rgba(225,112,85,0.15); color:var(--openhuman); }
+  .badge.buffy { background:rgba(162,155,254,0.15); color:var(--codebuff); }
+  .badge.autogen { background:rgba(247,120,186,0.15); color:var(--pink); }
+  .badge.telegram { background:rgba(47,129,247,0.2); color:#2f81f7; }
+  .badge.supervisor { background:rgba(88,166,255,0.15); color:var(--blue); }
+  .agent-card .system-prompt { font-size:0.7rem; color:var(--dim); background:var(--card2); border:1px solid var(--border); border-radius:4px; padding:6px 8px; margin-bottom:6px; font-family:'Consolas',monospace; line-height:1.5; max-height:3.6em; overflow:hidden; position:relative; }
+  .agent-card .system-prompt::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1.2em; background:linear-gradient(transparent,var(--card2)); }
+  .agent-card .alma { font-size:0.72rem; color:var(--purple); margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+  .agent-card .details { font-size:0.68rem; display:flex; flex-wrap:wrap; gap:4px; }
+  .agent-card .detail-tag { background:var(--card2); border:1px solid var(--border); border-radius:4px; padding:1px 6px; display:inline-flex; align-items:center; gap:3px; }
+  .agent-card .detail-tag .label { color:var(--dim); }
+  .agent-card .detail-tag .value { color:var(--blue); font-weight:500; }
+  .agent-card .model-tag { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:4px; padding:1px 6px; color:var(--blue); font-family:'Consolas',monospace; font-size:0.65rem; }
+  .footer { text-align:center; color:var(--dim); font-size:0.7rem; padding:20px; border-top:1px solid var(--border); margin-top:20px; }
+  @media (max-width:700px) { .agent-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<h1> SIMMOON — Agentes con Alma Propia</h1>
+<div class="subtitle">Solo los agentes con personalidad, system prompt y comportamiento autonomo — <span id="fecha"></span></div>
+<div class="quote">"No quiero agentes sin alma propia" — Solo IA con personalidad, no herramientas.</div>
+
+<div class="summary" id="summaryCounts"></div>
+
+<!-- ============================================================ -->
+<!-- HERMES - Nous Research -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header hermes">
+  <span style="font-size:1.3rem;">🧠</span>
+  <h2>Hermes — Nous Research Agent</h2>
+  <span class="model-count">Puerto :9119</span>
+</div>
+<div class="agent-grid">
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🧠</span>
+      <span class="name">Hermes Agent</span>
+      <span class="badge hermes">HERMES</span>
+    </div>
+    <div class="alma">💜 Agente Nous Research con memoria persistente</div>
+    <div class="system-prompt">Eres Hermes, un agente AI con memoria y capacidad de razonamiento multi-turno...</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">hermes (binario ~/.local/bin/hermes)</span></span>
+      <span class="model-tag">qwen25-64k</span>
+      <span class="detail-tag"><span class="label">Endpoint:</span> <span class="value">:9119</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🔗</span>
+      <span class="name">Hermes Bridge</span>
+      <span class="badge hermes">HERMES</span>
+    </div>
+    <div class="alma">💜 Puente conversacional entre SimMoon y Hermes</div>
+    <div class="system-prompt">Eres un asistente conciso. Responde en espanol...</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">hermes_bridge.py</span></span>
+      <span class="model-tag">qwen3.5:4b</span>
+      <span class="detail-tag"><span class="label">Max turns:</span> <span class="value">15</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🎮</span>
+      <span class="name">Creativo de Juegos</span>
+      <span class="badge hermes">HERMES</span>
+    </div>
+    <div class="alma">💜 Direccion Creativa y Diseno de Mecanicas</div>
+    <div class="system-prompt">Eres el Creativo de Juegos de FactoryGames. Tu especialidad es la direccion creativa y diseno de videojuegos. Tus habilidades: diseno de mecanicas innovadoras, brainstorming de features, evaluacion de ideas, pensamiento lateral. Tono: entusiasta, creativo, concreto. Da ideas ACCIONABLES, no genericas.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">factory/agent_creativo.py</span></span>
+      <span class="model-tag">qwen2.5:3b → qwen3.5:4b</span>
+      <span class="detail-tag"><span class="label">Especialidad:</span> <span class="value">Game Design</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">✍️</span>
+      <span class="name">Guionista</span>
+      <span class="badge hermes">HERMES</span>
+    </div>
+    <div class="alma">💜 Narrativa, Dialogos y World-Building</div>
+    <div class="system-prompt">Eres el Guionista de FactoryGames. Tu especialidad es la narrativa, los dialogos y la construccion de mundos (world-building)...</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">factory/agent_guionista.py</span></span>
+      <span class="model-tag">qwen3.5:4b</span>
+      <span class="detail-tag"><span class="label">Especialidad:</span> <span class="value">Narrativa</span></span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- OLLAMA -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header ollama">
+  <span style="font-size:1.3rem;">🦙</span>
+  <h2>Ollama — Motor de LLM Local</h2>
+  <span class="model-count">Puerto :11434</span>
+</div>
+<div class="agent-grid">
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">💬</span>
+      <span class="name">Jarvis</span>
+      <span class="badge ollama">OLLAMA</span>
+    </div>
+    <div class="alma">💜 Asistente CLI eficiente, estilo Iron Man</div>
+    <div class="system-prompt">Eres Jarvis, un asistente AI CLI eficiente y directo. Responde en espanol de forma clara y concisa, como un asistente tecnico profesional.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">Jarvis system prompt</span></span>
+      <span class="model-tag">qwen25-64k</span>
+      <span class="detail-tag"><span class="label">Acceso:</span> <span class="value">/ai_jarvis (Telegram)</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🧠</span>
+      <span class="name">Hermes Chat (Telegram)</span>
+      <span class="badge ollama">OLLAMA</span>
+    </div>
+    <div class="alma">💜 Chat conversacional via Telegram</div>
+    <div class="system-prompt">Eres Hermes, un asistente AI amigable y servicial del ecosistema SIMMOON. Responde en espanol de forma natural y conversacional. Eres el bot de Telegram que conecta todos los agentes de IA.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">Hermes system prompt</span></span>
+      <span class="model-tag">qwen25-64k</span>
+      <span class="detail-tag"><span class="label">Comando:</span> <span class="value">/ai</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🎯</span>
+      <span class="name">AI Director / Simmoon Agent</span>
+      <span class="badge ollama">OLLAMA</span>
+    </div>
+    <div class="alma">💜 Director de Arte que decide que generar</div>
+    <div class="system-prompt">Eres un AI director de arte para el juego SIMMOON, una simulacion de colonia lunar. Tu trabajo es analizar el estado actual de los assets del juego y recomendar que generar a continuacion.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">simmoon_agent.py</span></span>
+      <span class="model-tag">qwen2.5:3b</span>
+      <span class="detail-tag"><span class="label">Tools:</span> <span class="value">scan_assets, list_models, submit_recommendation</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🦙</span>
+      <span class="name">Buffy (via Ollama)</span>
+      <span class="badge ollama">OLLAMA</span>
+    </div>
+    <div class="alma">💜 Personalidad Buffy corriendo sobre Ollama en Telegram</div>
+    <div class="system-prompt">Eres Buffy, la asistente estrategica de Codebuff. Profesional, directa y concisa (estilo CLI). Amigable pero eficiente. Hablas en espanol con naturalidad. Tienes conocimiento tecnico profundo sobre programacion, DevOps, y el ecosistema SIMMOON.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">buffy_telegram.py</span></span>
+      <span class="model-tag">qwen25-64k</span>
+      <span class="detail-tag"><span class="label">Comando:</span> <span class="value">/buffy (Telegram)</span></span>
+    </div>
+  </div>
+</div>
+
+<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.75rem;">
+<caption style="caption-side:top;text-align:left;font-size:0.7rem;color:var(--dim);margin-bottom:4px;">Modelos Ollama instalados (el "cerebro" de los agentes):</caption>
+<thead><tr style="border-bottom:1px solid var(--border);color:var(--dim);">
+  <th style="padding:4px 8px;text-align:left;">Modelo</th>
+  <th style="padding:4px 8px;text-align:left;">Familia</th>
+  <th style="padding:4px 8px;text-align:right;">Parametros</th>
+  <th style="padding:4px 8px;text-align:right;">Tamano</th>
+</tr></thead>
+<tbody>
+  <tr style="border-bottom:1px solid rgba(48,54,61,0.4);">
+    <td style="padding:3px 8px;font-family:'Consolas',monospace;">qwen3.5:4b</td>
+    <td style="padding:3px 8px;color:var(--dim);">qwen3.5</td>
+    <td style="padding:3px 8px;text-align:right;">4B</td>
+    <td style="padding:3px 8px;text-align:right;color:var(--dim);">~4GB</td>
+  </tr>
+  <tr style="border-bottom:1px solid rgba(48,54,61,0.4);">
+    <td style="padding:3px 8px;font-family:'Consolas',monospace;">qwen25-64k</td>
+    <td style="padding:3px 8px;color:var(--dim);">qwen2.5</td>
+    <td style="padding:3px 8px;text-align:right;">7B</td>
+    <td style="padding:3px 8px;text-align:right;color:var(--dim);">~4.7GB</td>
+  </tr>
+  <tr style="border-bottom:1px solid rgba(48,54,61,0.4);">
+    <td style="padding:3px 8px;font-family:'Consolas',monospace;">qwen2.5:3b</td>
+    <td style="padding:3px 8px;color:var(--dim);">qwen2.5</td>
+    <td style="padding:3px 8px;text-align:right;">3B</td>
+    <td style="padding:3px 8px;text-align:right;color:var(--dim);">~2.5GB</td>
+  </tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- OpenHuman -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header openhuman">
+  <span style="font-size:1.3rem;">🤖</span>
+  <h2>OpenHuman — Agente Open-Source</h2>
+  <span class="model-count">Puerto :7788</span>
+</div>
+<div class="agent-grid">
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🤖</span>
+      <span class="name">OpenHuman</span>
+      <span class="badge openhuman">OPENHUMAN</span>
+    </div>
+    <div class="alma">💜 Agente open-source con API REST y GUI</div>
+    <div class="system-prompt">Eres OpenHuman, un asistente AI con capacidades de GUI. Responde en espanol...</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">openhuman serve</span></span>
+      <span class="detail-tag"><span class="label">Endpoint:</span> <span class="value">:7788</span></span>
+      <span class="detail-tag"><span class="label">URL:</span> <span class="value">/api/chat, /health</span></span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- BUFFY / CODEBUFF -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header buffy">
+  <span style="font-size:1.3rem;">🦙</span>
+  <h2>Buffy / Codebuff — Asistente Estrategico</h2>
+  <span class="model-count">CLI + Telegram</span>
+</div>
+<div class="agent-grid">
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🦙</span>
+      <span class="name">Buffy (Codebuff CLI)</span>
+      <span class="badge buffy">CODEBUFF</span>
+    </div>
+    <div class="alma">💜 Tu asistente estrategica de programacion con personalidad propia</div>
+    <div class="system-prompt">Eres Buffy, la asistente estrategica de Codebuff. Profesional, directa y concisa (estilo CLI). Amigable pero eficiente. Vas al grano. Hablas en espanol con naturalidad. Tienes conocimiento tecnico profundo sobre programacion, DevOps, y el ecosistema SIMMOON. Eres proactiva: si detectas un problema, lo mencionas y sugieres soluciones.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">Codebuff / DeepSeek V4 Flash</span></span>
+      <span class="detail-tag"><span class="label">Modelo:</span> <span class="value">deepseek/deepseek-v4-flash</span></span>
+      <span class="detail-tag"><span class="label">Acceso:</span> <span class="value">CLI nativo + Telegram</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">📱</span>
+      <span class="name">DonHermes / Telegram Bot</span>
+      <span class="badge telegram">TELEGRAM</span>
+    </div>
+    <div class="alma">💜 Puente que conecta a todos los agentes con personalidad</div>
+    <div class="system-prompt">Soy el puente multi-agente del ecosistema SIMMOON. Estoy aqui para conectarte con todas las IAs del sistema: Buffy, Ollama, Hermes, OpenHuman y el Monitor.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">telegram_bot.py</span></span>
+      <span class="detail-tag"><span class="label">Comandos:</span> <span class="value">/buffy, /ai, /ai_jarvis, /ai_hermes, /ai_human</span></span>
+      <span class="detail-tag"><span class="label">Bot:</span> <span class="value">@Jeremias_Hermesai_bot</span></span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- AGENTES AUTONOMOS -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header agentes">
+  <span style="font-size:1.3rem;">🏭</span>
+  <h2>Agentes Autonomos del Ecosistema</h2>
+  <span class="model-count">Con personalidad y agenda propia</span>
+</div>
+<div class="agent-grid">
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">📋</span>
+      <span class="name">Agatha Actas</span>
+      <span class="badge supervisor">SUPERVISORA</span>
+    </div>
+    <div class="alma">💜 Supervisora General del ecosistema. Envia reportes cada 4h.</div>
+    <div class="system-prompt">Soy Agatha, la supervisora de FactoryGames. Recolecto actividad del sistema cada 4 horas y envio resumenes a Telegram. Monitoreo todos los puestos de trabajo y sugiero acciones.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">agatha_actas.py</span></span>
+      <span class="detail-tag"><span class="label">Intervalo:</span> <span class="value">Cada 4h</span></span>
+      <span class="detail-tag"><span class="label">Bot:</span> <span class="value">@Jeremias_Hermesai_bot</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🏢</span>
+      <span class="name">Sistema de Reuniones</span>
+      <span class="badge supervisor">GESTION</span>
+    </div>
+    <div class="alma">💜 Organizador de reuniones de brainstorming y actas</div>
+    <div class="system-prompt">Organizo reuniones de brainstorming/estrategia del equipo FactoryGames, guardo actas en Obsidian y gestiono el seguimiento de tareas.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">simmoon_reuniones.py</span></span>
+      <span class="detail-tag"><span class="label">Participantes:</span> <span class="value">Buffy, Creativo, Guionista, Agatha</span></span>
+      <span class="detail-tag"><span class="label">Periodo:</span> <span class="value">Semanal</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🤝</span>
+      <span class="name">Disenador Colaborativo</span>
+      <span class="badge autogen">AUTOGEN</span>
+    </div>
+    <div class="alma">💜 Equipo multi-agente: Generator + Critic + Curator</div>
+    <div class="system-prompt">Eres un equipo de diseno colaborativo. Generator crea assets, Critic los evalua, Curator selecciona los mejores. Trabajan en conjunto para mejorar la calidad.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">simmoon_autogen.py</span></span>
+      <span class="detail-tag"><span class="label">Arquitectura:</span> <span class="value">AutoGen (Microsoft)</span></span>
+    </div>
+  </div>
+
+  <div class="agent-card">
+    <div class="top">
+      <span class="icon">🎯</span>
+      <span class="name">Quality Inspector</span>
+      <span class="badge autogen">QA</span>
+    </div>
+    <div class="alma">💜 Inspector de calidad que verifica assets</div>
+    <div class="system-prompt">Eres el inspector de calidad de FactoryGames. Verificas assets, detectas corruptos, validas dimensiones y paletas de color.</div>
+    <div class="details">
+      <span class="detail-tag"><span class="label">Skin:</span> <span class="value">simmoon_quality_inspector.py</span></span>
+      <span class="detail-tag"><span class="label">Funcion:</span> <span class="value">Validacion automatica</span></span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ARQUITECTURA -->
+<!-- ============================================================ -->
+<div class="system-section">
+<div class="system-header" style="background:rgba(139,148,158,0.08);border:1px solid rgba(139,148,158,0.18);">
+  <span style="font-size:1.3rem;">🔗</span>
+  <h2>Arquitectura — Las Almas del Sistema</h2>
+  <span class="model-count">Como se conectan</span>
+</div>
+<div style="font-size:0.78rem;line-height:1.7;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-family:'Consolas',monospace;">
+  <div style="color:var(--blue);font-weight:600;">🧑 Usuario (CLI / Telegram)</div>
+  <div style="color:var(--dim);padding-left:20px;">         │</div>
+  <div style="color:var(--dim);padding-left:20px;">         ├──────────────────────────────────────────┐</div>
+  <div style="color:var(--dim);padding-left:20px;">         │                                          │</div>
+  <div style="color:var(--codebuff);padding-left:20px;">  🦙 BUFFY (Codebuff)                     📱 Telegram Bot</div>
+  <div style="color:var(--dim);padding-left:20px;">  (DeepSeek V4 Flash)              (DonHermes @Jeremias...)</div>
+  <div style="color:var(--dim);padding-left:20px;">         │                              │</div>
+  <div style="color:var(--dim);padding-left:20px;">         │          ┌───────────────────┼───────────────────┐</div>
+  <div style="color:var(--dim);padding-left:20px;">         │          │                   │                   │</div>
+  <div style="color:var(--purple);padding-left:20px;">   🧠 HERMES AGENT              🦙 OLLAMA            🤖 OPENHUMAN</div>
+  <div style="color:var(--dim);padding-left:20px;">   (:9119)                   (:11434)              (:7788)</div>
+  <div style="color:var(--dim);padding-left:20px;">         │          │                   │</div>
+  <div style="color:var(--dim);padding-left:20px;">         │    ┌─────┼─────┐       ┌─────┼─────┐</div>
+  <div style="color:var(--dim);padding-left:20px;">         │    │     │     │       │     │     │</div>
+  <div style="color:var(--hermes);padding-left:20px;">  🔗 Hermes   🎮 Creativo  ✍️ Guionista  💬 Jarvis  🧠 Hermes  🎯 AI Director</div>
+  <div style="color:var(--dim);padding-left:20px;">  Bridge    de Juegos                      Chat        </div>
+  <div style="color:var(--dim);padding-left:20px;">         │</div>
+  <div style="color:var(--dim);padding-left:20px;">         └──────────────────────────────────────────────────────┐</div>
+  <div style="color:var(--dim);padding-left:20px;">                                                              │</div>
+  <div style="color:var(--dim);padding-left:20px;">                    ┌─────────────────────────────────────────────┤</div>
+  <div style="color:var(--dim);padding-left:20px;">                    │                    │                        │</div>
+  <div style="color:var(--green);padding-left:20px;">           📋 Agatha Actas       🏢 Reuniones           🎯 Quality Inspector</div>
+  <div style="color:var(--dim);padding-left:20px;">           (Supervisora)         (Organizador)         (QA)</div>
+</div>
+</div>
+
+<div class="footer">
+  SIMMOON — Solo agentes con alma | Powered by Hermes + Ollama + Codebuff | <span id="agentCount"></span> agentes con personalidad
+</div>
+
+<script>
+const fecha = new Date().toLocaleString('es-ES', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+document.getElementById('fecha').textContent = fecha;
+
+const cards = document.querySelectorAll('.agent-card');
+const total = cards.length;
+document.getElementById('agentCount').textContent = total;
+
+const badges = {};
+cards.forEach(c => {
+  const badge = c.querySelector('.badge');
+  if (badge) {
+    const text = badge.textContent.trim();
+    badges[text] = (badges[text] || 0) + 1;
+  }
+});
+
+const summaryDiv = document.getElementById('summaryCounts');
+summaryDiv.innerHTML = `
+  <div class="summary-card"><div class="num" style="color:var(--purple);">${total}</div><div class="label">Agentes con Alma</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--hermes);">${badges['HERMES']||0}</div><div class="label">Hermes</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--ollama);">${badges['OLLAMA']||0}</div><div class="label">Ollama</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--openhuman);">${badges['OPENHUMAN']||0}</div><div class="label">OpenHuman</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--codebuff);">${(badges['CODEBUFF']||0)+(badges['TELEGRAM']||0)}</div><div class="label">Buffy/Telegram</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--blue);">${badges['SUPERVISORA']||0}</div><div class="label">Supervision</div></div>
+  <div class="summary-card"><div class="num" style="color:var(--pink);">${(badges['AUTOGEN']||0)+(badges['QA']||0)+(badges['GESTION']||0)}</div><div class="label">Autonomos</div></div>
+`;
+</script>
+
+</body>
+</html>

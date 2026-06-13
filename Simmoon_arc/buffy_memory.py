@@ -155,6 +155,13 @@ def format_context_for_buffy(days: int = 7) -> str:
     # Agent Memory
     lines.append(format_memory_for_buffy(memories))
     
+    # ── FactoryGames company context ──
+    lines.append("")
+    lines.append("=" * 60)
+    lines.append("🏭 FACTORYGAMES — CONTEXTO DE EMPRESA")
+    lines.append("=" * 60)
+    lines.append(_get_factorygames_summary())
+    
     lines.append("")
     lines.append("=" * 60)
     lines.append("FIN DEL CONTEXTO")
@@ -183,9 +190,29 @@ def get_today_summary() -> str:
             lines.append(f"   🖼️  Assets: {s['assets_total']}")
             if s.get('alerts_count', 0) > 0:
                 lines.append(f"   🚨 Alertas pendientes: {s['alerts_count']}")
+            # ── FactoryGames company context ──
+            lines.append("")
+            lines.append("   🏭 FACTORYGAMES — EMPRESA")
+            lines.append(f"   {_get_factorygames_summary()}")
             return "\n".join(lines)
     
     return "📭 No hay resumen de hoy disponible."
+
+
+def _get_factorygames_summary() -> str:
+    """Resumen de 1 párrafo del documento fundacional de FactoryGames
+    para que los agentes lo vean al iniciar sesión."""
+    return (
+        "FactoryGames es un estudio indie de videojuegos impulsado por 15 agentes IA "
+        "open-source que colaboran sin coste de API externo —Ollama local, Freebuff (Buffy), "
+        "Claude Code y Hermes Agent (8 agentes autónomos: Guionista, Creativo, Propaganda, "
+        "Coordinación, QA, Historiador, Build, Diseño de Juego)— para cubrir todo el ciclo "
+        "creativo. Stack: Blender (3D), InvokeAI/ComfyUI (arte generativo), GIMP (post-procesado), "
+        "5 Bots Telegram (Director, Build, PR, Community, Monitor). Pipeline de 8 fases: "
+        "Concepto → Diseño → Arte → 3D → Código → QA → Marketing → Release. "
+        "Ventaja: primer estudio con producción 100% local, gratuita y completa. "
+        "SimMoon es el proyecto piloto."
+    )
 
 
 def get_project_status() -> str:

@@ -86,6 +86,15 @@ def _try_parse_json(val: Any) -> Any:
         return val
 
 
+def _to_str(val: Any) -> str:
+    """Convert any value to string, handling datetime.date objects from YAML."""
+    if hasattr(val, "isoformat"):
+        return val.isoformat()
+    if hasattr(val, "strftime"):
+        return val.strftime("%Y-%m-%d")
+    return str(val)
+
+
 # ── Minimal YAML frontmatter parser (fallback) ────────────────────────────
 def _parse_frontmatter(text: str) -> Tuple[dict, str]:
     """Parse YAML frontmatter from markdown text.
@@ -1033,11 +1042,177 @@ class ObsidianMemory:
 
         return "\n".join(parts)
 
+    # ── Diarias: resúmenes diarios del proyecto ────────────────────────────
+
+    def _diaria_rel_path(self, date_str: str) -> str:
+        """Ruta relativa para un archivo de diaria (estilo Unix)."""
+        safe_date = re.sub(r'[^\d\-]', '_', date_str)[:10]
+        return f"Diarias/{safe_date}.md"
+
+    def _diaria_local_path(self, date_str: str) -> Path:
+        """Ruta absoluta local para un archivo de diaria."""
+        return self.vault_path / self._diaria_rel_path(date_str)
+
+    def save_diaria(self, date_str: str, title: str, content: str,
+                    metadata: Optional[dict] = None) -> bool:
+        """Guardar un resumen diario en la carpeta Diarias/ del vault.
+
+        Args:
+            date_str: Fecha en formato YYYY-MM-DD
+            title: Título del resumen
+            content: Contenido markdown del resumen
+            metadata: Dict opcional con assets_created, assets_total,
+                      services_active, agents_active, alerts_count, tags, etc.
+
+        Returns:
+            True si se guardó correctamente
+        """
+        meta = metadata or {}
+        now = datetime.now().isoformat()
+
+        frontmatter = {
+            "date": date_str,
+            "title": title,
+            "type": "diaria",
+            "agent": self.agent_name,
+            "project": self.project,
+            "assets_created": meta.get("assets_created", 0),
+            "assets_total": meta.get("assets_total", 0),
+            "services_active": meta.get("services_active", 0),
+            "services_total": meta.get("services_total", 0),
+            "agents_active": meta.get("agents_active", 0),
+            "agents_total": meta.get("agents_total", 0),
+            "alerts_count": meta.get("alerts_count", 0),
+            "created": now,
+            "updated": now,
+        }
+        if meta.get("tags"):
+            frontmatter["tags"] = meta["tags"]
+        if meta.get("created_by"):
+            frontmatter["created_by"] = meta["created_by"]
+
+        # Si ya existe, preservar created original
+        existing = self._read_diaria(date_str)
+        if existing:
+            existing_meta, _ = _parse_frontmatter(existing)
+            if existing_meta.get("created"):
+                frontmatter["created"] = existing_meta["created"]
+
+        text = _dump_frontmatter(frontmatter, content)
+        return self._write_diaria(date_str, text)
+
+    def _read_diaria(self, date_str: str) -> Optional[str]:
+        """Leer contenido markdown de una diaria."""
+        if self.rest_available and self.rest_client:
+            rel = self._diaria_rel_path(date_str)
+            ok, text = self.rest_client.read_note(rel)
+            return text if ok else None
+        else:
+            fp = self._diaria_local_path(date_str)
+            if not fp.exists():
+                return None
+            try:
+                return fp.read_text(encoding="utf-8")
+            except Exception:
+                return None
+
+    def _write_diaria(self, date_str: str, text: str) -> bool:
+        """Escribir archivo de diaria al backend activo."""
+        if self.rest_available and self.rest_client:
+            rel = self._diaria_rel_path(date_str)
+            return self.rest_client.write_note(rel, text)
+        else:
+            fp = self._diaria_local_path(date_str)
+            try:
+                fp.parent.mkdir(parents=True, exist_ok=True)
+                fp.write_text(text, encoding="utf-8")
+                return True
+            except Exception as e:
+                print(f"[ERROR] No se pudo guardar diaria en {fp}: {e}")
+                return False
+
+    def get_diarias(self, days: int = 7, limit: int = 30) -> List[Dict[str, Any]]:
+        """Obtener resúmenes diarios desde la carpeta Diarias/ del vault.
+
+        Args:
+            days: Días hacia atrás
+            limit: Máximo de resultados
+
+        Returns:
+            Lista de dicts con date, title, content, metadata
+        """
+        cutoff = datetime.now() - timedelta(days=days)
+        results: List[Dict[str, Any]] = []
+
+        if self.rest_available and self.rest_client:
+            files = self.rest_client.list_notes(prefix="Diarias/")
+            for rel in files:
+                if not rel.endswith(".md"):
+                    continue
+                ok, text = self.rest_client.read_note(rel)
+                if not ok or text is None:
+                    continue
+                meta, body = _parse_frontmatter(text)
+                # YAML puede parsear la fecha como datetime.date → convertir a str
+                date_raw = _to_str(meta.get("date", ""))
+                try:
+                    file_date = datetime.strptime(date_raw[:10], "%Y-%m-%d")
+                    if file_date < cutoff:
+                        continue
+                except (ValueError, IndexError):
+                    pass
+                results.append(self._parse_diaria(meta, body, rel))
+                if len(results) >= limit:
+                    break
+        else:
+            diarias_dir = self.vault_path / "Diarias"
+            if diarias_dir.exists():
+                for fp in sorted(diarias_dir.glob("*.md"), reverse=True):
+                    try:
+                        text = fp.read_text(encoding="utf-8")
+                    except Exception:
+                        continue
+                    meta, body = _parse_frontmatter(text)
+                    date_raw = _to_str(meta.get("date", ""))
+                    try:
+                        file_date = datetime.strptime(date_raw[:10], "%Y-%m-%d")
+                        if file_date < cutoff:
+                            continue
+                    except (ValueError, IndexError):
+                        pass
+                    rel = str(fp.relative_to(self.vault_path)).replace("\\", "/")
+                    results.append(self._parse_diaria(meta, body, rel))
+                    if len(results) >= limit:
+                        break
+
+        return results
+
+    def _parse_diaria(self, metadata: dict, body: str, filepath: str) -> Dict[str, Any]:
+        """Parsear frontmatter + body de una diaria a dict estructurado."""
+        return {
+            "date": _to_str(metadata.get("date", "")),
+            "title": _to_str(metadata.get("title", "")),
+            "content": body.strip(),
+            "assets_created": metadata.get("assets_created", 0),
+            "assets_total": metadata.get("assets_total", 0),
+            "services_active": metadata.get("services_active", 0),
+            "services_total": metadata.get("services_total", 0),
+            "agents_active": metadata.get("agents_active", 0),
+            "agents_total": metadata.get("agents_total", 0),
+            "alerts_count": metadata.get("alerts_count", 0),
+            "tags": metadata.get("tags", []),
+            "created_by": metadata.get("created_by", ""),
+            "created_at": metadata.get("created", ""),
+            "filepath": filepath,
+        }
+
     # ── Sincronización con PostgreSQL ──────────────────────────────────────
 
     def sync_from_postgres(self, agent_filter: Optional[str] = None,
                            days: int = 7) -> int:
         """Sincronizar memorias desde PostgreSQL → Obsidian.
+
+        Incluye tanto agent_memory como daily_summaries.
 
         Args:
             agent_filter: Sincronizar solo un agente específico
@@ -1046,38 +1221,67 @@ class ObsidianMemory:
         Returns:
             Cantidad de entradas sincronizadas
         """
+        synced = 0
+
+        # ── Parte 1: Agent Memory ──
         try:
             sys.path.insert(0, str(SCRIPT_DIR))
             from agent_memory import AgentMemory, get_shared_context
         except ImportError:
             print("[ERROR] agent_memory.py no disponible para sync")
-            return 0
-
-        synced = 0
-        if agent_filter:
-            memories = AgentMemory(agent_filter).get_recent(days=days, limit=100)
         else:
-            memories = get_shared_context("SIMMOON", days=days, limit=100)
+            if agent_filter:
+                memories = AgentMemory(agent_filter).get_recent(days=days, limit=100)
+            else:
+                memories = get_shared_context("SIMMOON", days=days, limit=100)
 
-        tag_suffix = "synced_from_pg"
+            tag_suffix = "synced_from_pg"
 
-        for m in memories:
-            key = f"pg_{m.get('key_name', 'unknown')}"
-            content = m.get("content", "")
-            mem_type = m.get("memory_type", "context")
-            tags = (m.get("tags") or []) + [tag_suffix]
-            importance = m.get("importance", 3)
-            related = m.get("agent_name") or m.get("related_agent")
+            for m in memories:
+                key = f"pg_{m.get('key_name', 'unknown')}"
+                content = m.get("content", "")
+                mem_type = m.get("memory_type", "context")
+                tags = (m.get("tags") or []) + [tag_suffix]
+                importance = m.get("importance", 3)
+                related = m.get("agent_name") or m.get("related_agent")
 
-            if self.save(key, content, memory_type=mem_type,
-                         tags=tags, importance=importance,
-                         related_agent=related):
-                synced += 1
+                if self.save(key, content, memory_type=mem_type,
+                             tags=tags, importance=importance,
+                             related_agent=related):
+                    synced += 1
+
+        # ── Parte 2: Daily Summaries → Diarias/ ──
+        try:
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from agatha_actas import get_recent_summaries
+            summaries = get_recent_summaries(days=days)
+            for s in summaries:
+                date_str = str(s.get("date", ""))[:10]
+                if not date_str:
+                    continue
+                meta = {
+                    "assets_created": s.get("assets_created", 0),
+                    "assets_total": s.get("assets_total", 0),
+                    "services_active": s.get("services_active", 0),
+                    "services_total": s.get("services_total", 0),
+                    "agents_active": s.get("agents_active", 0),
+                    "agents_total": s.get("agents_total", 0),
+                    "alerts_count": s.get("alerts_count", 0),
+                    "tags": (s.get("tags") or []) + ["synced_from_pg"],
+                    "created_by": "Agatha Actas",
+                }
+                if self.save_diaria(date_str, s.get("title", ""),
+                                    s.get("content", ""), meta):
+                    synced += 1
+        except ImportError:
+            pass  # agatha_actas no disponible, sin problema
 
         return synced
 
     def sync_to_postgres(self, days: int = 7) -> int:
         """Sincronizar memorias desde Obsidian → PostgreSQL.
+
+        Incluye tanto agent_memory como Diarias/ → daily_summaries.
 
         Args:
             days: Días hacia atrás
@@ -1085,30 +1289,56 @@ class ObsidianMemory:
         Returns:
             Cantidad de entradas sincronizadas
         """
+        synced = 0
+
+        # ── Parte 1: Agent Memory ──
         try:
             sys.path.insert(0, str(SCRIPT_DIR))
             from agent_memory import AgentMemory
         except ImportError:
             print("[ERROR] agent_memory.py no disponible para sync")
-            return 0
+        else:
+            memories = self.get_recent(days=days, limit=100)
+            tag_suffix = "synced_from_obsidian"
 
-        memories = self.get_recent(days=days, limit=100)
-        synced = 0
-        tag_suffix = "synced_from_obsidian"
+            for m in memories:
+                agent = m.get("agent", "Buffy")
+                pg_memory = AgentMemory(agent)
+                key = f"obs_{m.get('key_name', 'unknown')}"
+                if pg_memory.save(
+                    key_name=key,
+                    content=m.get("content", ""),
+                    memory_type=m.get("memory_type", "context"),
+                    tags=(m.get("tags") or []) + [tag_suffix],
+                    importance=m.get("importance", 3),
+                    related_agent=m.get("related_agent"),
+                ):
+                    synced += 1
 
-        for m in memories:
-            agent = m.get("agent", "Buffy")
-            pg_memory = AgentMemory(agent)
-            key = f"obs_{m.get('key_name', 'unknown')}"
-            if pg_memory.save(
-                key_name=key,
-                content=m.get("content", ""),
-                memory_type=m.get("memory_type", "context"),
-                tags=(m.get("tags") or []) + [tag_suffix],
-                importance=m.get("importance", 3),
-                related_agent=m.get("related_agent"),
-            ):
-                synced += 1
+        # ── Parte 2: Diarias/ → daily_summaries ──
+        try:
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from agatha_actas import save_daily_summary
+            diarias = self.get_diarias(days=days, limit=30)
+            for d in diarias:
+                date_str = d.get("date", "")[:10]
+                if not date_str:
+                    continue
+                meta = {
+                    "assets_created": d.get("assets_created", 0),
+                    "assets_total": d.get("assets_total", 0),
+                    "services_active": d.get("services_active", 0),
+                    "services_total": d.get("services_total", 0),
+                    "agents_active": d.get("agents_active", 0),
+                    "agents_total": d.get("agents_total", 0),
+                    "alerts_count": d.get("alerts_count", 0),
+                    "tags": (d.get("tags") or []) + ["synced_from_obsidian"],
+                }
+                if save_daily_summary(date_str, d.get("title", ""),
+                                      d.get("content", ""), meta):
+                    synced += 1
+        except ImportError:
+            pass  # agatha_actas no disponible
 
         return synced
 
@@ -1188,6 +1418,15 @@ def main():
     parser.add_argument("--sync-days", type=int, default=7,
                         help="Días a sincronizar (default: 7)")
 
+    # Diarias
+    parser.add_argument("--save-diaria", nargs=3,
+                        metavar=("DATE", "TITLE", "CONTENT"),
+                        help="Guardar resumen diario: fecha(YYYY-MM-DD) título contenido")
+    parser.add_argument("--diarias", type=int, nargs="?", const=7, default=0,
+                        help="Ver resúmenes diarios (días, default: 7)")
+    parser.add_argument("--get-diaria", metavar="DATE",
+                        help="Obtener diaria por fecha (YYYY-MM-DD)")
+
     # Filtros
     parser.add_argument("--days", type=int, default=7,
                         help="Días hacia atrás (default: 7)")
@@ -1203,6 +1442,8 @@ def main():
         print("    python obsidian_memory.py --save 'refactor' 'ok' --save-type fact")
         print("    python obsidian_memory.py --context")
         print("    python obsidian_memory.py --search 'votos'")
+        print("    python obsidian_memory.py --diarias 7")
+        print("    python obsidian_memory.py --save-diaria 2026-06-12 'Resumen' 'contenido'")
         print("    # Con REST API:")
         print("    python obsidian_memory.py --rest --rest-api-key abc123 --rest-check")
         print("    python obsidian_memory.py --rest --rest-api-key abc123 --context")
@@ -1339,6 +1580,51 @@ def main():
         print(f"🔄 [{mode}] Sincronización bidireccional:")
         print(f"   PostgreSQL → Obsidian: {result['from_pg']}")
         print(f"   Obsidian → PostgreSQL: {result['to_pg']}")
+        return
+
+    # ── Diarias ──
+    if args.save_diaria:
+        date_str, title, content = args.save_diaria
+        ok = memory.save_diaria(date_str, title, content)
+        print(f"{'✅' if ok else '❌'} Diaria guardada [{mode}]: {date_str} — {title}")
+        return
+
+    if args.get_diaria:
+        # Buscar diaria por fecha exacta — cargar todas y filtrar
+        target = args.get_diaria.strip()[:10]
+        diarias = memory.get_diarias(days=365, limit=366)
+        found = None
+        for d in diarias:
+            if d.get("date", "")[:10] == target:
+                found = d
+                break
+        if found:
+            print(f"📅 {found['date']}: {found['title']}")
+            print(f"   Assets: {found['assets_total']} | "
+                  f"Servicios: {found['services_active']}/{found['services_total']} | "
+                  f"Agentes: {found['agents_active']}/{found['agents_total']}")
+            if found.get("alerts_count"):
+                print(f"   🚨 Alertas: {found['alerts_count']}")
+            print(f"   ---")
+            print(found.get("content", ""))
+        else:
+            print(f"❌ No se encontró diaria para: {target}")
+        return
+
+    if args.diarias > 0:
+        diarias = memory.get_diarias(days=args.diarias, limit=args.limit)
+        print(f"\n📅 [{mode}] Resúmenes diarios (últimos {args.diarias} días):")
+        print(f"   {'='*60}")
+        if diarias:
+            for d in diarias:
+                print(f"   📅 {d['date']}: {d['title']}")
+                print(f"      Assets: {d['assets_total']} | "
+                      f"Servicios: {d['services_active']}/{d['services_total']} | "
+                      f"Agentes: {d['agents_active']}/{d['agents_total']}")
+                if d.get("alerts_count"):
+                    print(f"      🚨 Alertas: {d['alerts_count']}")
+        else:
+            print("   (sin diarias guardadas — ejecuta --save-diaria o --sync-from-pg)")
         return
 
     # ── Context / Boot / Summary ──

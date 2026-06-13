@@ -345,6 +345,57 @@ python simmoon_pipeline.py --category all --skip-db          # Solo generar + pi
 
 ---
 
+## 🧪 Tests 🆕
+
+Suite de tests unitarios en `test_*.py` ejecutable con `unittest discover`.
+
+### Tests rápidos (modo por defecto)
+
+```bash
+cd Simmoon_arc
+python -m unittest test_build_markdown_factorygames test_cargar_ayer_counts \
+                    test_shared_services_agents test_workstation_dispatcher
+```
+
+| Test file | Tests | Tiempo | Skip |
+|-----------|-------|--------|------|
+| `test_build_markdown_factorygames.py` | 29 | 0.066 s | 1 (1 MB opt-in) |
+| `test_cargar_ayer_counts.py` | 6 | 0.015 s | 0 |
+| `test_shared_services_agents.py` | 19 | 0.017 s | 0 |
+| `test_workstation_dispatcher.py` | 29 | 0.166 s | 0 |
+| **Total** | **83** | **≈ 0.26 s** | **1** |
+
+### Tests con stress de 1 MB (`RUN_SLOW_TESTS=1`)
+
+Activa el test de stress que valida que `build_markdown()` no trunque
+archivos grandes (> 100 KB) usando un buffer de **1 MB** sintético.
+
+```bash
+cd Simmoon_arc
+RUN_SLOW_TESTS=1 python -m unittest test_build_markdown_factorygames
+```
+
+| Modo | Tests | Tiempo | Skip |
+|------|-------|--------|------|
+| Fast (sin env var) | 29 | 0.066 s | 1 (1 MB) |
+| Slow (`RUN_SLOW_TESTS=1`) | 29 | 0.056 s | 0 |
+
+> 📝 El test de 1 MB añade ~10 ms en este hardware (RTX 4070 + SSD
+> NVMe). En máquinas más lentas el coste puede ser mayor, por eso se
+> mantiene **opt-in por defecto** para no ralentizar el suite rápido.
+
+### Cobertura de `build_markdown()`
+
+- ✅ Frontmatter YAML válido (13 campos requeridos: `title`, `date`, `tags`,
+  `importance`, `empresa`, `version`, `tipo`, `archivo_adjunto`, `caracteres`,
+  `lineas`, `palabras`, `idioma`, `cargado_por`)
+- ✅ Conteo de chars / lines / words correcto
+- ✅ Fence de **4 backticks** (no 3) y robusto a ``` dentro del contenido
+- ✅ Sin truncamiento en archivos grandes (> 100 KB, 150 KB, 1 MB)
+- ✅ Edge cases: string vacío, BOM `\ufeff`, multibyte UTF-8, con y sin `\n` final
+
+---
+
 ## 🔜 Próximos Pasos
 
 1. Generar nuevas categorías con Diffusers (WSL2)
@@ -355,4 +406,4 @@ python simmoon_pipeline.py --category all --skip-db          # Solo generar + pi
 
 ---
 
-*Documento generado: 2026-06-08 — Estado actual del proyecto SIMMOON.*
+*Documento generado: 2026-06-12 — Estado actual del proyecto SIMMOON (incluye 🧪 sección de tests).*

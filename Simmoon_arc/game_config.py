@@ -494,7 +494,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "veh_02": TipoEdificio("veh_02", "Camión Minero", "vehicles",
 
-                           "veh_02_mining_truck_pixel.png",
+                           "veh_camion_minero_blender.png",
 
                            costo=350, produce_energia=-5, mantenimiento=8, empleos=2,
 
@@ -504,7 +504,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "veh_03": TipoEdificio("veh_03", "Lanzadera Pasajeros", "vehicles",
 
-                           "veh_03_passenger_shuttle_pixel.png",
+                           "veh_lanzadera_blender.png",
 
                            costo=400, produce_energia=-4, mantenimiento=6, empleos=2,
 
@@ -514,7 +514,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "veh_04": TipoEdificio("veh_04", "Carguero Pesado", "vehicles",
 
-                           "veh_04_cargo_hauler_pixel.png",
+                           "veh_carguero_blender.png",
 
                            costo=500, produce_energia=-8, mantenimiento=10, empleos=3,
 
@@ -524,7 +524,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "veh_05": TipoEdificio("veh_05", "Vehículo de Emergencia", "vehicles",
 
-                           "veh_05_emergency_vehicle_pixel.png",
+                           "veh_emergencia_blender.png",
 
                            costo=250, produce_energia=-3, mantenimiento=4, empleos=1,
 
@@ -560,7 +560,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "veh_09": TipoEdificio("veh_09", "Dron de Suministro", "vehicles",
 
-                           "veh_09_supply_drone_pixel.png",
+                           "veh_dron_suministro_blender.png",
 
                            costo=180, produce_energia=-1, mantenimiento=2, empleos=0,
 
@@ -990,7 +990,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_08": TipoEdificio("misc_08", "Parque Recreativo", "buildings_misc",
 
-                            "misc_08_park_recreation_dome_pixel.png",
+                            "misc_parque_recreativo_blender.png",
 
                             costo=300, produce_oxigeno=5, produce_energia=-2,
 
@@ -1001,7 +1001,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_09": TipoEdificio("misc_09", "Gestión de Residuos", "buildings_misc",
 
-                            "misc_09_waste_management_pixel.png",
+                            "misc_gestion_residuos_blender.png",
 
                             costo=350, produce_energia=-4, mantenimiento=5, empleos=2,
 
@@ -1011,7 +1011,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "misc_10": TipoEdificio("misc_10", "Estación de Bomberos", "buildings_misc",
 
-                            "misc_10_fire_station_pixel.png",
+                            "misc_estacion_bomberos_blender.png",
 
                             costo=400, produce_energia=-3, mantenimiento=5, empleos=5,
 
@@ -1200,7 +1200,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "oficio_04": TipoEdificio("oficio_04", "Gimnasio 1/6G", "buildings_misc",
 
-                              "misc_08_park_recreation_dome_pixel.png",
+                              "misc_parque_recreativo_blender.png",
 
                               costo=350, produce_energia=-4, produce_oxigeno=-2,
 
@@ -1529,7 +1529,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "ind_03": TipoEdificio("ind_03", "Laboratorio de Helio-3", "industry",
 
-                           "ind_03_helium_3_lab_pixel.png",
+                           "ind_laboratorio_helio3_blender.png",
 
                            costo=2000, produce_energia=-10, produce_oxigeno=-4,
 
@@ -1539,7 +1539,7 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
     "ind_04": TipoEdificio("ind_04", "Puerto de Exportación", "industry",
 
-                           "ind_04_export_harbor_pixel.png",
+                           "ind_puerto_exportacion_blender.png",
 
                            costo=2500, produce_energia=-20, produce_oxigeno=-6,
 
