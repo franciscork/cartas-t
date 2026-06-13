@@ -79,16 +79,19 @@ class Renderizador:
 
             self.fuente_titulo = pygame.font.Font(None, 48)
 
-    
-
     def _generar_tiles_terreno(self) -> None:
-
         """Genera tiles procedurales para todos los biomas del terreno."""
-
         self.tiles_terreno = generar_tiles_terreno(64)
 
-        self.tile_terreno = self.tiles_terreno.get("regolith")
+        # Hornear borde de cuadricula isometrica en cada tile
+        grid_overlay = pygame.Surface((64, 64), pygame.SRCALPHA)
+        color_grid = _from_game('Config').COLOR_GRID
+        puntos = [(32, 0), (64, 16), (32, 32), (0, 16)]
+        pygame.draw.polygon(grid_overlay, color_grid, puntos, 1)
+        for tile in self.tiles_terreno.values():
+            tile.blit(grid_overlay, (0, 0))
 
+        self.tile_terreno = self.tiles_terreno.get("regolith")
         self.tile_terreno_base = self._crear_tile_base()
 
     
