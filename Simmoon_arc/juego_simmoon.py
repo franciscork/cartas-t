@@ -1906,7 +1906,7 @@ class Recursos:
 
 
 
-    def actualizar_balance(self, edificios: List['EdificioColocado']) -> None:
+    def actualizar_balance(self, edificios: List['EdificioColocado'], es_de_noche: bool = False) -> None:
 
         """Recalcula producción y consumo basado en los edificios colocados."""
 
@@ -1922,7 +1922,10 @@ class Recursos:
 
             if edificio.activo:
 
-                self.energia_total += edificio.tipo.produce_energia
+                energia_prod = edificio.tipo.produce_energia
+                if es_de_noche and edificio.tipo.categoria == "solar_energy" and energia_prod > 0:
+                    energia_prod = 0
+                self.energia_total += energia_prod
 
                 self.oxigeno_total += edificio.tipo.produce_oxigeno
 
@@ -2305,13 +2308,13 @@ class Colono:
             self.destino_x, self.destino_y = random.choice(tiles)
             self.tarea_actual = "moverse"
 
-    def mover_hacia_destino(self):
+    def mover_hacia_destino(self, es_de_noche: bool = False):
         """Movimiento suave hacia el destino."""
         dx = self.destino_x - self.x
         dy = self.destino_y - self.y
         dist = math.hypot(dx, dy)
         if dist > 0.2:
-            velocidad = 0.04 + random.random() * 0.03
+            velocidad = (0.04 + random.random() * 0.03) * (0.5 if es_de_noche else 1.0)
             self.x += (dx / dist) * velocidad
             self.y += (dy / dist) * velocidad
             self.tarea_actual = "moverse"
@@ -2342,7 +2345,7 @@ class Colono:
         else:
             self.tarea_actual = "descansar"
 
-    def actualizar(self, mapa, recursos):
+    def actualizar(self, mapa, recursos, es_de_noche: bool = False):
         """Actualiza el estado del colono cada frame."""
         self.frames_parado += 1
 
@@ -2351,7 +2354,7 @@ class Colono:
             self.felicidad = max(0, self.felicidad - random.uniform(0, 0.3))
 
         if self.tarea_actual == "moverse":
-            llego = self.mover_hacia_destino()
+            llego = self.mover_hacia_destino(es_de_noche)
             if llego:
                 self.ejecutar_tarea(mapa, recursos)
                 self.frames_tarea = 0
@@ -2394,7 +2397,7 @@ class SistemaColonos:
         self.colonos.append(Colono(tx, ty, nombre))
         return True
 
-    def actualizar(self, recursos, poblacion_total):
+    def actualizar(self, recursos, poblacion_total, es_de_noche: bool = False):
         """Actualiza el sistema de colonos cada frame."""
         self.frames += 1
         self.poblacion_objetivo = max(1, poblacion_total // 2)
@@ -2406,7 +2409,7 @@ class SistemaColonos:
             self.colonos.pop()
 
         for colono in self.colonos:
-            colono.actualizar(self.mapa, recursos)
+            colono.actualizar(self.mapa, recursos, es_de_noche)
 
         for colono in self.colonos:
             if colono.tarea_actual != "moverse" and colono.frames_parado > 600:
@@ -2991,6 +2994,72 @@ class CrisisLunar:
 
 
 
+
+
+# ═══════════════════════════════════════════════════════════════
+# ☀️🌙 CICLO DIA/NOCHE - Efectos reales en produccion, visibilidad y colonos
+# ═══════════════════════════════════════════════════════════════
+
+class CicloDiaNoche:
+    """Sistema de ciclo dia/noche con efectos en energia solar, visibilidad y colonos."""
+
+    def __init__(self, ancho: int, alto: int):
+        self.turno_actual = 0
+        self.es_de_noche = False
+        self.dia_actual = 1
+        self.noche_actual = 1
+        self.overlay_noche = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+        self.estrellas = [(random.randint(0, ancho), random.randint(0, alto // 2), random.uniform(0.3, 1.5)) for _ in range(120)]
+        self.alpha_actual = 0.0
+        self.alpha_objetivo = 0.0
+
+    def avanzar(self):
+        """Llamado al avanzar turno. Alterna dia(0-13) y noche(14-27)."""
+        self.turno_actual = (self.turno_actual + 1) % 28
+        self.es_de_noche = self.turno_actual >= 14
+        if not self.es_de_noche:
+            self.dia_actual = self.turno_actual + 1
+        else:
+            self.noche_actual = self.turno_actual - 13
+        self.alpha_objetivo = 160.0 if self.es_de_noche else 0.0
+
+    def actualizar(self):
+        """Transicion suave del overlay de noche cada frame."""
+        if self.alpha_actual < self.alpha_objetivo:
+            self.alpha_actual = min(self.alpha_objetivo, self.alpha_actual + 1.5)
+        elif self.alpha_actual > self.alpha_objetivo:
+            self.alpha_actual = max(self.alpha_objetivo, self.alpha_actual - 1.5)
+
+
+    def renderizar_overlay(self, pantalla):
+        """Oscurece la pantalla + estrellas. Llamar al FINAL tras mapa pero antes de UI."""
+        if self.alpha_actual > 1:
+            self.overlay_noche.fill((3, 8, 28, int(self.alpha_actual)))
+            if self.alpha_actual > 80:
+                t = pygame.time.get_ticks() * 0.0015
+                for x, y, vel in self.estrellas:
+                    b = int((math.sin(t * vel) + 1) * 100 * (self.alpha_actual / 160))
+                    pygame.draw.circle(self.overlay_noche, (255, 255, 240, b), (x, y), max(1, int(vel)))
+            pantalla.blit(self.overlay_noche, (0, 0))
+
+    def renderizar_ui(self, pantalla, renderizador, ancho_ventana):
+        """Panel indicador dia/noche en esquina superior derecha."""
+        fase = self.turno_actual + 1 if not self.es_de_noche else self.turno_actual - 13
+        fase_str = f"Dia {fase}/14" if not self.es_de_noche else f"Noche {fase}/14"
+        icono = "Sol" if not self.es_de_noche else "Luna"
+        r = renderizador
+        rect_p = pygame.Rect(ancho_ventana - 155, 8, 145, 42)
+        pygame.draw.rect(pantalla, (*Config.COLOR_PANEL, 225), rect_p, border_radius=8)
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, rect_p, 2, border_radius=8)
+        txt = r.fuente_pequenia.render(f"{icono} {fase_str}", True, Config.COLOR_TEXTO_AMARILLO)
+        pantalla.blit(txt, (rect_p.x + 8, rect_p.y + 4))
+        prog = self.turno_actual / 28.0
+        pygame.draw.rect(pantalla, (40, 40, 70), (rect_p.x + 8, rect_p.y + 28, 128, 5))
+        color_b = (255, 200, 50) if not self.es_de_noche else (80, 140, 240)
+        pygame.draw.rect(pantalla, color_b, (rect_p.x + 8, rect_p.y + 28, int(128 * prog), 5))
+
+
+
 class JuegoSimmoon:
 
     """Motor principal del juego SIMMOON."""
@@ -3123,9 +3192,7 @@ class JuegoSimmoon:
 
         self.mostrando_ayuda = False  # Ayuda estatica con tecla H
 
-        self.es_de_noche = False  # Estado del ciclo d?a/noche
-
-        self.contador_lunar = 0  # Contador de turnos en el ciclo actual
+        self.ciclo = CicloDiaNoche(Config.ANCHO_VENTANA, Config.ALTO_VENTANA)
 
 
 
@@ -3452,10 +3519,11 @@ class JuegoSimmoon:
         """Avanza un turno: producción, consumo, mantenimiento y crecimiento poblacional."""
 
         self.recursos.turno += 1
+        self.ciclo.avanzar()
         self.mercado_inter.actualizar(self.recursos.turno)
         self.crisis_lunar.actualizar(self.recursos, self.sistema_colonos, self.mapa, self.recursos.turno)
+        self.recursos.actualizar_balance(self.mapa.edificios, self.ciclo.es_de_noche)
 
-        self.recursos.actualizar_balance(self.mapa.edificios)
 
 
 
@@ -3518,7 +3586,7 @@ class JuegoSimmoon:
             self.manifestantes = []
 
 
-        if self.es_de_noche:
+        if self.ciclo.es_de_noche:
 
             energia_solar = 0
 
@@ -3877,7 +3945,7 @@ class JuegoSimmoon:
 
             "felicidad": self.recursos.felicidad,
             "bono": self.recursos.bono_produccion,
-            "es_noche": self.es_de_noche,
+            "es_noche": self.ciclo.es_de_noche,
 
             "poblacion": cambio_pob,
 
@@ -4133,7 +4201,7 @@ class JuegoSimmoon:
 
             ciclo_estado = "🌙 Noche" if d["es_noche"] else "☀️ Día"
 
-            txt_ciclo = r.fuente_pequenia.render(f"{ciclo_estado} lunar (turno {self.contador_lunar + 1}/{Config.DIAS_NOCHE if d['es_noche'] else Config.DIAS_LUZ})", True, Config.COLOR_TEXTO)
+            txt_ciclo = r.fuente_pequenia.render(f"{ciclo_estado} lunar (turno {self.ciclo.turno_actual + 1}/{Config.DIAS_NOCHE if d['es_noche'] else Config.DIAS_LUZ})", True, Config.COLOR_TEXTO)
 
             self.pantalla.blit(txt_ciclo, (x, y))
 
@@ -4571,6 +4639,9 @@ class JuegoSimmoon:
                 self.ejecutando = False
 
         # ── Overlay rendering (outside loop, once per frame) ──
+        # UI indicador dia/noche
+        self.ciclo.renderizar_ui(self.pantalla, self.renderizador, Config.ANCHO_VENTANA)
+
         if self.tutorial_activo:
             self.renderizar_tutorial()
         if self.mostrando_ayuda:
@@ -4582,7 +4653,8 @@ class JuegoSimmoon:
         """Actualiza la lógica del juego cada frame."""
 
         self.tile_hover_x, self.tile_hover_y = self._obtener_tile_bajo_raton()
-        self.sistema_colonos.actualizar(self.recursos, self.recursos.poblacion)
+        self.ciclo.actualizar()
+        self.sistema_colonos.actualizar(self.recursos, self.recursos.poblacion, self.ciclo.es_de_noche)
 
 
 
@@ -4974,8 +5046,8 @@ class JuegoSimmoon:
         """Renderiza todo el juego."""
 
         # Sincronizar ciclo lunar con el renderizador
-        self.renderizador.es_de_noche = self.es_de_noche
-        self.renderizador.contador_lunar = self.contador_lunar
+        self.renderizador.es_de_noche = self.ciclo.es_de_noche
+        self.renderizador.contador_lunar = self.ciclo.turno_actual
 
         # Limpiar pantalla
 
@@ -5207,6 +5279,9 @@ class JuegoSimmoon:
         # Colonos en el mapa
         self.sistema_colonos.dibujar_en_mapa(self.pantalla, self.camara)
         self.crisis_lunar.dibujar_en_mapa(self.pantalla, self.camara)
+
+        # Overlay de noche + estrellas
+        self.ciclo.renderizar_overlay(self.pantalla)
 
         # ── Mensaje temporal ──
 
