@@ -190,6 +190,10 @@ class Config:
 
 # ─── Datos de Edificios ───────────────────────────────────────────────────
 
+
+# ── Blender assets cache (built at module load, zero runtime cost) ──
+_BLENDER_CACHE = {'biz_almacen.png', 'biz_banco_lunar.png', 'biz_centro_medico.png', 'biz_fabrica.png', 'biz_hotel_lunar.png', 'biz_laboratorio.png', 'biz_oficina_minera.png', 'biz_puesto_comercial.png', 'biz_restaurante_lunar.png', 'biz_terminal_espacial.png', 'biz_tienda_lunar.png', 'char_drone_maintenance.png', 'char_drone_maintenance_pixel.png', 'flora_bioluminescent.png', 'flora_bioluminescent_pixel.png', 'hou_albergue_basico.png', 'ind_fabrica_3d.png', 'ind_fundicion.png', 'ind_laboratorio_helio3.png', 'ind_puerto_exportacion.png', 'infra_comm_tower.png', 'infra_sonic_extractor.png', 'infra_sonic_extractor_pixel.png', 'misc_academia.png', 'misc_base_ascensor.png', 'misc_estacion_bomberos.png', 'misc_gestion_residuos.png', 'misc_parque_recreativo.png', 'misc_planta_agua.png', 'misc_procesador_atmosferico.png', 'misc_torre_comunicaciones.png', 'veh_camion_minero.png', 'veh_carguero_pesado.png', 'veh_dron_suministro.png', 'veh_emergencia.png', 'veh_lanzadera_pasajeros.png', 'veh_mining_rover.png'}
+
 @dataclass
 
 class TipoEdificio:
@@ -230,10 +234,13 @@ class TipoEdificio:
 
 
     @property
-
     def ruta_sprite(self) -> str:
+        """Ruta al archivo del sprite, prefiriendo render 3D Blender si existe."""
+        base = self.sprite_archivo.replace("_blender", "").replace("_pixel", "").replace(".png", "")
+        if base + ".png" in _BLENDER_CACHE:
+            return "blender_renders/" + base + ".png"
+        return f"{self.categoria}_pixel/{self.sprite_archivo}"
 
-        """Ruta al archivo pixel-art del sprite."""
 
         return f"{self.categoria}_pixel/{self.sprite_archivo}"
 
