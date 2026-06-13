@@ -3640,6 +3640,220 @@ class JuegoSimmoon:
 
 
 
+    def guardar_partida(self, archivo: str = None) -> str:
+        """Guarda el estado completo de la partida en un archivo JSON."""
+        import json
+        from datetime import datetime
+
+        # Directorio saves/
+        save_dir = Path(__file__).parent / "saves"
+        save_dir.mkdir(exist_ok=True)
+
+        if archivo is None:
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            archivo = str(save_dir / f"save_{ts}.json")
+        else:
+            archivo = str(save_dir / archivo)
+
+        # Serializar edificios
+        edificios_data = []
+        for e in self.mapa.edificios:
+            edificios_data.append({
+                "id": e.tipo.id,
+                "x": e.x, "y": e.y, "activo": e.activo,
+            })
+
+        # Serializar colonos
+        colonos_data = []
+        for c in self.sistema_colonos.colonos:
+            colonos_data.append({
+                "nombre": c.nombre,
+                "x": c.x, "y": c.y,
+                "salud": c.salud, "felicidad": c.felicidad,
+                "productividad": c.productividad,
+                "necesidad_actual": c.necesidad_actual,
+                "tarea_actual": c.tarea_actual,
+                "destino_x": c.destino_x, "destino_y": c.destino_y,
+            })
+
+        data = {
+            "version": 1,
+            "fecha": datetime.now().isoformat(),
+            "recursos": {
+                "creditos": self.recursos.creditos,
+                "energia": self.recursos.energia,
+                "oxigeno": self.recursos.oxigeno,
+                "agua": self.recursos.agua,
+                "presion": self.recursos.presion,
+                "energia_total": self.recursos.energia_total,
+                "oxigeno_total": self.recursos.oxigeno_total,
+                "agua_total": self.recursos.agua_total,
+                "presion_total": self.recursos.presion_total,
+                "poblacion": self.recursos.poblacion,
+                "turno": self.recursos.turno,
+                "felicidad": self.recursos.felicidad,
+                "bono_produccion": self.recursos.bono_produccion,
+            },
+            "mapa": {
+                "tamanio": self.mapa.tamanio,
+                "edificios": edificios_data,
+                "zonas": self.mapa.zonas,
+            },
+            "camara": {
+                "offset_x": self.camara.offset_x,
+                "offset_y": self.camara.offset_y,
+                "zoom": self.camara.zoom,
+            },
+            "mercado": {
+                "precios": self.mercado_inter.precios,
+                "base": self.mercado_inter.base,
+                "historial": self.mercado_inter.historial,
+                "evento_activo": self.mercado_inter.evento_activo,
+            "turno": self.mercado_inter.turno,
+                "evento_duracion": self.mercado_inter.evento_duracion,
+            },
+            "crisis": {
+                "historial": self.crisis_lunar.historial,
+                "enfriamiento": self.crisis_lunar.enfriamiento,
+                "evento_activo": self.crisis_lunar.evento_activo,
+            },
+            "colonos": {
+                "colonos": colonos_data,
+                "poblacion_objetivo": self.sistema_colonos.poblacion_objetivo,
+            },
+            "tecnologia": {
+                "completadas": list(self.tecnologia.completadas),
+                "desbloqueadas": list(self.tecnologia.desbloqueadas),
+                "investigando": self.tecnologia.investigando,
+                "turnos_restantes": self.tecnologia.turnos_restantes,
+                "bonos_activos": self.tecnologia.bonos_activos,
+            },
+            "ciclo": {
+                "turno_actual": self.ciclo.turno_actual,
+            },
+        }
+
+        with open(archivo, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+
+        self._mostrar_mensaje(f"Partida guardada: {Path(archivo).name}", (0, 200, 100))
+        return archivo
+
+    def cargar_partida(self, archivo: str) -> bool:
+        """Carga el estado completo de la partida desde un archivo JSON."""
+        import json
+
+        path = Path(archivo)
+        if not path.exists():
+            self._mostrar_mensaje(f"Archivo no encontrado: {archivo}", (255, 100, 100))
+            return False
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            self._mostrar_mensaje(f"Error al cargar: {e}", (255, 100, 100))
+            return False
+
+        version = data.get("version", 0)
+        if version < 1:
+            self._mostrar_mensaje("Formato de partida incompatible", (255, 100, 100))
+            return False
+
+        # Restaurar recursos
+        r = data["recursos"]
+        self.recursos.creditos = r["creditos"]
+        self.recursos.energia = r["energia"]
+        self.recursos.oxigeno = r["oxigeno"]
+        self.recursos.agua = r["agua"]
+        self.recursos.presion = r["presion"]
+        self.recursos.energia_total = r["energia_total"]
+        self.recursos.oxigeno_total = r["oxigeno_total"]
+        self.recursos.agua_total = r["agua_total"]
+        self.recursos.presion_total = r["presion_total"]
+        self.recursos.poblacion = r["poblacion"]
+        self.recursos.turno = r["turno"]
+        self.recursos.felicidad = r["felicidad"]
+        self.recursos.bono_produccion = r.get("bono_produccion", 1.0)
+
+        # Restaurar mapa
+        m = data["mapa"]
+        self.mapa = Mapa(m["tamanio"])
+        self.sistema_colonos.mapa = self.mapa  # Actualizar referencia
+        # Reconstruir edificios desde sus tipos
+        for ed in m["edificios"]:
+            tipo_id = ed["id"]
+            if tipo_id in CATALOGO_EDIFICIOS:
+                tipo = CATALOGO_EDIFICIOS[tipo_id]
+                sprite = self.renderizador.cargar_sprite(tipo.ruta_sprite) if hasattr(self.renderizador, "cargar_sprite") else None if self.renderizador else None
+                edificio = self.mapa.colocar_edificio(ed["x"], ed["y"], tipo, sprite)
+                if edificio:
+                    edificio.activo = ed.get("activo", True)
+        # Restaurar zonas
+        self.mapa.zonas = m.get("zonas", self.mapa.zonas)
+
+        # Restaurar camara
+        c = data["camara"]
+        self.camara.offset_x = c["offset_x"]
+        self.camara.offset_y = c["offset_y"]
+        self.camara.zoom = c["zoom"]
+
+        # Restaurar mercado
+        mk = data["mercado"]
+        self.mercado_inter.precios = mk["precios"]
+        self.mercado_inter.base = mk["base"]
+        self.mercado_inter.historial = {k: v for k, v in mk.get("historial", {}).items()}
+        self.mercado_inter.evento_activo = mk.get("evento_activo", "")
+        self.mercado_inter.turno = mk.get("turno", 0)
+        self.mercado_inter.evento_duracion = mk.get("evento_duracion", 0)
+
+        # Restaurar crisis
+        cr = data["crisis"]
+        self.crisis_lunar.historial = cr.get("historial", [])
+        self.crisis_lunar.enfriamiento = cr.get("enfriamiento", 5)
+        self.crisis_lunar.evento_activo = cr.get("evento_activo")
+
+        # Restaurar colonos
+        co = data["colonos"]
+        self.sistema_colonos.colonos.clear()
+        for cd in co.get("colonos", []):
+            colono = Colono(cd["x"], cd["y"], cd["nombre"])
+            colono.salud = cd.get("salud", 100)
+            colono.felicidad = cd.get("felicidad", 50)
+            colono.productividad = cd.get("productividad", 100)
+            colono.necesidad_actual = cd.get("necesidad_actual", "oxigeno")
+            colono.tarea_actual = cd.get("tarea_actual", "descansar")
+            colono.destino_x = cd.get("destino_x", cd["x"])
+            colono.destino_y = cd.get("destino_y", cd["y"])
+            self.sistema_colonos.colonos.append(colono)
+        self.sistema_colonos.poblacion_objetivo = co.get("poblacion_objetivo", 0)
+
+        # Restaurar tecnologia
+        t = data["tecnologia"]
+        self.tecnologia.completadas = set(t.get("completadas", []))
+        self.tecnologia.desbloqueadas = set(t.get("desbloqueadas", []))
+        self.tecnologia.investigando = t.get("investigando")
+        self.tecnologia.turnos_restantes = t.get("turnos_restantes", 0)
+        self.tecnologia._recalcular_bonos()
+
+        # Restaurar ciclo
+        cl = data["ciclo"]
+        self.ciclo.turno_actual = cl.get("turno_actual", 0)
+        self.ciclo.es_de_noche = self.ciclo.turno_actual >= 14
+        self.ciclo.alpha_objetivo = 160.0 if self.ciclo.es_de_noche else 0.0
+
+        # Refiltrar catalogo
+        self.catalogo = filtrar_catalogo_por_votos(self.votos) if self.votos else filtrar_catalogo_por_votos({})
+        self.catalogo = {k: v for k, v in self.catalogo.items() if self.tecnologia.edificio_desbloqueado(k) or not es_edificio_privado(k)}
+
+        # Recalcular balance
+        self.recursos.actualizar_balance(self.mapa.edificios, self.ciclo.es_de_noche)
+
+        self._mostrar_mensaje(f"Partida cargada: {path.name}", (100, 255, 100))
+        return True
+
+
+
     def _mostrar_mensaje(self, texto: str) -> None:
 
         """Muestra un mensaje temporal en pantalla."""
@@ -4952,6 +5166,20 @@ class JuegoSimmoon:
 
                 elif evento.key == pygame.K_t:
                     self.tecnologia.visible = not self.tecnologia.visible
+
+                elif evento.key == pygame.K_g:
+                    self.guardar_partida()
+
+                elif evento.key == pygame.K_l:
+                    save_dir = Path(__file__).parent / "saves"
+                    if save_dir.exists():
+                        saves = sorted(save_dir.glob("save_*.json"), reverse=True)
+                        if saves:
+                            self.cargar_partida(str(saves[0]))
+                        else:
+                            self._mostrar_mensaje("No hay partidas guardadas", (255, 200, 50))
+                    else:
+                        self._mostrar_mensaje("No hay partidas guardadas", (255, 200, 50))
             # ── MOUSE HANDLING ──
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 self.mouse_click = True
