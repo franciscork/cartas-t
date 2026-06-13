@@ -2252,6 +2252,245 @@ class MercadoInterColonial:
 
 
 
+
+# ═══════════════════════════════════════════════════════════════
+# COLONOS DINAMICOS - Sistema de NPCs con vida propia
+# ═══════════════════════════════════════════════════════════════
+
+NOMBRES_LUNARES = [
+    "Apolo", "Selene", "Diana", "Artemisa", "Orion", "Casiopea", "Gagarin",
+    "Valentina", "Armstrong", "Aldrin", "Collins", "Tycho", "Copernico",
+    "Kepler", "Ares", "Helios", "Nova", "Astra", "Cosmo", "Luna",
+]
+
+COLORES_TAREA = {
+    "descansar": (70, 130, 180),
+    "construir": (60, 180, 75),
+    "reparar": (255, 210, 80),
+    "protestar": (220, 60, 60),
+    "moverse": (180, 180, 180),
+}
+
+
+class Colono:
+    """Un colono individual con necesidades, tareas y movimiento."""
+
+    def __init__(self, x: int, y: int, nombre: str):
+        self.nombre = nombre
+        self.x = float(x)
+        self.y = float(y)
+        self.salud = 100.0
+        self.felicidad = float(random.randint(50, 100))
+        self.productividad = 100.0
+        self.necesidad_actual = random.choice(["oxigeno", "agua", "energia", "felicidad"])
+        self.tarea_actual = "descansar"
+        self.destino_x = x
+        self.destino_y = y
+        self.frames_parado = 0
+        self.frames_tarea = 0
+
+    def asignar_destino(self, mapa, recursos):
+        """Busca la zona mas adecuada segun la necesidad actual."""
+        zona_map = {
+            "oxigeno": "ecologico",
+            "agua": "ecologico",
+            "energia": "industrial",
+            "felicidad": "comercial",
+        }
+        zona_objetivo = zona_map.get(self.necesidad_actual, "alojamiento")
+        tiles = mapa.tiles_zonificados(zona_objetivo)
+        if not tiles:
+            tiles = mapa.tiles_zonificados("alojamiento")
+        if tiles:
+            self.destino_x, self.destino_y = random.choice(tiles)
+            self.tarea_actual = "moverse"
+
+    def mover_hacia_destino(self):
+        """Movimiento suave hacia el destino."""
+        dx = self.destino_x - self.x
+        dy = self.destino_y - self.y
+        dist = math.hypot(dx, dy)
+        if dist > 0.2:
+            velocidad = 0.04 + random.random() * 0.03
+            self.x += (dx / dist) * velocidad
+            self.y += (dy / dist) * velocidad
+            self.tarea_actual = "moverse"
+            return False
+        self.x = float(self.destino_x)
+        self.y = float(self.destino_y)
+        return True
+
+    def ejecutar_tarea(self, mapa, recursos):
+        """Ejecuta la tarea al llegar al destino."""
+        ix, iy = int(self.x), int(self.y)
+        zona_actual = None
+        if 0 <= ix < mapa.tamanio and 0 <= iy < mapa.tamanio:
+            zona_actual = mapa.zonas[iy][ix]
+
+        if self.necesidad_actual == "oxigeno" and zona_actual == "ecologico":
+            self.tarea_actual = "reparar"
+            recursos.oxigeno += random.randint(1, 3)
+        elif self.necesidad_actual == "energia" and zona_actual == "industrial":
+            self.tarea_actual = "construir"
+            recursos.energia += random.randint(1, 3)
+        elif self.necesidad_actual == "agua" and zona_actual == "ecologico":
+            self.tarea_actual = "reparar"
+            recursos.agua += random.randint(1, 2)
+        elif self.necesidad_actual == "felicidad" and zona_actual == "comercial":
+            self.tarea_actual = "descansar"
+            self.felicidad = min(100, self.felicidad + random.randint(2, 8))
+        else:
+            self.tarea_actual = "descansar"
+
+    def actualizar(self, mapa, recursos):
+        """Actualiza el estado del colono cada frame."""
+        self.frames_parado += 1
+
+        if self.frames_parado % 180 == 0:
+            self.salud = max(0, self.salud - random.uniform(0, 0.5))
+            self.felicidad = max(0, self.felicidad - random.uniform(0, 0.3))
+
+        if self.tarea_actual == "moverse":
+            llego = self.mover_hacia_destino()
+            if llego:
+                self.ejecutar_tarea(mapa, recursos)
+                self.frames_tarea = 0
+            return
+
+        self.frames_tarea += 1
+        if self.frames_tarea > 300:
+            self.necesidad_actual = random.choice(["oxigeno", "agua", "energia", "felicidad"])
+            self.asignar_destino(mapa, recursos)
+            self.frames_tarea = 0
+            self.frames_parado = 0
+
+        if self.felicidad < 20 and random.random() < 0.01:
+            self.tarea_actual = "protestar"
+
+
+class SistemaColonos:
+    """Gestiona la poblacion de colonos y su panel overlay (tecla C)."""
+
+    def __init__(self, renderizador, mapa):
+        self.visible = False
+        self.colonos: list = []
+        self.renderizador = renderizador
+        self.mapa = mapa
+        self.frames = 0
+        self.poblacion_objetivo = 0
+
+    def spawn_colono(self):
+        """Crea un nuevo colono en zona de alojamiento aleatoria."""
+        tiles = self.mapa.tiles_zonificados("alojamiento")
+        if not tiles:
+            tiles = [(self.mapa.tamanio // 2, self.mapa.tamanio // 2)]
+        tx, ty = random.choice(tiles)
+        nombre = random.choice(NOMBRES_LUNARES)
+        existentes = {c.nombre for c in self.colonos}
+        intentos = 0
+        while nombre in existentes and intentos < 30:
+            nombre = random.choice(NOMBRES_LUNARES) + str(random.randint(1, 99))
+            intentos += 1
+        self.colonos.append(Colono(tx, ty, nombre))
+        return True
+
+    def actualizar(self, recursos, poblacion_total):
+        """Actualiza el sistema de colonos cada frame."""
+        self.frames += 1
+        self.poblacion_objetivo = max(1, poblacion_total // 2)
+
+        if len(self.colonos) < self.poblacion_objetivo and self.frames % 120 == 0:
+            self.spawn_colono()
+
+        while len(self.colonos) > self.poblacion_objetivo:
+            self.colonos.pop()
+
+        for colono in self.colonos:
+            colono.actualizar(self.mapa, recursos)
+
+        for colono in self.colonos:
+            if colono.tarea_actual != "moverse" and colono.frames_parado > 600:
+                colono.asignar_destino(self.mapa, recursos)
+                colono.frames_parado = 0
+
+    def dibujar_en_mapa(self, pantalla, camara):
+        """Dibuja los colonos como circulos de colores en el mapa."""
+        for colono in self.colonos:
+            px, py = camara.iso_a_pantalla(colono.x, colono.y)
+            if 0 <= px <= camara.ancho_ventana and 0 <= py <= camara.alto_ventana:
+                color = COLORES_TAREA.get(colono.tarea_actual, (255, 255, 255))
+                radio = max(2, int(4 * camara.zoom))
+                offset_y = int(math.sin(pygame.time.get_ticks() * 0.005 + hash(colono.nombre) % 100) * 2)
+                pygame.draw.circle(pantalla, color, (int(px), int(py) - 10 + offset_y), radio)
+                pygame.draw.circle(pantalla, Config.COLOR_TEXTO, (int(px), int(py) - 10 + offset_y), radio, 1)
+
+    def renderizar(self, pantalla, renderizador):
+        """Renderiza el panel overlay de Gestion de Colonos."""
+        x, y = 10, 50
+        ancho, alto = 380, 320
+
+        overlay = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+        overlay.fill((*Config.COLOR_PANEL, 240))
+        pantalla.blit(overlay, (x, y))
+
+        pygame.draw.rect(pantalla, Config.COLOR_PANEL_BORDE, (x, y, ancho, alto), 2, border_radius=8)
+
+        fuente_m = renderizador.fuente_mediana
+        fuente_p = renderizador.fuente_pequenia
+
+        cabecera = "Gestion de Colonos"
+        txt = fuente_m.render(cabecera, True, Config.COLOR_TEXTO_AMARILLO)
+        pantalla.blit(txt, (x + 15, y + 10))
+
+        total = len(self.colonos)
+        if total > 0:
+            salud_prom = sum(c.salud for c in self.colonos) / total
+            fel_prom = sum(c.felicidad for c in self.colonos) / total
+        else:
+            salud_prom = fel_prom = 0
+
+        stats_y = y + 42
+        stats = [
+            f"Poblacion: {total}",
+            f"Salud: {salud_prom:.0f}%",
+            f"Felicidad: {fel_prom:.0f}%",
+        ]
+        for i, s in enumerate(stats):
+            txt = fuente_p.render(s, True, Config.COLOR_TEXTO)
+            pantalla.blit(txt, (x + 15 + i * 120, stats_y))
+
+        sep_y = y + 65
+        pygame.draw.line(pantalla, Config.COLOR_PANEL_BORDE, (x + 10, sep_y), (x + ancho - 10, sep_y), 1)
+
+        tabla_y = y + 72
+        cabeceras = f"{'Nombre':<12} {'Tarea':<11} {'Sal':>4} {'Fel':>4}"
+        txt = fuente_p.render(cabeceras, True, Config.COLOR_PANEL_BORDE)
+        pantalla.blit(txt, (x + 15, tabla_y))
+
+        for i, colono in enumerate(self.colonos[:8]):
+            fila_y = tabla_y + 18 + i * 22
+
+            nombre_txt = fuente_p.render(f"{colono.nombre:<12}", True, Config.COLOR_TEXTO)
+            pantalla.blit(nombre_txt, (x + 15, fila_y))
+
+            color_tarea = COLORES_TAREA.get(colono.tarea_actual, Config.COLOR_TEXTO)
+            tarea_txt = fuente_p.render(f"{colono.tarea_actual:<11}", True, color_tarea)
+            pantalla.blit(tarea_txt, (x + 120, fila_y))
+
+            color_salud = (220, 60, 60) if colono.salud < 30 else (60, 180, 75) if colono.salud > 70 else Config.COLOR_TEXTO
+            salud_txt = fuente_p.render(f"{colono.salud:>4.0f}", True, color_salud)
+            pantalla.blit(salud_txt, (x + 245, fila_y))
+
+            color_fel = (220, 60, 60) if colono.felicidad < 30 else (60, 180, 75) if colono.felicidad > 70 else Config.COLOR_TEXTO
+            fel_txt = fuente_p.render(f"{colono.felicidad:>4.0f}", True, color_fel)
+            pantalla.blit(fel_txt, (x + 290, fila_y))
+
+        pie_y = y + alto - 22
+        pie_txt = fuente_p.render("C: Ocultar panel  |  Colonos autonomos", True, Config.COLOR_PANEL_BORDE)
+        pantalla.blit(pie_txt, (x + 15, pie_y))
+
+
+
 @dataclass
 
 class EdificioColocado:
@@ -2646,6 +2885,7 @@ class JuegoSimmoon:
         self.historial_finanzas: List[Dict[str, int]] = []  # Últimos 10 turnos
 
         self.mostrando_finanzas = False  # Panel de finanzas (tecla F)
+        self.sistema_colonos = SistemaColonos(self.renderizador, self.mapa)
 
 
 
@@ -4069,6 +4309,8 @@ class JuegoSimmoon:
                     self.zona_seleccionada = None
                     if self.tutorial_activo and self.tutorial_paso == 2:
                         self.tutorial_paso = 3
+                elif evento.key == pygame.K_c:
+                    self.sistema_colonos.visible = not self.sistema_colonos.visible
                 elif evento.key == pygame.K_m:
                     self.mercado_inter.visible = not self.mercado_inter.visible
 
@@ -4149,6 +4391,7 @@ class JuegoSimmoon:
         """Actualiza la lógica del juego cada frame."""
 
         self.tile_hover_x, self.tile_hover_y = self._obtener_tile_bajo_raton()
+        self.sistema_colonos.actualizar(self.recursos, self.recursos.poblacion)
 
 
 
@@ -4762,6 +5005,12 @@ class JuegoSimmoon:
                     else:
                         self._mostrar_mensaje(f"Mercado: no hay suficiente {rec}")
 
+        # Colonos panel (tecla C)
+        if self.sistema_colonos.visible:
+            self.sistema_colonos.renderizar(self.pantalla, self.renderizador)
+
+        # Colonos en el mapa
+        self.sistema_colonos.dibujar_en_mapa(self.pantalla, self.camara)
 
         # ── Mensaje temporal ──
 
