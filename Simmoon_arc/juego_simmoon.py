@@ -3959,434 +3959,189 @@ class JuegoSimmoon:
 
 
     def manejar_eventos(self) -> None:
-
         """Procesa todos los eventos de entrada."""
-
         mouse_pos = pygame.mouse.get_pos()
-
         self.mouse_click = False  # Resetear flag de click
 
-
-
         for evento in pygame.event.get():
-
-            # ── Cerrar overlays con click o ESC ──
-
+            # ── Cerrar overlays con ESC ──
             if self.mostrando_resumen or self.mostrando_permiso or self.mostrando_finanzas:
-
                 if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
-
                     if self.tutorial_activo and self.tutorial_paso == 0:
-
-                        # Salto de bienvenida -> paso 1
-
                         self.tutorial_paso = 1
-
                     elif self.tutorial_activo and self.tutorial_paso >= 7:
-
                         self.tutorial_activo = False
-
                         self.tutorial_paso = 0
 
-        if self.tutorial_activo:
-            self.renderizar_tutorial()
+            # ── Click handling for overlays ──
+            if self.mostrando_resumen:
+                if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                    pant_w, pant_h = self.pantalla.get_width(), self.pantalla.get_height()
+                    # Boton CERRAR de finanzas
+                    if self.mostrando_finanzas:
+                        ancho_f, alto_f = 700, 480
+                        cx_f, cy_f = (pant_w - ancho_f) // 2, (pant_h - alto_f) // 2
+                        btn_fin = pygame.Rect(cx_f + ancho_f // 2 - 60, cy_f + alto_f - 45, 120, 35)
+                        if btn_fin.collidepoint(evento.pos):
+                            self.mostrando_finanzas = False
+                    # Boton CERRAR del resumen + permisos
+                    ancho, alto = 460, 540
+                    cx, cy = (pant_w - ancho) // 2, (pant_h - alto) // 2
+                    if self.mostrando_resumen:
+                        btn_ok = pygame.Rect(cx + ancho // 2 - 70, cy + alto - 55, 140, 38)
+                        if btn_ok.collidepoint(evento.pos):
+                            self.mostrando_resumen = False
+                    if self.mostrando_permiso:
+                        btn_aprobar = pygame.Rect(cx + 30, cy + alto - 55, 160, 38)
+                        btn_cancelar = pygame.Rect(cx + ancho - 190, cy + alto - 55, 160, 38)
+                        if btn_aprobar.collidepoint(evento.pos):
+                            self._aprobar_permiso()
+                        elif btn_cancelar.collidepoint(evento.pos):
+                            self.mostrando_permiso = False
 
-        elif self.mostrando_ayuda:
-            self.renderizar_ayuda_estatica()
-
-
-
-        if self.mostrando_resumen:
-
-
-            if self.mostrando_permiso:
-
-                self.mostrando_permiso = False
-
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-
-                pant_w, pant_h = self.pantalla.get_width(), self.pantalla.get_height()
-
-                # Botón CERRAR de finanzas
-
-                if self.mostrando_finanzas:
-
-                    ancho_f, alto_f = 700, 480
-
-                    cx_f, cy_f = (pant_w - ancho_f) // 2, (pant_h - alto_f) // 2
-
-                    btn_fin = pygame.Rect(cx_f + ancho_f // 2 - 60, cy_f + alto_f - 45, 120, 35)
-
-                    if btn_fin.collidepoint(evento.pos):
-
-                        self.mostrando_finanzas = False
-
-            # continue removed (not in loop)
-
-                ancho, alto = 460, 540
-
-                cx, cy = (pant_w - ancho) // 2, (pant_h - alto) // 2
-
-                # Botón CERRAR del resumen
-
-                if self.mostrando_resumen:
-
-                    btn_ok = pygame.Rect(cx + ancho // 2 - 70, cy + alto - 55, 140, 38)
-
-                    if btn_ok.collidepoint(evento.pos):
-
-                        self.mostrando_resumen = False
-
-                # Botones del permiso (APROBAR / CANCELAR)
-
-                if self.mostrando_permiso:
-
-                    btn_aprobar = pygame.Rect(cx + 30, cy + alto - 55, 160, 38)
-
-                    btn_cancelar = pygame.Rect(cx + ancho - 190, cy + alto - 55, 160, 38)
-
-                    if btn_aprobar.collidepoint(evento.pos):
-
-                        self._aprobar_permiso()
-
-                    elif btn_cancelar.collidepoint(evento.pos):
-
-                        self.mostrando_permiso = False
-
-
-
-        if evento.type == pygame.KEYDOWN:
-
-            if evento.key == pygame.K_ESCAPE:
-                if self.tutorial_activo and self.tutorial_paso == 0:
-                    self.tutorial_paso = 1
-                else:
-                    self.ejecutando = False
-
-            elif evento.key == pygame.K_b:
-
-                # Alternar modo construir
-
-                self.modo_construir = not self.modo_construir
-
-                self.modo_vender = False
-                if self.tutorial_activo and self.tutorial_paso == 6:
-                    self.tutorial_z_hecho = True
-                    self.tutorial_paso = 7
-
-                if not self.modo_construir:
-
-                    self.edificio_seleccionado = None
-
-            elif evento.key == pygame.K_v:
-
-                # Alternar modo vender
-
-                self.modo_vender = not self.modo_vender
-
-                self.modo_construir = False
-
-                self.edificio_seleccionado = None
-                if self.tutorial_activo and self.tutorial_paso == 3:
-                    self.tutorial_b_hecho = True
-                    self.tutorial_paso = 4
-
-            elif evento.key == pygame.K_h:
-
-                # Alternar ayuda estatica (H)
-
-                if self.tutorial_activo:
-
-                    self.tutorial_activo = False
-
-                    self.mostrando_ayuda = True
-
-                else:
-
-                    self.mostrando_ayuda = not self.mostrando_ayuda
-
-            elif evento.key in (pygame.K_w, pygame.K_UP):
-                self.camara.mover(0, -1)
-                if self.tutorial_activo and self.tutorial_paso == 1:
-                    self.tutorial_paso = 2
-
-            elif evento.key in (pygame.K_s, pygame.K_DOWN):
-                self.camara.mover(0, 1)
-                if self.tutorial_activo and self.tutorial_paso == 1:
-                    self.tutorial_paso = 2
-
-            elif evento.key in (pygame.K_a, pygame.K_LEFT):
-                self.camara.mover(-1, 0)
-                if self.tutorial_activo and self.tutorial_paso == 1:
-                    self.tutorial_paso = 2
-
-            elif evento.key in (pygame.K_d, pygame.K_RIGHT):
-                self.camara.mover(1, 0)
-                if self.tutorial_activo and self.tutorial_paso == 1:
-                    self.tutorial_paso = 2
-
-            elif evento.key == pygame.K_SPACE:
-
-                # Atajo: espacio = siguiente turno
-
-                if self.tutorial_activo and self.tutorial_paso == 0:
-                    self.tutorial_paso = 1
-                elif self.tutorial_activo and self.tutorial_paso == 5:
-                    self.tutorial_espacio_hecho = True
-                    self.tutorial_paso = 6
-                else:
-                    if not self.mostrando_resumen:
-                        self.procesar_siguiente_turno()
+            # ── KEY HANDLING ──
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    if self.tutorial_activo and self.tutorial_paso == 0:
+                        self.tutorial_paso = 1
                     else:
-                        self.mostrando_resumen = False
-
-                    SonidoProcedural.sonido_turno()
-
-            elif evento.key == pygame.K_f:
-
-                # Alternar panel de finanzas
-
-                self.mostrando_finanzas = not self.mostrando_finanzas
-
-            elif evento.key == pygame.K_r:
-
-                # Alternar panel de flujo de recursos
-
-                self.panel_flujo.visible = not self.panel_flujo.visible
-                if self.panel_flujo.visible:
-                    self.panel_flujo.frames = 29
-
-            elif evento.key == pygame.K_m:
-
-                # Alternar mercado inter-colonial
-                self.mercado_inter.visible = not self.mercado_inter.visible
-
-            elif evento.key == pygame.K_z:
-
-                # Alternar modo zonificar
-
-                self.modo_zonificar = not self.modo_zonificar
-
-                self.modo_construir = False
-
-                self.modo_vender = False
-
-                self.edificio_seleccionado = None
-
-                self.zona_seleccionada = None
-
-
-
-        elif evento.type == pygame.MOUSEBUTTONDOWN:
-
-            self.mouse_click = True  # Marcar que hubo click
-
-            grid_x, grid_y = self._obtener_tile_bajo_raton()
-
-
-
-            if evento.button == 1:
-
-                panel_x = self.pantalla.get_width() - 320
-
-                if mouse_pos[0] >= panel_x:
-
-                    pass  # was continue
-
-
-
-
-                # Modo zonificar: pintar zona
-
-                if self.modo_zonificar and self.zona_seleccionada:
-
-                    if self.mapa.pintar_zona(grid_x, grid_y, self.zona_seleccionada):
-
-                        self._mostrar_mensaje(f"Zona {CATALOGO_ZONAS[self.zona_seleccionada].nombre} [{grid_x},{grid_y}]")
-
-                    else:
-
-                        self._mostrar_mensaje("❌ Terreno ocupado, no se puede zonificar")
-
-                        SonidoProcedural.sonido_alerta()
-
-                    pass  # was continue
-
-
-
-
-                if self.modo_vender:
-
-                    # Vender o reparar edificio
-
-                    ox, oy = grid_x, grid_y
-
-                    edif_danado = self.mapa.grid[oy][ox] if 0 <= ox < self.mapa.tamanio and 0 <= oy < self.mapa.tamanio else None
-
-                    if edif_danado and not edif_danado.activo:
-
-                        coste_rep = edif_danado.tipo.costo // 3
-
-                        if self.recursos.gastar(coste_rep):
-
-                            edif_danado.activo = True
-
-                            self.recursos.actualizar_balance(self.mapa.edificios)
-
-                            self._mostrar_mensaje(f"🔧 Reparado: {edif_danado.tipo.nombre} (-{coste_rep} 💰)")
-
-                            SonidoProcedural.sonido_construir()
-
-                        else:
-
-                            self._mostrar_mensaje(f"❌ Necesitas {coste_rep}💰 para reparar")
-
-                            SonidoProcedural.sonido_alerta()
-
-                    elif edif_danado:
-
-                        reembolso = edif_danado.tipo.costo // 2
-
-                        self.mapa.vender_edificio(grid_x, grid_y)
-
-                        self.recursos.ingresar(reembolso)
-
-                        self.recursos.actualizar_balance(self.mapa.edificios)
-
-                        self._mostrar_mensaje(f"✅ Vendido: {edif_danado.tipo.nombre} (+{reembolso} 💰)")
-
-                        SonidoProcedural.sonido_vender()
-
-                    else:
-
-                        self._mostrar_mensaje("❌ No hay edificio aquí para vender")
-
-                        SonidoProcedural.sonido_alerta()
-
-
-
-                elif self.modo_construir and self.edificio_seleccionado:
-
-                    # Colocar edificio (soporte multi-tile)
-
-                    tipo = self.edificio_seleccionado
-
-
-
-                    # Si es privado, abrir overlay de permiso en vez de colocar directo
-
-                    if es_edificio_privado(tipo.id):
-
-                        if self.mapa.tile_valido(grid_x, grid_y, tipo.ancho_tiles, tipo.alto_tiles):
-
-                            self.permiso_tipo = tipo
-
-                            self.permiso_gx = grid_x
-
-                            self.permiso_gy = grid_y
-
-                            self.mostrando_permiso = True
-
-                        else:
-
-                            if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1:
-
-                                self._mostrar_mensaje(f"❌ No hay espacio ({tipo.ancho_tiles}x{tipo.alto_tiles} tiles)")
-
-                            else:
-
-                                self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
-
-                        pass  # was continue
-
-
-
-
-                    # Público: colocación directa
-
-                    if self.mapa.tile_valido(grid_x, grid_y, tipo.ancho_tiles, tipo.alto_tiles):
-
-                        if self.recursos.gastar(tipo.costo):
-
-                            sprite = self.renderizador.cargar_sprite(
-
-                                tipo.ruta_sprite, (64, 64)
-
-                            )
-
-                            self.mapa.colocar_edificio(grid_x, grid_y, tipo, sprite)
-
-                            self.recursos.actualizar_balance(self.mapa.edificios)
-
-                            tam_txt = "" if tipo.ancho_tiles == 1 and tipo.alto_tiles == 1 else f" ({tipo.ancho_tiles}x{tipo.alto_tiles})"
-
-                            self._mostrar_mensaje(f"✅ Construido: {tipo.nombre}{tam_txt}")
-
-                            SonidoProcedural.sonido_construir()
-
-                        else:
-
-                            self._mostrar_mensaje(f"❌ Créditos insuficientes (necesitas {tipo.costo} 💰)")
-
-                    else:
-
-                        if tipo.ancho_tiles > 1 or tipo.alto_tiles > 1:
-
-                            self._mostrar_mensaje(f"❌ No hay espacio ({tipo.ancho_tiles}x{tipo.alto_tiles} tiles)")
-
-                        else:
-
-                            self._mostrar_mensaje("❌ Casilla ocupada o fuera del mapa")
-
-
-
-            elif evento.button == 3:  # Click derecho
-
-                # Modo zonificar: borrar zona o cancelar seleccion
-
-                if self.modo_zonificar:
-
-                    if self.zona_seleccionada:
-
-                        self.zona_seleccionada = None
-
-                    else:
-
-                        self.mapa.borrar_zona(grid_x, grid_y)
-
-                else:
-
-                    self.edificio_seleccionado = None
-
-                    self.modo_construir = False
-
+                        self.ejecutando = False
+                elif evento.key == pygame.K_b:
+                    self.modo_construir = not self.modo_construir
                     self.modo_vender = False
+                    if self.tutorial_activo and self.tutorial_paso == 6:
+                        self.tutorial_z_hecho = True
+                        self.tutorial_paso = 7
+                    if not self.modo_construir:
+                        self.edificio_seleccionado = None
+                elif evento.key == pygame.K_v:
+                    self.modo_vender = not self.modo_vender
+                    self.modo_construir = False
+                    self.edificio_seleccionado = None
+                    if self.tutorial_activo and self.tutorial_paso == 3:
+                        self.tutorial_b_hecho = True
+                        self.tutorial_paso = 4
+                elif evento.key == pygame.K_h:
+                    if self.tutorial_activo:
+                        self.tutorial_activo = False
+                        self.mostrando_ayuda = True
+                    else:
+                        self.mostrando_ayuda = not self.mostrando_ayuda
+                elif evento.key in (pygame.K_w, pygame.K_UP):
+                    self.camara.mover(0, -1)
+                    if self.tutorial_activo and self.tutorial_paso == 1:
+                        self.tutorial_paso = 2
+                elif evento.key in (pygame.K_s, pygame.K_DOWN):
+                    self.camara.mover(0, 1)
+                    if self.tutorial_activo and self.tutorial_paso == 1:
+                        self.tutorial_paso = 2
+                elif evento.key in (pygame.K_a, pygame.K_LEFT):
+                    self.camara.mover(-1, 0)
+                    if self.tutorial_activo and self.tutorial_paso == 1:
+                        self.tutorial_paso = 2
+                elif evento.key in (pygame.K_d, pygame.K_RIGHT):
+                    self.camara.mover(1, 0)
+                    if self.tutorial_activo and self.tutorial_paso == 1:
+                        self.tutorial_paso = 2
+                elif evento.key == pygame.K_SPACE:
+                    if self.tutorial_activo and self.tutorial_paso == 0:
+                        self.tutorial_paso = 1
+                    elif self.tutorial_activo and self.tutorial_paso == 5:
+                        self.tutorial_espacio_hecho = True
+                        self.tutorial_paso = 6
+                    else:
+                        if not self.mostrando_resumen:
+                            self.procesar_siguiente_turno()
+                        else:
+                            self.mostrando_resumen = False
+                        SonidoProcedural.sonido_turno()
+                elif evento.key == pygame.K_f:
+                    self.mostrando_finanzas = not self.mostrando_finanzas
+                elif evento.key == pygame.K_r:
+                    self.panel_flujo.visible = not self.panel_flujo.visible
+                    if self.panel_flujo.visible:
+                        self.panel_flujo.frames = 29
+                elif evento.key == pygame.K_z:
+                    self.modo_zonificar = not self.modo_zonificar
+                    self.modo_construir = False
+                    self.modo_vender = False
+                    self.edificio_seleccionado = None
+                    self.zona_seleccionada = None
+                    if self.tutorial_activo and self.tutorial_paso == 2:
+                        self.tutorial_paso = 3
+                elif evento.key == pygame.K_m:
+                    self.mercado_inter.visible = not self.mercado_inter.visible
 
+            # ── MOUSE HANDLING ──
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                self.mouse_click = True
+                if self.modo_construir and self.edificio_seleccionado:
+                    gx, gy = self.camara.pantalla_a_iso(*evento.pos)
+                    tipo = self.edificio_seleccionado
+                    if not self.mapa.tile_valido(gx, gy, tipo.ancho_tiles, tipo.alto_tiles):
+                        self._mostrar_mensaje("No hay espacio suficiente aqui")
+                        SonidoProcedural.sonido_error()
+                    elif self.recursos.creditos < tipo.costo:
+                        self._mostrar_mensaje(f"Creditos insuficientes ({tipo.costo} necesarios)")
+                        SonidoProcedural.sonido_error()
+                    elif es_edificio_privado(tipo.id):
+                        self.permiso_tipo = tipo
+                        self.permiso_gx = gx
+                        self.permiso_gy = gy
+                        self.mostrando_permiso = True
+                    else:
+                        sprite = self.renderizador.cargar_sprite(tipo.ruta_sprite, (64, 64))
+                        if self.mapa.colocar_edificio(gx, gy, tipo, sprite):
+                            self.recursos.gastar(tipo.costo)
+                            self.recursos.actualizar_balance(self.mapa.edificios)
+                            SonidoProcedural.sonido_construir()
+                            if self.tutorial_activo and self.tutorial_paso == 4:
+                                self.tutorial_click_hecho = True
+                                self.tutorial_paso = 5
+                        else:
+                            self._mostrar_mensaje("No se puede colocar aqui")
+                            SonidoProcedural.sonido_error()
+                elif self.modo_vender:
+                    gx, gy = self.camara.pantalla_a_iso(*evento.pos)
+                    if self.mapa.esta_ocupado(gx, gy):
+                        edificio = self.mapa.vender_edificio(gx, gy)
+                        if edificio:
+                            reembolso = int(edificio.tipo.costo * 0.5)
+                            self.recursos.ingresar(reembolso)
+                            self.recursos.actualizar_balance(self.mapa.edificios)
+                            self._mostrar_mensaje(f"Vendido: {edificio.tipo.nombre} (+{reembolso})")
+                            SonidoProcedural.sonido_construir()
+                elif self.modo_zonificar and self.zona_seleccionada:
+                    gx, gy = self.camara.pantalla_a_iso(*evento.pos)
+                    if self.mapa.pintar_zona(gx, gy, self.zona_seleccionada):
+                        self._mostrar_mensaje(f"Zona pintada: {CATALOGO_ZONAS[self.zona_seleccionada].nombre}")
+                    else:
+                        self._mostrar_mensaje("No se puede zonificar aqui")
 
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
+                if self.modo_construir:
+                    self.modo_construir = False
+                    self.edificio_seleccionado = None
+                    self._mostrar_mensaje("Construccion cancelada")
+                elif self.modo_vender:
+                    self.modo_vender = False
+                    self._mostrar_mensaje("Modo vender desactivado")
 
-            elif evento.button == 4:  # Rueda arriba
-
-                self.camara.acercar(0.1)
-                if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
-
-            elif evento.button == 5:  # Rueda abajo
-
-                self.camara.acercar(-0.1)
-                if self.tutorial_activo and self.tutorial_paso == 2: self.tutorial_paso = 3
-
-
+            elif evento.type == pygame.MOUSEWHEEL:
+                self.camara.acercar(evento.y * 0.1)
 
             elif evento.type == pygame.VIDEORESIZE:
-
                 self.camara.ancho_ventana = evento.w
-
                 self.camara.alto_ventana = evento.h
 
-                self.pantalla = pygame.display.set_mode((evento.w, evento.h), pygame.RESIZABLE)
+            elif evento.type == pygame.QUIT:
+                self.ejecutando = False
 
-
-
-        # ── Movimiento continuo de cámara con teclas ──
+        # ── Overlay rendering (outside loop, once per frame) ──
+        if self.tutorial_activo:
+            self.renderizar_tutorial()
+        if self.mostrando_ayuda:
+            self.renderizar_ayuda_estatica()
 
 
     def actualizar(self) -> None:
