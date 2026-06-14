@@ -45,7 +45,7 @@ def _is_wsl() -> bool:
         return False
 
 
-def _wsl_cmd(cmd: str, timeout: int = 10, as_root: bool = False) -> subprocess.CompletedProcess:
+def _wsl_cmd(cmd: str, timeout: int = 5, as_root: bool = False) -> subprocess.CompletedProcess:
     """Run a command, transparently wrapping for WSL if needed."""
     if _is_wsl():
         # Already in WSL, run directly
@@ -253,7 +253,7 @@ def check_gpu(require_gpu: bool = True) -> dict:
             "utilization.gpu,utilization.memory,"
             "fan.speed,power.draw,power.limit "
             "--format=csv,noheader,nounits 2>/dev/null",
-            timeout=15, as_root=True
+            timeout=8, as_root=True
         )
 
         if proc.returncode != 0 or not proc.stdout.strip():
@@ -285,7 +285,7 @@ def check_gpu(require_gpu: bool = True) -> dict:
         proc2 = _wsl_cmd(
             "nvidia-smi --query-compute-apps=pid,process_name,used_memory "
             "--format=csv,noheader,nounits 2>/dev/null",
-            timeout=10, as_root=True
+            timeout=5, as_root=True
         )
         if proc2.returncode == 0 and proc2.stdout.strip():
             for line in proc2.stdout.strip().split("\n"):
@@ -373,7 +373,7 @@ def check_ram() -> dict:
         try:
             proc = _wsl_cmd(
                 'wmic computersystem get TotalPhysicalMemory 2>/dev/null | tail -1',
-                timeout=10
+                timeout=5
             )
             if proc.returncode == 0 and proc.stdout.strip():
                 total_bytes = int(proc.stdout.strip())
@@ -384,7 +384,7 @@ def check_ram() -> dict:
 
     # ── Fallback general: usar free (nativo Linux o WSL sin PowerShell) ──
     try:
-        proc = _wsl_cmd("free -b | grep Mem", timeout=10)
+        proc = _wsl_cmd("free -b | grep Mem", timeout=5)
         if proc.returncode == 0:
             parts = proc.stdout.split()
             if len(parts) >= 7:
@@ -409,7 +409,7 @@ def check_disk() -> dict:
     result = {}
     for mount in mounts:
         try:
-            proc = _wsl_cmd(f"df -BM {mount} 2>/dev/null | tail -1", timeout=10)
+            proc = _wsl_cmd(f"df -BM {mount} 2>/dev/null | tail -1", timeout=5)
             if proc.returncode == 0 and proc.stdout.strip():
                 parts = proc.stdout.split()
                 if len(parts) >= 6:
@@ -434,7 +434,7 @@ def check_cpu_temp() -> Optional[float]:
         # Try lm-sensors
         proc = _wsl_cmd(
             "sensors 2>/dev/null | grep -E 'Package id|Tctl|temp1' | head -1",
-            timeout=10
+            timeout=5
         )
         if proc.returncode == 0 and proc.stdout.strip():
             match = re.search(r'[\+\-]?(\d+\.?\d*)°C', proc.stdout)
@@ -444,7 +444,7 @@ def check_cpu_temp() -> Optional[float]:
         # Try /sys/class/thermal
         proc2 = _wsl_cmd(
             "cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1",
-            timeout=10
+            timeout=5
         )
         if proc2.returncode == 0 and proc2.stdout.strip():
             temp = int(proc2.stdout.strip()) / 1000.0
@@ -457,23 +457,21 @@ def check_cpu_temp() -> Optional[float]:
 
 # ── Service Health ────────────────────────────────────────────────────────
 
-def check_http_service(name: str, url: str, timeout: int = 5) -> dict:
-    """Check if an HTTP service is responding."""
+def check_http_service(name: str, url: str, timeout: int = 3) -> dict:
+    """Check if an HTTP service is responding via Python urllib (no subprocess).
+
+    Much faster than spawning curl via _wsl_cmd — avoids bash + wsl.exe overhead.
+    """
     result = {"name": name, "url": url, "healthy": False, "status_code": 0, "latency_ms": 0}
     start = time.time()
     try:
-        proc = _wsl_cmd(
-            f"curl -s -o /dev/null -w '%{{http_code}}' --connect-timeout {timeout} {url}",
-            timeout=timeout + 5
-        )
+        req = urllib.request.Request(url, method="GET")
+        resp = urllib.request.urlopen(req, timeout=timeout)
         result["latency_ms"] = round((time.time() - start) * 1000)
-        if proc.returncode == 0:
-            code = proc.stdout.strip()
-            if code.isdigit():
-                result["status_code"] = int(code)
-                result["healthy"] = result["status_code"] < 500
-    except subprocess.TimeoutExpired:
-        result["latency_ms"] = timeout * 1000
+        result["status_code"] = resp.status
+        result["healthy"] = resp.status < 500
+    except Exception:
+        result["latency_ms"] = round((time.time() - start) * 1000)
     return result
 
 
@@ -488,7 +486,7 @@ def check_postgresql(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
     try:
         proc = _wsl_cmd(
             f"psql -U {pg_user} -d {pg_db} -t -c \"SELECT version();\" 2>/dev/null | head -1",
-            timeout=10
+            timeout=5
         )
         if proc.returncode == 0 and proc.stdout.strip():
             result["healthy"] = True
@@ -497,7 +495,7 @@ def check_postgresql(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
             # List databases
             proc2 = _wsl_cmd(
                 f"psql -U {pg_user} -t -c \"\\l\" 2>/dev/null | awk '{{print $1}}' | grep -v '^$' | grep -v '^('",
-                timeout=10
+                timeout=5
             )
             if proc2.returncode == 0:
                 result["databases"] = [
@@ -540,15 +538,13 @@ def check_services(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
     # Enhance with model info if healthy
     if svc["healthy"]:
         try:
-            proc = _wsl_cmd(
-                "curl -s http://localhost:11434/api/tags 2>/dev/null | "
-                "python3 -c \"import sys,json; d=json.load(sys.stdin); "
-                "print(len(d.get('models',[])))\" 2>/dev/null",
-                timeout=10
+            req = urllib.request.Request(
+                "http://localhost:11434/api/tags", method="GET"
             )
-            if proc.returncode == 0 and proc.stdout.strip().isdigit():
-                svc["model_count"] = int(proc.stdout.strip())
-        except subprocess.TimeoutExpired:
+            resp = urllib.request.urlopen(req, timeout=3)
+            data = json.loads(resp.read().decode("utf-8"))
+            svc["model_count"] = len(data.get("models", []))
+        except Exception:
             pass
     services["ollama"] = svc
 
@@ -557,7 +553,7 @@ def check_services(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
 
     # OpenHuman (API mode)
     services["openhuman"] = check_http_service(
-        "OpenHuman", "http://localhost:7788/health", timeout=5
+        "OpenHuman", "http://localhost:7788/health", timeout=3
     )
 
     return services
