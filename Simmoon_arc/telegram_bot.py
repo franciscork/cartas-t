@@ -999,7 +999,17 @@ async def cmd_gen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = " ".join(context.args)
     msg = await update.message.reply_text("🎨 Orquestando GPU para generación... ⏳")
 
-    # 1. Esperar que ComfyUI termine trabajos previos (Anti-Overlap)
+    # 1. Ensure ComfyUI is running (lazy startup via persistent tmux)
+    await msg.edit_text("🔌 Asegurando que ComfyUI este corriendo...")
+    try:
+        from wsl_service_manager import ensure_comfyui
+        if not await asyncio.get_event_loop().run_in_executor(None, ensure_comfyui):
+            await msg.edit_text("⚠️ No se pudo iniciar ComfyUI. Intenta manualmente con: bash launch_ias.sh start art")
+            return
+    except ImportError:
+        pass  # wsl_service_manager not available, assume ComfyUI is already running
+    
+    # 2. Esperar que ComfyUI termine trabajos previos (Anti-Overlap)
     await msg.edit_text("⏳ Verificando cola de ComfyUI...")
     if await is_comfyui_busy():
         await msg.edit_text("⏳ ComfyUI está ocupado. Esperando que termine...")
@@ -1201,6 +1211,26 @@ def main():
     print(f"  🧠 Bot: @{config.get('bot_name', 'SIMMOON Bot')}")
     print(f"  🧠 Modelo: {config['ollama_model']}")
     print(f"  {'='*50}")
+    
+    # Auto-ensure Ollama is running (persistent WSL tmux)
+    print(f"\n  🔌 Verificando Ollama en WSL...")
+    try:
+        from wsl_service_manager import ensure_ollama, check_comfyui
+        ollama_ok = ensure_ollama()
+        if ollama_ok:
+            print(f"  ✅ Ollama listo")
+        else:
+            print(f"  ⚠️  Ollama no disponible — /ai y /buffy no funcionaran")
+        comfyui_up = check_comfyui()
+        if comfyui_up:
+            print(f"  ✅ ComfyUI detectado")
+        else:
+            print(f"  💤 ComfyUI no detectado — se iniciara bajo demanda en /gen")
+    except ImportError:
+        print(f"  ⚠️  wsl_service_manager.py no encontrado")
+    except Exception as e:
+        print(f"  ⚠️  Error verificando servicios: {e}")
+    
     print(f"\n  Presiona Ctrl+C para detener.\n")
 
     # Start polling
