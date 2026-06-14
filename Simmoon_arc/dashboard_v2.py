@@ -796,65 +796,97 @@ setInterval(refreshData,8000);
 </html>
 """
 
-# --- Routes ---
-@app.route("/")
-def index():
-    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+def _collect_all(include_config: bool = False) -> dict:
+    """Run all dashboard collectors in parallel via ThreadPoolExecutor.
 
-    def _build_index():
-        def _safe(fn, default):
-            try: return fn() if callable(fn) else fn
-            except: return default
+    Collectors run truly concurrently — wall clock = max(slowest single
+    collector), typically <5s. Uses as_completed() so results are
+    processed as they arrive rather than blocking sequentially.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        gpu_def = {"available":False}; ram_def = {"total_gb":0,"used_gb":0,"available_gb":0,"used_percent":0}; disk_def = {}
-        gpu = _safe(check_gpu,gpu_def) if _MONITOR_OK else gpu_def
-        ram = _safe(check_ram,ram_def) if _MONITOR_OK else ram_def
-        disk = _safe(check_disk,disk_def) if _MONITOR_OK else disk_def
-        services = _safe(check_services,{}) if _MONITOR_OK else {}
-        agent_data = _safe(collect_agent_status,{"agents":[],"services":{},"total_running":0,"total_agents":0})
-        agents_list = agent_data.get("agents",[])
-        env_data = _safe(collect_environment,{"timestamp":"","asset_count":0,"categories_found":{}})
-        ollama_models = _safe(collect_ollama_models,[])
-        openhuman_health = _safe(check_openhuman_health,{"available":False})
+    defaults = {
+        "gpu": {"available": False},
+        "ram": {},
+        "disk": {},
+        "services": {},
+        "agent_data": {"agents": [], "services": {}, "total_running": 0, "total_agents": 0},
+        "env_data": {"timestamp": "", "asset_count": 0, "categories_found": {}},
+        "ollama_models": [],
+        "openhuman_health": {"available": False},
+        "factory_data": {"available": False, "agents": [], "healthy": 0, "total": 0},
+        "pipeline_data": {"available": False, "executed": False},
+        "config_data": {"available": False},
+    }
+    result = dict(defaults)
 
-        alerts = []
-        healthy = True
-        if _MONITOR_OK:
-            try:
-                alerts = detect_alerts({"gpu":gpu,"ram":ram,"disk":disk,"services":services})
-                healthy = len(alerts) == 0
-            except: alerts = ["Error alertas"]; healthy = False
-        else: alerts = ["monitor_sistema.py no disponible"]
-
-        factory_data = _safe(collect_factory_status,{"available":False,"agents":[],"healthy":0,"total":0})
-
-        return render_template_string(DASHBOARD_HTML,
-            gpu=gpu, ram=ram, disk=disk, services=services, alerts=alerts, healthy=healthy,
-            timestamp=datetime.now().strftime("%H:%M:%S"),
-            agent_stats={"running":sum(1 for a in agents_list if a["running"]),"total":len(agents_list),"list":agents_list},
-            env=env_data, ollama_models=ollama_models, openhuman=openhuman_health,
-            factory_stats=factory_data,
-            pipeline_stats=_safe(collect_pipeline_status,{"available":False,"executed":False}))
+    # Collectors: key -> callable
+    collectors = {}
+    if _MONITOR_OK:
+        collectors.update({
+            "gpu": check_gpu, "ram": check_ram,
+            "disk": check_disk, "services": check_services,
+        })
+    collectors.update({
+        "agent_data": collect_agent_status,
+        "env_data": collect_environment,
+        "ollama_models": collect_ollama_models,
+        "openhuman_health": check_openhuman_health,
+        "factory_data": collect_factory_status,
+        "pipeline_data": collect_pipeline_status,
+    })
+    if include_config:
+        collectors["config_data"] = collect_dispatcher_config
 
     executor = None
     try:
-        executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(_build_index)
-        result = future.result(timeout=8)
-        executor.shutdown(wait=False)
-        return result
-    except (FutureTimeout, Exception):
+        executor = ThreadPoolExecutor(max_workers=len(collectors))
+        # Submit all at once
+        futmap = {executor.submit(fn): key for key, fn in collectors.items()}
+        # Process as they complete — true parallelism
+        for future in as_completed(futmap, timeout=6):
+            key = futmap[future]
+            try:
+                result[key] = future.result(timeout=1)  # Already done
+            except Exception:
+                pass  # Keep default
+    except Exception:
+        pass
+    finally:
         if executor:
             executor.shutdown(wait=False)
-        return render_template_string(DASHBOARD_HTML,
-            gpu={"available":False}, ram={"total_gb":0,"used_gb":0,"available_gb":0,"used_percent":0},
-            disk={}, services={}, alerts=["⚠️ Dashboard timeout — servicios no responden"],
-            healthy=False, timestamp=datetime.now().strftime("%H:%M:%S"),
-            agent_stats={"running":0,"total":0,"list":[]},
-            env={"timestamp":"","asset_count":0,"categories_found":{}},
-            ollama_models=[], openhuman={"available":False},
-            factory_stats={"available":False,"agents":[],"healthy":0,"total":0},
-            pipeline_stats={"available":False,"executed":False})
+
+    return result
+
+# --- Routes ---
+@app.route("/")
+def index():
+    """Dashboard HTML — all collectors run in parallel via ThreadPoolExecutor."""
+    data = _collect_all()
+    agents_list = data["agent_data"].get("agents", [])
+
+    alerts = []
+    healthy = True
+    if _MONITOR_OK:
+        try:
+            alerts = detect_alerts({"gpu": data["gpu"], "ram": data["ram"],
+                                     "disk": data["disk"], "services": data["services"]})
+            healthy = len(alerts) == 0
+        except:
+            alerts = ["Error alertas"]
+            healthy = False
+    else:
+        alerts = ["monitor_sistema.py no disponible"]
+
+    return render_template_string(DASHBOARD_HTML,
+        gpu=data["gpu"], ram=data["ram"], disk=data["disk"],
+        services=data["services"], alerts=alerts, healthy=healthy,
+        timestamp=datetime.now().strftime("%H:%M:%S"),
+        agent_stats={"running": sum(1 for a in agents_list if a["running"]),
+                      "total": len(agents_list), "list": agents_list},
+        env=data["env_data"], ollama_models=data["ollama_models"],
+        openhuman=data["openhuman_health"],
+        factory_stats=data["factory_data"], pipeline_stats=data["pipeline_data"])
 
 @app.route("/api/health")
 def api_health():
@@ -960,59 +992,35 @@ def api_pipeline_run():
 
 @app.route("/api/dashboard")
 def api_dashboard():
-    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+    """JSON dashboard — all collectors run in parallel via ThreadPoolExecutor."""
+    data = _collect_all(include_config=True)
+    agents = data["agent_data"].get("agents", [])
 
-    def _build_dashboard():
-        def _safe(fn, default):
-            try: return fn()
-            except: return default
-        gpu=_safe(check_gpu,{"available":False}) if _MONITOR_OK else {"available":False}
-        ram=_safe(check_ram,{}) if _MONITOR_OK else {}
-        disk=_safe(check_disk,{}) if _MONITOR_OK else {}
-        services=_safe(check_services,{}) if _MONITOR_OK else {}
-        agent_data=_safe(collect_agent_status,{"agents":[],"services":{},"total_running":0,"total_agents":0})
-        env_data=_safe(collect_environment,{"timestamp":"","asset_count":0,"categories_found":{}})
-        ollama_models=_safe(collect_ollama_models,[])
-        openhuman_health=_safe(check_openhuman_health,{"available":False})
-        alerts=[]
-        try: alerts=detect_alerts({"gpu":gpu,"ram":ram,"disk":disk,"services":services}) if _MONITOR_OK else []
-        except: alerts=["Error"]
-        factory_data = _safe(collect_factory_status,{"available":False,"agents":[],"healthy":0,"total":0})
-        return {"timestamp":datetime.now().strftime("%H:%M:%S"),"healthy":len(alerts)==0,
-            "gpu":gpu,"ram":ram,"disk":disk,"services":services,"alerts":alerts,
-            "agent_stats":{"running":sum(1 for a in agent_data.get("agents",[]) if a["running"]),
-                           "total":len(agent_data.get("agents",[])),"list":agent_data.get("agents",[])},
-            "environment":env_data,"ollama_models":ollama_models,"openhuman":openhuman_health,
-            "factory":factory_data,
-            "pipeline":_safe(collect_pipeline_status,{"available":False,"executed":False}),
-            "dispatcher_config":_safe(collect_dispatcher_config,{"available":False})}
+    alerts = []
+    if _MONITOR_OK:
+        try:
+            alerts = detect_alerts({"gpu": data["gpu"], "ram": data["ram"],
+                                     "disk": data["disk"], "services": data["services"]})
+        except:
+            alerts = ["Error"]
 
-    executor = None
-    try:
-        executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(_build_dashboard)
-        result = future.result(timeout=8)
-        executor.shutdown(wait=False)
-        return jsonify(result)
-    except (FutureTimeout, Exception):
-        if executor:
-            executor.shutdown(wait=False)
-        return jsonify({
-            "timestamp": datetime.now().strftime("%H:%M:%S"),
-            "healthy": False,
-            "gpu": {"available": False},
-            "ram": {},
-            "disk": {},
-            "services": {},
-            "alerts": ["Dashboard timeout — servicios no responden"],
-            "agent_stats": {"running": 0, "total": 0, "list": []},
-            "environment": {},
-            "ollama_models": [],
-            "openhuman": {"available": False},
-            "factory": {"available": False, "agents": [], "healthy": 0, "total": 0},
-            "pipeline": {"available": False, "executed": False},
-            "dispatcher_config": {"available": False},
-        })
+    return jsonify({
+        "timestamp": datetime.now().strftime("%H:%M:%S"),
+        "healthy": len(alerts) == 0,
+        "gpu": data["gpu"], "ram": data["ram"], "disk": data["disk"],
+        "services": data["services"], "alerts": alerts,
+        "agent_stats": {
+            "running": sum(1 for a in agents if a["running"]),
+            "total": len(agents),
+            "list": agents,
+        },
+        "environment": data["env_data"],
+        "ollama_models": data["ollama_models"],
+        "openhuman": data["openhuman_health"],
+        "factory": data["factory_data"],
+        "pipeline": data["pipeline_data"],
+        "dispatcher_config": data.get("config_data", {"available": False}),
+    })
 
 def main():
     parser = argparse.ArgumentParser(description="SIMMOON Dashboard + FactoryGames Orquestacion")
