@@ -586,6 +586,82 @@ class HuggingFaceBackend:
         return False
 
 
+# --- Standalone Single Generation (for Telegram bot /gen) -------------------
+
+def generate_single(prompt: str, backend: str = "comfyui",
+                    width: int = 512, height: int = 512,
+                    steps: int = 20, cfg: float = 7.0,
+                    output_dir: str = None, seed: int = -1,
+                    negative_prompt: str = "") -> dict:
+    """Generate a single image — used by Telegram bot /gen command.
+
+    Args:
+        prompt: The image generation prompt
+        backend: "comfyui" or "huggingface"
+        width, height: Output dimensions
+        steps: Inference steps
+        cfg: CFG scale
+        output_dir: Directory for output (default: SCRIPT_DIR / 'generated')
+        seed: Random seed (-1 = random)
+        negative_prompt: Optional negative prompt
+
+    Returns:
+        dict with keys: success, image_path, backend, prompt, error (if failed)
+    """
+    import re
+
+    config = load_config()
+    script_dir = Path(__file__).parent.resolve()
+
+    # Output directory
+    if output_dir:
+        out_dir = Path(output_dir)
+    else:
+        out_dir = script_dir / "generated"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_prompt = re.sub(r'[<>:"/\\|?*\s]', '_', prompt[:30])
+    output_path = out_dir / f"gen_{timestamp}_{safe_prompt}.png"
+
+    prompt_data = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt or config.get("negative_prompt", ""),
+    }
+
+    try:
+        if backend == "comfyui":
+            be = ComfyUIBackend(config)
+            success = be.generate(prompt_data, str(output_path), category_settings={
+                "width": width, "height": height,
+                "steps": steps, "cfg_scale": cfg, "seed": seed,
+            })
+        elif backend == "huggingface":
+            be = HuggingFaceBackend(config)
+            success = be.generate(prompt_data, str(output_path), category_settings={
+                "width": width, "height": height,
+                "steps": steps, "cfg_scale": cfg,
+            })
+        else:
+            return {"success": False, "error": f"Backend desconocido: {backend}"}
+
+        if success and output_path.exists():
+            return {
+                "success": True,
+                "image_path": str(output_path),
+                "backend": backend,
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+            }
+        else:
+            return {"success": False, "error": "Generación falló — el backend no devolvió imagen"}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # --- Generator Orchestrator ------------------------------------------------
 
 class SimmoonGenerator:
