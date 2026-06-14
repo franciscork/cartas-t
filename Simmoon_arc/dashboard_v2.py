@@ -210,7 +210,7 @@ def _try_import(mn):
 
 def _tmux_session_exists(name):
     try:
-        r = _wsl_cmd(f"tmux has-session -t {name} 2>/dev/null && echo YES || echo NO", timeout=5)
+        r = _wsl_cmd(f"tmux has-session -t {name} 2>/dev/null && echo YES || echo NO", timeout=3)
         return "YES" in r.stdout
     except: return False
 
@@ -223,44 +223,116 @@ def _http_healthy(url, timeout=3):
 
 def _wsl_has_binary(name):
     try:
-        r = _wsl_cmd(f"command -v {name} 2>/dev/null && echo FOUND || echo NOT_FOUND", timeout=5)
+        r = _wsl_cmd(f"command -v {name} 2>/dev/null && echo FOUND || echo NOT_FOUND", timeout=3)
         return "FOUND" in r.stdout
     except: return False
 
 def _file_exists_in_wsl(path):
     try:
-        r = _wsl_cmd(f"test -f {path} && echo YES || echo NO", timeout=5)
+        r = _wsl_cmd(f"test -f {path} && echo YES || echo NO", timeout=3)
         return "YES" in r.stdout
     except: return False
 
+
+# ── Agent Status Collector (parallelized) ─────────────────────────────
 def collect_agent_status():
+    """Collect agent statuses in parallel to avoid WSL subprocess pileup.
+
+    All slow checks (WSL subprocess, HTTP) run concurrently via
+    ThreadPoolExecutor with a 4s global timeout. Fast local checks
+    (file existence, imports) run inline.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FutureTimeout
+
     now = datetime.now().strftime("%H:%M:%S")
-    ollama_healthy = _http_healthy("http://localhost:11434/api/tags", timeout=2)
+
+    # Defaults for when checks fail or timeout
+    ollama_healthy = False
     ollama_models = []
-    if ollama_healthy:
-        try:
-            r = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
-            ollama_models = [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
-        except: pass
+    tmux_telegram = False
+    tmux_agatha = False
+    hermes_binary = False
+    hermes_file = False
+    hermes_http = False
+    openhuman_http = False
+    hermes_dash_http = False
+    services_raw = {}
+
+    def _get_ollama():
+        import urllib.request
+        h = _http_healthy("http://localhost:11434/api/tags", timeout=2)
+        models = []
+        if h:
+            try:
+                r = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
+                models = [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
+            except: pass
+        return h, models
+
+    def _get_services():
+        if _MONITOR_OK:
+            try: return check_services()
+            except: pass
+        return {}
+
+    # Run slow checks in parallel (HTTP + WSL subprocess calls)
+    executor = None
+    try:
+        executor = ThreadPoolExecutor(max_workers=6)
+        futures = {
+            executor.submit(_get_ollama): "ollama",
+            executor.submit(_get_services): "services",
+            executor.submit(_tmux_session_exists, "telegram-bot"): "tmux_telegram",
+            executor.submit(_tmux_session_exists, "agatha-actas"): "tmux_agatha",
+            executor.submit(_wsl_has_binary, "hermes"): "hermes_binary",
+            executor.submit(_file_exists_in_wsl, "~/.local/bin/hermes"): "hermes_file",
+            executor.submit(_http_healthy, "http://localhost:9119", 2): "hermes_http",
+            executor.submit(_http_healthy, "http://localhost:7788", 2): "openhuman_http",
+            executor.submit(_http_healthy, "http://localhost:9120", 2): "hermes_dash_http",
+        }
+        for future in as_completed(futures, timeout=4):
+            key = futures[future]
+            try:
+                val = future.result(timeout=4)
+                if key == "ollama":
+                    ollama_healthy, ollama_models = val
+                elif key == "services":
+                    services_raw = val
+                elif key == "tmux_telegram":
+                    tmux_telegram = val
+                elif key == "tmux_agatha":
+                    tmux_agatha = val
+                elif key == "hermes_binary":
+                    hermes_binary = val
+                elif key == "hermes_file":
+                    hermes_file = val
+                elif key == "hermes_http":
+                    hermes_http = val
+                elif key == "openhuman_http":
+                    openhuman_http = val
+                elif key == "hermes_dash_http":
+                    hermes_dash_http = val
+            except (FutureTimeout, Exception):
+                pass
+    except (FutureTimeout, Exception):
+        pass
+    finally:
+        if executor:
+            executor.shutdown(wait=False)
 
     agents = [
-        {"name":"Telegram Bot","icon":"🤖","running":_tmux_session_exists("telegram-bot"),"method":"tmux","desc":"Bot @Jeremi_Hermes_bot"},
-        {"name":"Hermes Agent","icon":"🧠","running":_http_healthy("http://localhost:9119",2),"method":":9119","desc":"Agente multi-escritorio","binary":_wsl_has_binary("hermes")},
-        {"name":"Hermes Bridge","icon":"🔗","running":_try_import("hermes_bridge") and _file_exists_in_wsl("~/.local/bin/hermes"),"method":"Python","desc":"Puente Simmoon-Hermes"},
-        {"name":"OpenHuman","icon":"🤖","running":_http_healthy("http://localhost:7788",2),"method":":7788","desc":"API core"},
+        {"name":"Telegram Bot","icon":"🤖","running":tmux_telegram,"method":"tmux","desc":"Bot @Jeremi_Hermes_bot"},
+        {"name":"Hermes Agent","icon":"🧠","running":hermes_http,"method":":9119","desc":"Agente multi-escritorio","binary":hermes_binary},
+        {"name":"Hermes Bridge","icon":"🔗","running":_try_import("hermes_bridge") and hermes_file,"method":"Python","desc":"Puente Simmoon-Hermes"},
+        {"name":"OpenHuman","icon":"🤖","running":openhuman_http,"method":":7788","desc":"API core"},
         {"name":"Simmoon Agent","icon":"🎯","running":(SCRIPT_DIR/"simmoon_agent.py").exists(),"method":"Python","desc":"AI Director"},
         {"name":"AutoGen","icon":"👥","running":(SCRIPT_DIR/"simmoon_autogen.py").exists(),"method":"Python","desc":"Diseno multi-agente"},
         {"name":"Pipeline","icon":"🔄","running":(SCRIPT_DIR/"simmoon_pipeline.py").exists(),"method":"Python","desc":"LangGraph workflow"},
         {"name":"Simmoon Game","icon":"🎮","running":(SCRIPT_DIR/"juego_simmoon.py").exists(),"method":"Python","desc":"Juego colonia lunar"},
-        {"name":"Agatha Actas","icon":"📋","running":_tmux_session_exists("agatha-actas"),"method":"tmux","desc":"Reportes horarios"},
-        {"name":"DonHermes Bot","icon":"🤖","running":_tmux_session_exists("agatha-actas"),"method":"Telegram","desc":"Bot @...ai_bot"},
-        {"name":"Hermes Dash","icon":"📊","running":_http_healthy("http://localhost:9120",2),"method":":9120","desc":"Web UI Hermes"},
+        {"name":"Agatha Actas","icon":"📋","running":tmux_agatha,"method":"tmux","desc":"Reportes horarios"},
+        {"name":"DonHermes Bot","icon":"🤖","running":tmux_agatha,"method":"Telegram","desc":"Bot @...ai_bot"},
+        {"name":"Hermes Dash","icon":"📊","running":hermes_dash_http,"method":":9120","desc":"Web UI Hermes"},
     ]
-
-    services_raw = {}
-    if _MONITOR_OK:
-        try: services_raw = check_services()
-        except: pass
 
     return {"timestamp":now,"agents":agents,"services":services_raw,
             "total_running":sum(1 for a in agents if a["running"]),"total_agents":len(agents),
@@ -270,7 +342,7 @@ def collect_environment():
     now = datetime.now()
     uptime_str = "N/A"
     try:
-        r = _wsl_cmd("uptime -p 2>/dev/null || uptime 2>/dev/null", timeout=5)
+        r = _wsl_cmd("uptime -p 2>/dev/null || uptime 2>/dev/null", timeout=3)
         uptime_str = r.stdout.strip() or "N/A"
     except: pass
 
@@ -919,7 +991,7 @@ def api_dashboard():
     try:
         executor = ThreadPoolExecutor(max_workers=1)
         future = executor.submit(_build_dashboard)
-        result = future.result(timeout=5)
+        result = future.result(timeout=8)
         executor.shutdown(wait=False)
         return jsonify(result)
     except (FutureTimeout, Exception):
