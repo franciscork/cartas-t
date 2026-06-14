@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -475,32 +476,37 @@ def check_http_service(name: str, url: str, timeout: int = 3) -> dict:
     return result
 
 
-def check_postgresql(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
+def check_postgresql(pg_user: str = "docus", pg_db: str = "simmoon",
+                     timeout: int = 5, fast: bool = False) -> dict:
     """Check PostgreSQL connectivity.
     
     Args:
         pg_user: PostgreSQL username.
         pg_db: PostgreSQL database name.
+        timeout: WSL subprocess timeout in seconds.
+        fast: If True, skip databases list query (faster).
     """
     result = {"healthy": False, "version": "", "databases": []}
     try:
         proc = _wsl_cmd(
             f"psql -U {pg_user} -d {pg_db} -t -c \"SELECT version();\" 2>/dev/null | head -1",
-            timeout=5
+            timeout=timeout
         )
         if proc.returncode == 0 and proc.stdout.strip():
             result["healthy"] = True
             result["version"] = proc.stdout.strip()
 
-            # List databases
-            proc2 = _wsl_cmd(
-                f"psql -U {pg_user} -t -c \"\\l\" 2>/dev/null | awk '{{print $1}}' | grep -v '^$' | grep -v '^('",
-                timeout=5
-            )
-            if proc2.returncode == 0:
-                result["databases"] = [
-                    db.strip() for db in proc2.stdout.strip().split("\n") if db.strip()
-                ]
+            # List databases (skip in fast mode)
+            if not fast:
+                db_timeout = min(timeout, 3)
+                proc2 = _wsl_cmd(
+                    f"psql -U {pg_user} -t -c \"\\l\" 2>/dev/null | awk '{{print $1}}' | grep -v '^$' | grep -v '^('",
+                    timeout=db_timeout
+                )
+                if proc2.returncode == 0:
+                    result["databases"] = [
+                        db.strip() for db in proc2.stdout.strip().split("\n") if db.strip()
+                    ]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
     return result
@@ -525,36 +531,65 @@ def _check_cli_tool(name: str, cmd: str, version_arg: str = "--version") -> dict
 
 
 def check_services(pg_user: str = "docus", pg_db: str = "simmoon") -> dict:
-    """Check all critical services."""
+    """Check all critical services in parallel via ThreadPoolExecutor.
+
+    Wall clock = max(slowest individual check), typically <2s.
+    Previously sequential (5+5+10+3 = 23s worst case).
+    """
+    # Timeouts reducidos: localhost responde en <100ms, no necesita 5s
+    COM_TIMEOUT = 2   # HTTP check timeout (era 5)
+    OLL_TIMEOUT = 2   # Ollama HTTP timeout (era 5)
+    OH_TIMEOUT = 2    # OpenHuman HTTP timeout (era 3)
+    PG_TIMEOUT = 2    # PostgreSQL WSL timeout (era 5)
+
     services = {}
 
-    # ComfyUI
-    services["comfyui"] = check_http_service(
-        "ComfyUI", "http://localhost:8188/queue", timeout=5
-    )
+    # -- Funciones helper que cada thread ejecuta --
+    def _check_comfyui():
+        return ("comfyui", check_http_service(
+            "ComfyUI", "http://localhost:8188/queue", timeout=COM_TIMEOUT))
 
-    # Ollama
-    svc = check_http_service("Ollama", "http://localhost:11434/api/tags", timeout=5)
-    # Enhance with model info if healthy
-    if svc["healthy"]:
-        try:
-            req = urllib.request.Request(
-                "http://localhost:11434/api/tags", method="GET"
-            )
-            resp = urllib.request.urlopen(req, timeout=3)
-            data = json.loads(resp.read().decode("utf-8"))
-            svc["model_count"] = len(data.get("models", []))
-        except Exception:
-            pass
-    services["ollama"] = svc
+    def _check_ollama():
+        svc = check_http_service("Ollama", "http://localhost:11434/api/tags", timeout=OLL_TIMEOUT)
+        if svc["healthy"]:
+            try:
+                req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
+                resp = urllib.request.urlopen(req, timeout=1)
+                data = json.loads(resp.read().decode("utf-8"))
+                svc["model_count"] = len(data.get("models", []))
+            except Exception:
+                pass
+        return ("ollama", svc)
 
-    # PostgreSQL
-    services["postgresql"] = check_postgresql(pg_user=pg_user, pg_db=pg_db)
+    def _check_pg():
+        return ("postgresql", check_postgresql(pg_user=pg_user, pg_db=pg_db,
+                                                 timeout=PG_TIMEOUT, fast=True))
 
-    # OpenHuman (API mode)
-    services["openhuman"] = check_http_service(
-        "OpenHuman", "http://localhost:7788/health", timeout=3
-    )
+    def _check_openhuman():
+        return ("openhuman", check_http_service(
+            "OpenHuman", "http://localhost:7788/health", timeout=OH_TIMEOUT))
+
+    executor = None
+    try:
+        executor = ThreadPoolExecutor(max_workers=4)
+        futmap = {
+            executor.submit(_check_comfyui): "comfyui",
+            executor.submit(_check_ollama): "ollama",
+            executor.submit(_check_pg): "postgresql",
+            executor.submit(_check_openhuman): "openhuman",
+        }
+        for future in as_completed(futmap, timeout=3):
+            key = futmap[future]
+            try:
+                k, val = future.result(timeout=1)
+                services[k] = val
+            except Exception:
+                pass
+    except Exception:
+        pass
+    finally:
+        if executor:
+            executor.shutdown(wait=False)
 
     return services
 
