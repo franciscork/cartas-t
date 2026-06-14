@@ -727,39 +727,62 @@ setInterval(refreshData,8000);
 # --- Routes ---
 @app.route("/")
 def index():
-    def _safe(fn, default):
-        try: return fn() if callable(fn) else fn
-        except: return default
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
-    gpu_def = {"available":False}; ram_def = {"total_gb":0,"used_gb":0,"available_gb":0,"used_percent":0}; disk_def = {}
-    gpu = _safe(check_gpu,gpu_def) if _MONITOR_OK else gpu_def
-    ram = _safe(check_ram,ram_def) if _MONITOR_OK else ram_def
-    disk = _safe(check_disk,disk_def) if _MONITOR_OK else disk_def
-    services = _safe(check_services,{}) if _MONITOR_OK else {}
-    agent_data = collect_agent_status()
-    agents_list = agent_data.get("agents",[])
-    env_data = collect_environment()
-    ollama_models = collect_ollama_models()
-    openhuman_health = check_openhuman_health()
+    def _build_index():
+        def _safe(fn, default):
+            try: return fn() if callable(fn) else fn
+            except: return default
 
-    alerts = []
-    healthy = True
-    if _MONITOR_OK:
-        try:
-            alerts = detect_alerts({"gpu":gpu,"ram":ram,"disk":disk,"services":services})
-            healthy = len(alerts) == 0
-        except: alerts = ["Error alertas"]; healthy = False
-    else: alerts = ["monitor_sistema.py no disponible"]
+        gpu_def = {"available":False}; ram_def = {"total_gb":0,"used_gb":0,"available_gb":0,"used_percent":0}; disk_def = {}
+        gpu = _safe(check_gpu,gpu_def) if _MONITOR_OK else gpu_def
+        ram = _safe(check_ram,ram_def) if _MONITOR_OK else ram_def
+        disk = _safe(check_disk,disk_def) if _MONITOR_OK else disk_def
+        services = _safe(check_services,{}) if _MONITOR_OK else {}
+        agent_data = _safe(collect_agent_status,{"agents":[],"services":{},"total_running":0,"total_agents":0})
+        agents_list = agent_data.get("agents",[])
+        env_data = _safe(collect_environment,{"timestamp":"","asset_count":0,"categories_found":{}})
+        ollama_models = _safe(collect_ollama_models,[])
+        openhuman_health = _safe(check_openhuman_health,{"available":False})
 
-    factory_data = collect_factory_status()
+        alerts = []
+        healthy = True
+        if _MONITOR_OK:
+            try:
+                alerts = detect_alerts({"gpu":gpu,"ram":ram,"disk":disk,"services":services})
+                healthy = len(alerts) == 0
+            except: alerts = ["Error alertas"]; healthy = False
+        else: alerts = ["monitor_sistema.py no disponible"]
 
-    return render_template_string(DASHBOARD_HTML,
-        gpu=gpu, ram=ram, disk=disk, services=services, alerts=alerts, healthy=healthy,
-        timestamp=datetime.now().strftime("%H:%M:%S"),
-        agent_stats={"running":sum(1 for a in agents_list if a["running"]),"total":len(agents_list),"list":agents_list},
-        env=env_data, ollama_models=ollama_models, openhuman=openhuman_health,
-        factory_stats=factory_data,
-        pipeline_stats=collect_pipeline_status())
+        factory_data = _safe(collect_factory_status,{"available":False,"agents":[],"healthy":0,"total":0})
+
+        return render_template_string(DASHBOARD_HTML,
+            gpu=gpu, ram=ram, disk=disk, services=services, alerts=alerts, healthy=healthy,
+            timestamp=datetime.now().strftime("%H:%M:%S"),
+            agent_stats={"running":sum(1 for a in agents_list if a["running"]),"total":len(agents_list),"list":agents_list},
+            env=env_data, ollama_models=ollama_models, openhuman=openhuman_health,
+            factory_stats=factory_data,
+            pipeline_stats=_safe(collect_pipeline_status,{"available":False,"executed":False}))
+
+    executor = None
+    try:
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(_build_index)
+        result = future.result(timeout=8)
+        executor.shutdown(wait=False)
+        return result
+    except (FutureTimeout, Exception):
+        if executor:
+            executor.shutdown(wait=False)
+        return render_template_string(DASHBOARD_HTML,
+            gpu={"available":False}, ram={"total_gb":0,"used_gb":0,"available_gb":0,"used_percent":0},
+            disk={}, services={}, alerts=["⚠️ Dashboard timeout — servicios no responden"],
+            healthy=False, timestamp=datetime.now().strftime("%H:%M:%S"),
+            agent_stats={"running":0,"total":0,"list":[]},
+            env={"timestamp":"","asset_count":0,"categories_found":{}},
+            ollama_models=[], openhuman={"available":False},
+            factory_stats={"available":False,"agents":[],"healthy":0,"total":0},
+            pipeline_stats={"available":False,"executed":False})
 
 @app.route("/api/health")
 def api_health():
