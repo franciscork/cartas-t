@@ -49,6 +49,8 @@ import sys
 import math
 
 import random
+from misiones_diplomaticas import GeneradorMisionesDiplomaticas, MISIONES_DIPLOMATICAS
+from diplomacia import DiplomaciaManager, Decision, TipoEvento, EventoDiplomatico
 
 import json
 
@@ -1391,6 +1393,14 @@ CATALOGO_EDIFICIOS: Dict[str, TipoEdificio] = {
 
                            descripcion="Gestión y administración de la colonia. 2x2", alquiler=50),
 
+    "gov_03": TipoEdificio(
+        "gov_03", "Embajada Permanente", "government",
+        "gov_03_embassy.png",
+        ancho_tiles=1, alto_tiles=1, costo=600, alquiler=0,
+        descripcion="Edificio diplomatico. +1 nivel_seguridad."
+    ),
+
+
 
 
     # ── Alojamiento (housing) ──
@@ -2149,6 +2159,10 @@ class MercadoInterColonial:
         coste = int(cantidad * self.precios[recurso])
         if recursos.creditos >= coste:
             recursos.creditos -= coste
+            # Hook Misiones Diplomaticas: notificar transaccion comercial
+            if hasattr(self, '_juego') and self._juego and hasattr(self._juego, 'gen_misiones_diplomaticas'):
+                self._juego.gen_misiones_diplomaticas.notificar_transaccion_comercial(coste)
+
             if recurso == "energia":
                 recursos.energia_total += cantidad
             elif recurso == "oxigeno":
@@ -2168,6 +2182,10 @@ class MercadoInterColonial:
         if disponible >= cantidad and cantidad > 0:
             ingreso = int(cantidad * self.precios[recurso] * 0.8)
             recursos.creditos += ingreso
+            # Hook Misiones Diplomaticas: notificar transaccion comercial
+            if hasattr(self, '_juego') and self._juego and hasattr(self._juego, 'gen_misiones_diplomaticas'):
+                self._juego.gen_misiones_diplomaticas.notificar_transaccion_comercial(-ingreso)
+
             if recurso == "energia":
                 recursos.energia_total -= cantidad
             elif recurso == "oxigeno":
@@ -2282,6 +2300,7 @@ class MercadoInterColonial:
 
 
 
+        self._juego = None   # Asignado externamente por JuegoSimmoon
 # ═══════════════════════════════════════════════════════════════
 # COLONOS DINAMICOS - Sistema de NPCs con vida propia
 # ═══════════════════════════════════════════════════════════════
@@ -3074,6 +3093,23 @@ class SistemaMisiones:
     def _generar_mision(self):
         tipos = ['build_n', 'population_n', 'balance_all', 'happiness_n',
                  'credits_n', 'survive_n', 'zone_n', 'tech_n', 'export_value']
+        # Hook Misiones Diplomaticas (Feature 2.2): 5% prob de generar mision diplomatica
+        if (random.random() < 0.05
+                and hasattr(self, 'gen_misiones_diplomaticas')):
+            plantilla = self.gen_misiones_diplomaticas.generar_mision_diplomatica(
+                self.misiones_completadas
+            )
+            if plantilla:
+                self.misiones_activas.append(Mision(
+                    m_id=f'dip_{len(self.misiones_activas)}_{plantilla.tipo}',
+                    m_tipo=plantilla.tipo,
+                    objetivo=plantilla.objetivo,
+                    desc=plantilla.descripcion,
+                    rec_tipo='creditos',
+                    rec_cant=plantilla.recompensa_creditos,
+                ))
+                return
+
         tipo = random.choice(tipos)
         escala = 1.0 + (self.misiones_completadas * 0.12)
 
@@ -3156,6 +3192,12 @@ class SistemaMisiones:
                     m.progreso = len(mapa.tiles_zonificados())
                 elif m.tipo == 'tech_n':
                     m.progreso = len(tecnologia.completadas) if tecnologia else 0
+                elif m.tipo in MISIONES_DIPLOMATICAS:
+                    plantilla = MISIONES_DIPLOMATICAS[m.tipo]
+                    m.progreso = self.gen_misiones_diplomaticas.progreso_de_mision(
+                        plantilla,
+                    )
+
                 elif m.tipo == 'export_value':
                     m.progreso += 5  # +5c per turn (export simulation)
 
@@ -3187,6 +3229,16 @@ class SistemaMisiones:
             rec_str = f'Planos: {CATALOGO_EDIFICIOS[b_id].nombre}'
         self.agregar_toast('\U0001F3AF Mision Completa!',
                           f'{m.descripcion}  |  {rec_str}', '\u2705')
+
+        if m.tipo in MISIONES_DIPLOMATICAS:
+            plantilla = MISIONES_DIPLOMATICAS[m.tipo]
+            cid = plantilla.colonia_objetivo
+            if cid and plantilla.recompensa_relacion_bonus and hasattr(self, 'diplomacia'):
+                bonus = plantilla.recompensa_relacion_bonus
+                col = self.diplomacia.colonias.get(cid)
+                if col:
+                    col.relacion = max(-100, min(100, col.relacion + bonus))
+                    rec_str += f' y {bonus:+d} rel. con {cid}'
 
     def renderizar(self, pantalla, recursos):
 
@@ -3448,6 +3500,52 @@ TECNOLOGIAS = {
         "bono": {"meteorito_inmune": True},
         "requiere": "def_2",
     },
+    # ── Gobierno 🏛️ ──
+    "gov_1": {
+        "nombre": "Embajada Permanente", "rama": "gobierno", "tier": 1,
+        "costo": 900, "turnos": 3,
+        "descripcion": "Embajadas fisicas en cada colonia. -25% costo en regalos diplomaticos, +2 relacion inicial, misiones narrativas a tier 30.",
+        "desbloquea": [],
+        "bono": {
+            "embajada_permanente": True,
+            "descuento_diplomatico": 0.25,
+            "descuento_compensacion": 0.25,
+            "descuento_crisis": 0.10,
+            "relacion_inicial_bonus": 2,
+            "tier_narrativa_reduction": 20,
+            "embajador_cooldown_reduction": 10,
+        },
+        "requiere": "def_1",
+    },
+    "gov_2": {
+        "nombre": "Contraespionaje+", "rama": "gobierno", "tier": 2,
+        "costo": 2500, "turnos": 5,
+        "descripcion": "Extension del Contraespionaje base. Anula bloqueo comercial, -50% prob sabotaje adicional, +3 nivel_seguridad.",
+        "desbloquea": [],
+        "bono": {
+            "contraespionaje_plus": True,
+            "anula_bloqueo_comercial": True,
+            "sabotaje_prob_reduction_extra": 0.50,
+            "nivel_seguridad_bonus_extra": 3,
+            "sabotaje_duracion_reduction": 2,
+        },
+        "requiere": "gov_1",
+    },
+    "gov_3": {
+        "nombre": "Tratado Multilateral", "rama": "gobierno", "tier": 3,
+        "costo": 5500, "turnos": 7,
+        "descripcion": "Combina 2 tratados en uno con 2x duracion y bonificaciones sumadas. Sincroniza tratados con la misma colonia.",
+        "desbloquea": [],
+        "bono": {
+            "tratado_multilateral": True,
+            "duracion_mult_factor": 2.0,
+            "cumbre_multilateral_unlock": True,
+            "sincronizacion_tratados": True,
+            "bonificaciones_sumadas": True,
+        },
+        "requiere": "gov_1",
+    },
+
 }
 
 COLORES_RAMA = {
@@ -3455,6 +3553,7 @@ COLORES_RAMA = {
     "habitabilidad": (60, 180, 120),
     "industria": (180, 140, 60),
     "defensa": (120, 140, 220),
+    "gobierno":      (200, 180, 100),
 }
 
 ICONOS_RAMA = {
@@ -3462,6 +3561,7 @@ ICONOS_RAMA = {
     "habitabilidad": chr(0x1F3E0),
     "industria": chr(0x1F3ED),
     "defensa": chr(0x1F6E1) + chr(0xFE0F),
+    "gobierno":      chr(0x1F3DB) + chr(0xFE0F),
 }
 
 
@@ -3702,6 +3802,7 @@ COLORES_RAMA = {
     "habitabilidad": (60, 180, 120),
     "industria": (180, 140, 60),
     "defensa": (120, 140, 220),
+    "gobierno":      (200, 180, 100),
 }
 
 ICONOS_RAMA = {
@@ -3709,6 +3810,7 @@ ICONOS_RAMA = {
     "habitabilidad": chr(0x1F3E0),
     "industria": chr(0x1F3ED),
     "defensa": chr(0x1F6E1) + chr(0xFE0F),
+    "gobierno":      chr(0x1F3DB) + chr(0xFE0F),
 }
 
 
@@ -3748,6 +3850,12 @@ class JuegoSimmoon:
 
         self.catalogo = filtrar_catalogo_por_votos(self.votos) if votos else filtrar_catalogo_por_votos({})
         # Filtrar tambien por tecnologias desbloqueadas
+        # Diplomacia debe existir antes de L3929 (gen_misiones_diplomaticas)
+        # y antes de cualquier hook que referencie self.diplomacia.
+        self.diplomacia = DiplomaciaManager()
+        # Tecnologia debe inicializarse ANTES del filtro de catalogo (L3852)
+        # que llama self.tecnologia.edificio_desbloqueado(k).
+        self.tecnologia = ArbolTecnologia()
         self.catalogo = {k: v for k, v in self.catalogo.items() if self.tecnologia.edificio_desbloqueado(k) or not es_edificio_privado(k)}
 
 
@@ -3820,11 +3928,20 @@ class JuegoSimmoon:
         self.panel_flujo = PanelFlujoRecursos(self.renderizador)
         # Mercado inter-colonial
         self.mercado_inter = MercadoInterColonial()
+        self.mercado_inter._juego = self
         self.crisis_lunar = CrisisLunar()
+        self.gen_misiones_diplomaticas = GeneradorMisionesDiplomaticas(self.diplomacia, semilla=42)
+
+        # Wire: cuando el jugador ACEPTA un evento CUMBRE_MULTILATERAL,
+        # setea el flag del generador para que la mision asistir_cumbre_multilateral progrese.
+        self.diplomacia._on_cumbre_aceptada = lambda: setattr(
+            self.gen_misiones_diplomaticas, cumbre_multilateral_aceptada, True
+        )        # Wire callback de eventos resueltos al generador (Feature 2.2)
+        self.diplomacia.on_resolve = self.gen_misiones_diplomaticas.notificar_evento_resuelto
         self.crisis_lunar.tecnologia = self.tecnologia  # Referencia cruzada
 
         # ── Sistema de Misiones y Logros (tecla O) ──
-        self.misiones = SistemaMisiones(self.renderizador)
+        self.misiones = SistemaMisiones(ancho=self.mapa.tamanio, alto=self.mapa.tamanio)  # mapa cuadrado: Config.TAMANIO_GRID x TAMANIO_GRID
 
         # ── Modo Sandbox (P para toggle) ──
         self.modo_sandbox = False
@@ -3855,8 +3972,7 @@ class JuegoSimmoon:
 
         self.mostrando_ayuda = False  # Ayuda estatica con tecla H
 
-        self.ciclo = CicloDiaNoche(Config.ANCHO_VENTANA, Config.ALTO_VENTANA)
-        self.tecnologia = ArbolTecnologia()
+        self.ciclo = CicloDiaNoche()  # stub: clase no acepta args (definida en el modulo)
         self.crisis_lunar.tecnologia = self.tecnologia
 
 
@@ -4021,6 +4137,7 @@ class JuegoSimmoon:
                 "turnos_restantes": self.tecnologia.turnos_restantes,
                 "bonos_activos": self.tecnologia.bonos_activos,
             },
+            "misiones_diplomaticas": self.gen_misiones_diplomaticas.to_dict(),
             "ciclo": {
                 "turno_actual": self.ciclo.turno_actual,
             },
@@ -4170,6 +4287,10 @@ class JuegoSimmoon:
 
         # Recalcular balance
         self.recursos.actualizar_balance(self.mapa.edificios, self.ciclo.es_de_noche)
+        # Hook Misiones Diplomaticas (Feature 2.2): actualizar diplomacia
+        if hasattr(self, 'diplomacia') and hasattr(self, 'gen_misiones_diplomaticas'):
+            self.diplomacia.actualizar(getattr(self, 'turno_actual', 0))
+
 
         self._mostrar_mensaje(f"Partida cargada: {path.name}", (100, 255, 100))
         return True
@@ -4488,6 +4609,7 @@ class JuegoSimmoon:
         self.tecnologia.investigando = pre["tecnologia_investigando"]
         self.tecnologia.turnos_restantes = pre["tecnologia_turnos_restantes"]
         self.tecnologia.bonos_activos = pre["tecnologia_bonos_activos"]
+        self.gen_misiones_diplomaticas.from_dict(data.get("misiones_diplomaticas", {}))
         # Limpiar estado guardado
         self._pre_sandbox_state = None
         # Sandbox: recursos nunca se agotan
@@ -5561,12 +5683,12 @@ class JuegoSimmoon:
                     self.modo_sandbox = not self.modo_sandbox
                     if self.modo_sandbox:
                         self._activar_sandbox()
-                    self.misiones.agregar_toast(
-                        "🏖️ Modo Sandbox", "Créditos ilimitados activados", "🏖️")
+                        self.misiones.agregar_toast(
+                            "🏖️ Modo Sandbox", "Créditos ilimitados activados", "🏖️")
                     else:
                         self._desactivar_sandbox()
-                    self.misiones.agregar_toast(
-                        "🔙 Modo Normal", "Límites restaurados", "🔙")
+                        self.misiones.agregar_toast(
+                            "🔙 Modo Normal", "Límites restaurados", "🔙")
                 elif evento.key == pygame.K_g:
                     self.guardar_partida()
 
@@ -6451,4 +6573,13 @@ if __name__ == "__main__":
     juego = JuegoSimmoon(votos=votos)
 
     juego.ejecutar()
+
+
+
+
+
+
+
+
+
 

@@ -13,10 +13,12 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -30,6 +32,57 @@ if sys.platform == "win32" and hasattr(sys.stdout, 'reconfigure'):
         pass
 
 SCRIPT_DIR = Path(__file__).parent.parent.resolve()
+
+# ── Config (override desde dispatcher_config.json) ────────────────────────
+_DISPATCHER_CONFIG: dict = {}
+_config_path = SCRIPT_DIR / "dispatcher_config.json"
+if _config_path.exists():
+    try:
+        _DISPATCHER_CONFIG = json.loads(_config_path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+
+def _validar_timeout(valor: object, clave: str, default: int) -> int:
+    """Validar que un valor de timeout sea entero positivo; loguear warning si no."""
+    if isinstance(valor, int) and valor > 0:
+        return valor
+    if isinstance(valor, int) and valor <= 0:
+        print(f"  [WARN] dispatcher_config.json: '{clave}' debe ser positivo "
+              f"(recibido {valor!r}), usando default {default}", file=sys.stderr)
+    else:
+        print(f"  [WARN] dispatcher_config.json: '{clave}' debe ser un entero "
+              f"(recibido {type(valor).__name__}: {valor!r}), usando default {default}",
+              file=sys.stderr)
+    return default
+
+
+# Timeouts por defecto (override via config.json)
+# Ej: {"llm_timeout": 600, "coding_timeout": 600}
+DEFAULT_LLM_TIMEOUT: int = _validar_timeout(
+    _DISPATCHER_CONFIG.get("llm_timeout", 300), "llm_timeout", 300)
+DEFAULT_CODING_TIMEOUT: int = _validar_timeout(
+    _DISPATCHER_CONFIG.get("coding_timeout", 300), "coding_timeout", 300)
+DEFAULT_IMAGE_TIMEOUT: int = _validar_timeout(
+    _DISPATCHER_CONFIG.get("image_timeout", 300), "image_timeout", 300)
+DEFAULT_PIPELINE_TIMEOUT: int = _validar_timeout(
+    _DISPATCHER_CONFIG.get("pipeline_timeout", 3600), "pipeline_timeout", 3600)
+
+# Timeout global del lote (dispatch_multi) — None = sin limite
+# Ej: {"multi_timeout": 600}
+_MULTI_RAW = _DISPATCHER_CONFIG.get("multi_timeout")
+if isinstance(_MULTI_RAW, int) and _MULTI_RAW > 0:
+    DEFAULT_MULTI_TIMEOUT: Optional[int] = _MULTI_RAW
+else:
+    if _MULTI_RAW is not None:
+        if isinstance(_MULTI_RAW, int) and _MULTI_RAW <= 0:
+            print(f"  [WARN] dispatcher_config.json: 'multi_timeout' debe ser positivo "
+                  f"(recibido {_MULTI_RAW!r}), sin l\u00edmite global", file=sys.stderr)
+        else:
+            print(f"  [WARN] dispatcher_config.json: 'multi_timeout' debe ser un entero "
+                  f"(recibido {type(_MULTI_RAW).__name__}: {_MULTI_RAW!r}), sin l\u00edmite global",
+                  file=sys.stderr)
+    DEFAULT_MULTI_TIMEOUT: Optional[int] = None
 
 # ── Result type ───────────────────────────────────────────────────────────
 class DispatchResult:
@@ -63,6 +116,34 @@ class DispatchResult:
     def __str__(self):
         status = "✅" if self.success else "❌"
         return f"{status} [{self.agent}] {self.task_type} ({self.duration:.1f}s)"
+
+
+# ── Parallel batch result ──────────────────────────────────────────────
+class ParallelBatchResult:
+    """Resultado de multiples tareas despachadas en paralelo."""
+
+    def __init__(self, results: List[DispatchResult]):
+        self.results = results
+        self.total = len(results)
+        self.success = sum(1 for r in results if r.success)
+        self.failed = self.total - self.success
+        self.total_duration = sum(r.duration for r in results)
+        self.wall_clock = 0.0
+
+    def to_dict(self) -> dict:
+        return {
+            "total": self.total,
+            "success": self.success,
+            "failed": self.failed,
+            "total_duration": round(self.total_duration, 1),
+            "wall_clock": round(self.wall_clock, 1),
+            "results": [r.to_dict() for r in self.results],
+        }
+
+    def __str__(self):
+        speedup = self.total_duration / max(self.wall_clock, 0.1) if self.wall_clock > 0 else 1.0
+        return (f"📦 Parallel batch: {self.success}/{self.total} OK "
+                f"({self.total_duration:.1f}s total / {self.wall_clock:.1f}s wall = {speedup:.1f}x speedup)")
 
 
 # ── Soft imports ─────────────────────────────────────────────────────────
@@ -184,13 +265,17 @@ class TaskDispatcher:
                          context: str = "",
                          effort: str = "high",
                          model: Optional[str] = None,
-                         timeout: int = 300) -> DispatchResult:
+                         timeout: Optional[int] = None) -> DispatchResult:
         """Delegar tarea de código al BuffySupervisor.
 
         Usa BuffySupervisor que selecciona automáticamente:
           - Claude Code (si autenticado)
           - Ollama + qwen2.5-coder (local, gratis)
         """
+        # Usar timeout del config si no se pasó explícitamente
+        if timeout is None:
+            timeout = DEFAULT_CODING_TIMEOUT
+
         supervisor = _get_buffy_supervisor(self.verbose)
         if supervisor:
             result = supervisor.delegate(
@@ -230,8 +315,13 @@ class TaskDispatcher:
                         output_path: Optional[str] = None,
                         width: int = 512,
                         height: int = 512,
+                        timeout: Optional[int] = None,
                         **kwargs) -> DispatchResult:
         """Generar imagen usando GeneratorFactory (con fallback chain)."""
+        # Usar timeout del config si no se pas\u00f3 expl\u00edcitamente
+        if timeout is None:
+            timeout = DEFAULT_IMAGE_TIMEOUT
+
         gen = _get_generator_factory()
         if not gen:
             return DispatchResult(
@@ -277,7 +367,7 @@ class TaskDispatcher:
 
     def _dispatch_llm(self, prompt: str,
                       model: str = "qwen2.5-coder:14b",
-                      timeout: int = 120,
+                      timeout: Optional[int] = None,
                       temperature: float = 0.3,
                       max_tokens: int = 4096) -> DispatchResult:
         """Consultar un modelo LLM vía Ollama.
@@ -285,7 +375,7 @@ class TaskDispatcher:
         Args:
             prompt: El prompt a enviar
             model: Modelo Ollama (default: qwen2.5-coder:14b)
-            timeout: Timeout en segundos
+            timeout: Timeout en segundos (default: DEFAULT_LLM_TIMEOUT del config)
             temperature: Temperatura de generación
             max_tokens: Máximo de tokens a generar
 
@@ -293,6 +383,9 @@ class TaskDispatcher:
             DispatchResult con la respuesta
         """
         start_time = time.time()
+        # Usar timeout del config si no se pasó explícitamente
+        if timeout is None:
+            timeout = DEFAULT_LLM_TIMEOUT
 
         # Verificar que Ollama esté disponible
         try:
@@ -366,6 +459,7 @@ class TaskDispatcher:
                            skip_generation: bool = False,
                            skip_pixel: bool = False,
                            skip_db: bool = False,
+                           timeout: Optional[int] = None,
                            **kwargs) -> DispatchResult:
         """Ejecutar pipeline completo de generación de assets.
 
@@ -387,6 +481,9 @@ class TaskDispatcher:
             DispatchResult con el resultado del pipeline
         """
         start_time = time.time()
+        # Usar timeout del config si no se pas\u00f3 expl\u00edcitamente
+        if timeout is None:
+            timeout = DEFAULT_PIPELINE_TIMEOUT
 
         # Importar pipeline_generator y simmoon_pipeline (soft import)
         try:
@@ -460,6 +557,117 @@ class TaskDispatcher:
                 error=f"Pipeline falló: {e}",
                 duration=duration,
             )
+
+    # ── Parallel dispatch ──────────────────────────────────────────
+
+    def dispatch_multi(self, tasks: List[Dict[str, Any]],
+                       max_workers: Optional[int] = None,
+                       stop_on_error: bool = False,
+                       timeout: Optional[int] = None) -> ParallelBatchResult:
+        """Despachar multiples tareas en paralelo usando ThreadPoolExecutor.
+
+        Cada tarea se define como un dict con los argumentos de dispatch():
+          - task_type (obligatorio)
+          - task (obligatorio)
+          - files, context, effort, etc. (opcionales)
+
+        Los agentes trabajan concurrentemente en lugar de en serie.
+
+        Args:
+            tasks: Lista de dicts con especificaciones de tarea
+            max_workers: Max workers (default: min(4, cpu_count))
+            stop_on_error: Si True, detiene todas las tareas si una falla
+            timeout: Timeout global en segundos para todo el lote
+                (default: DEFAULT_MULTI_TIMEOUT del config; None = sin l\u00edmite)
+
+        Returns:
+            ParallelBatchResult con el resultado de todas las tareas
+        """
+        # Usar timeout global del config si no se pas\u00f3 expl\u00edcitamente
+        if timeout is None:
+            timeout = DEFAULT_MULTI_TIMEOUT
+
+        if not tasks:
+            return ParallelBatchResult([])
+
+        cpu_count = os.cpu_count() or 1
+        workers = max_workers or min(4, cpu_count)
+
+        if self.verbose:
+            print(f"\n  ⚡ Despachando {len(tasks)} tarea(s) en paralelo "
+                  f"({workers} workers)...")
+            print(f"  {'─'*55}")
+            for i, t in enumerate(tasks, 1):
+                tt = t.get("task_type", "?")
+                tk = t.get("task", "")[:60]
+                print(f"     [{i}] {tt}: {tk}...")
+            print(f"  {'─'*55}")
+
+        start_wall = datetime.now()
+        indexed_results: Dict[int, DispatchResult] = {}
+        error_event = threading.Event() if stop_on_error else None
+
+        def _dispatch_one(task_spec: dict, task_idx: int) -> DispatchResult:
+            if stop_on_error and error_event and error_event.is_set():
+                return DispatchResult(
+                    success=False,
+                    agent="cancelled",
+                    task_type=task_spec.get("task_type", "unknown"),
+                    error="Cancelada por error en otra tarea del lote",
+                )
+            return self.dispatch(**task_spec)
+
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {executor.submit(_dispatch_one, t, i): i
+                      for i, t in enumerate(tasks)}
+
+            for future in as_completed(futures):
+                idx = futures[future]
+                try:
+                    result = future.result(timeout=timeout)
+                    indexed_results[idx] = result
+                    if stop_on_error and not result.success and error_event:
+                        error_event.set()
+                except Exception as e:
+                    task_spec = tasks[idx]
+                    indexed_results[idx] = DispatchResult(
+                        success=False,
+                        agent="exception",
+                        task_type=task_spec.get("task_type", "unknown"),
+                        error=f"Excepcion/timeout en tarea #{idx}: {e}",
+                    )
+                    if stop_on_error and error_event:
+                        error_event.set()
+
+        # Reconstruir lista ordenada por indice original
+        ordered_results = [indexed_results[i] for i in range(len(tasks))
+                          if i in indexed_results]
+        wall_clock = (datetime.now() - start_wall).total_seconds()
+        batch = ParallelBatchResult(ordered_results)
+        batch.wall_clock = wall_clock
+
+        if self.verbose:
+            print(f"\n  {batch}")
+            if batch.failed > 0:
+                for r in ordered_results:
+                    if not r.success:
+                        print(f"     ❌ [{r.task_type}] {r.error[:100]}")
+            print(f"  {'─'*55}")
+
+        return batch
+
+    def dispatch_parallel(self, *task_specs: Dict[str, Any],
+                          **kwargs) -> ParallelBatchResult:
+        """Conveniencia: dispatchea multiples tareas en paralelo.
+
+        Uso:
+            disp.dispatch_parallel(
+                {"task_type": "llm", "task": "tarea 1"},
+                {"task_type": "coding", "task": "tarea 2", "files": ["x.py"]},
+                max_workers=3,
+            )
+        """
+        return self.dispatch_multi(list(task_specs), **kwargs)
 
     # ── Utilidades ───────────────────────────────────────────────────
 

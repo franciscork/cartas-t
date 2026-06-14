@@ -75,6 +75,20 @@ except ImportError:
     _FM_OK = False
 
 
+# ── Constants: frontmatter safety ───────────────────────────────────────
+# Allowlist explícita de meta-keys que save_diaria() promueve al frontmatter
+# de las diarias. Evita leak accidental de secretos (api_key, token, etc.) y
+# errores de serialización YAML con tipos no soportados (datetime, Path, set,
+# bytes). Cubre las necesidades de _cargar_ayer_obsidian.py
+# (system_events/system_sources) y los metadatos canónicos (tags/created_by).
+_ALLOWED_DIARIA_PASSTHROUGH_KEYS = frozenset({
+    "system_events", "system_sources", "tags", "created_by",
+})
+# Tipos seguros para serialización YAML. bool es subclase de int en Python,
+# pero lo listamos explícitamente por claridad. type(None) cubre None.
+_SAFE_YAML_TYPES = (str, int, float, bool, list, dict, type(None))
+
+
 # ── Helper: parse JSON safely ────────────────────────────────────────────
 def _try_parse_json(val: Any) -> Any:
     """Try to parse a JSON string; return as-is on failure."""
@@ -1086,10 +1100,13 @@ class ObsidianMemory:
             "created": now,
             "updated": now,
         }
-        if meta.get("tags"):
-            frontmatter["tags"] = meta["tags"]
-        if meta.get("created_by"):
-            frontmatter["created_by"] = meta["created_by"]
+        # Allowlist explícita (ver constantes a nivel de módulo):
+        # evita leak de secretos y errores de YAML con tipos no soportados.
+        if meta:
+            for k, v in meta.items():
+                if k in _ALLOWED_DIARIA_PASSTHROUGH_KEYS and k not in frontmatter:
+                    if isinstance(v, _SAFE_YAML_TYPES):
+                        frontmatter[k] = v
 
         # Si ya existe, preservar created original
         existing = self._read_diaria(date_str)

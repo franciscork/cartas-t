@@ -749,6 +749,15 @@
 <!-- ═══ LOGS ═══ -->
 <div class="grid grid-3">
     <div class="card grid-full">
+        <h2><span class="icon">⚙</span> Dispatcher Config <span id="configCount" style="color:var(--text-dim);font-weight:400;font-size:0.65rem;"></span></h2>
+        <div id="configContainer" style="font-size:0.72rem;">
+            <div style="color:var(--text-dim);">Cargando...</div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-3">
+    <div class="card grid-full">
         <h2><span class="icon">📜</span> Últimos Eventos <span id="logCount" style="color:var(--text-dim);font-weight:400;font-size:0.65rem;"></span></h2>
         <div id="logContainer" style="max-height:240px;overflow-y:auto;font-size:0.72rem;font-family:'Consolas','Courier New',monospace;line-height:1.6;">
             <div style="color:var(--text-dim);">Cargando eventos...</div>
@@ -757,7 +766,9 @@
 </div>
 
 <div class="footer">
-    ☾ SIMMOON — Actualización automática cada 10s · <a href="/api/health" target="_blank" style="color:var(--accent);text-decoration:none;">API JSON</a>
+    ☾ SIMMOON — Actualización automática cada 10s ·
+    <a href="/api/health" target="_blank" style="color:var(--accent);text-decoration:none;">API Health</a> ·
+    <a href="/api/config" target="_blank" style="color:var(--accent);text-decoration:none;">API Config</a>
 </div>
 
 <script>
@@ -880,11 +891,44 @@ function escHtml(s) {
     return div.innerHTML;
 }
 
+// ── Dispatcher Config refresh ───────────────────────────────────────────
+function refreshConfig() {
+    fetch('/api/config')
+        .then(r => r.json())
+        .then(data => {
+            const c = document.getElementById('configContainer');
+            const cnt = document.getElementById('configCount');
+            if (!c) return;
+            if (!data.available) {
+                c.innerHTML = '<div style="color:var(--text-dim);">Config no disponible</div>';
+                return;
+            }
+            const labels = {
+                llm_timeout: 'LLM (Ollama)',
+                coding_timeout: 'Coding (Buffy)',
+                image_timeout: 'Image (GenFactory)',
+                pipeline_timeout: 'Pipeline (Assets)',
+                multi_timeout: 'Lote paralelo',
+            };
+            if (cnt) cnt.textContent = '· 5 timeouts';
+            let html = '';
+            for (const key in labels) {
+                const val = data[key];
+                const display = val === null ? 'sin límite' : val + 's';
+                html += '<div class="metric"><span class="label">' + labels[key] + '</span><span class="value blue">' + display + '</span></div>';
+            }
+            c.innerHTML = html;
+        })
+        .catch(() => {});
+}
+
 // Auto-refresh logs every 10s
 refreshLogs();
 setInterval(refreshLogs, 10000);
 
 // ── Dashboard data refresh ──────────────────────────────────────────────
+refreshConfig();
+setInterval(refreshConfig, 15000);
 setInterval(refreshData, 8000);
 setTimeout(() => location.reload(), 180000);
 </script>

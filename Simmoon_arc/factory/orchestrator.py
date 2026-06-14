@@ -415,6 +415,69 @@ class FactoryOrchestrator:
         return "\n".join(lines)
 
     # ══════════════════════════════════════════════════════════════════
+    #  Delegación paralela
+    # ══════════════════════════════════════════════════════════════════
+
+    def delegate_parallel(self, tasks: List[dict],
+                          max_workers: Optional[int] = None,
+                          stop_on_error: bool = False) -> dict:
+        """Delegar multiples tareas en paralelo.
+
+        Cada tarea es un dict con:
+          - task_type (obligatorio)
+          - task (obligatorio)
+          - files, context, effort (opcionales)
+
+        Los agentes trabajan concurrentemente usando ThreadPoolExecutor.
+
+        Args:
+            tasks: Lista de especificaciones de tarea
+            max_workers: Max workers paralelos
+            stop_on_error: Detener si una tarea falla
+
+        Returns:
+            Dict con resumen del lote paralelo
+        """
+        self.logger.info("Orquestador",
+                         f"Delegando {len(tasks)} tareas en paralelo")
+
+        batch = self.dispatcher.dispatch_multi(
+            tasks=tasks,
+            max_workers=max_workers,
+            stop_on_error=stop_on_error,
+        )
+
+        self.logger.task(
+            "Orquestador", f"batch_{int(datetime.now().timestamp())}",
+            "done",
+            f"{batch.success}/{batch.total} OK, {batch.wall_clock:.1f}s wall, "
+            f"{batch.total_duration:.1f}s total",
+        )
+
+        if batch.success == batch.total:
+            self.logger.success("Orquestador",
+                                f"{batch.total} tareas paralelas completadas")
+        else:
+            self.logger.warn("Orquestador",
+                             f"{batch.failed}/{batch.total} tareas paralelas fallaron")
+
+        # Persistir resultados en memoria
+        if self.memory and batch.success > 0:
+            try:
+                self.memory.save(
+                    key_name=f"parallel_batch_{int(datetime.now().timestamp())}",
+                    content=str(batch),
+                    memory_type='task',
+                    tags=['factory', 'parallel', 'success' if batch.success == batch.total else 'partial'],
+                    importance=3,
+                    related_agent="orchestrator",
+                )
+            except Exception:
+                pass
+
+        return batch.to_dict()
+
+    # ══════════════════════════════════════════════════════════════════
     #  Agentes
     # ══════════════════════════════════════════════════════════════════
 

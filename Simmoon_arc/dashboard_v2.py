@@ -136,6 +136,24 @@ def _get_obsidian_history():
             _OBSIDIAN_HISTORY = None
     return _OBSIDIAN_HISTORY
 
+# ── Dispatcher Config (soft import) ────────────────────────────────────
+_DISPATCHER_CONFIG_CACHE = None
+def collect_dispatcher_config() -> dict:
+    """Obtener valores activos del dispatcher_config.json."""
+    try:
+        import factory.task_dispatcher as td
+        return {
+            "available": True,
+            "llm_timeout": td.DEFAULT_LLM_TIMEOUT,
+            "coding_timeout": td.DEFAULT_CODING_TIMEOUT,
+            "image_timeout": td.DEFAULT_IMAGE_TIMEOUT,
+            "pipeline_timeout": td.DEFAULT_PIPELINE_TIMEOUT,
+            "multi_timeout": td.DEFAULT_MULTI_TIMEOUT,
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
 def collect_pipeline_history() -> list:
     """Obtener historial de ejecuciones de pipeline desde ObsidianMemory."""
     obs = _get_obsidian_history()
@@ -515,13 +533,19 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 </div>
 
 <div class="grid grid-2">
-    <div class="card">
+    <div class="card grid-full">
         <h2><span class="icon">🚨</span> Alertas</h2>
         {% if alerts %}
             {% for alert in alerts %}
             <div class="alert-box {{ 'err' if '❌' in alert else 'warn' }}"><span>{{ '❌' if '❌' in alert else '⚠' }}</span>{{ alert.replace('❌ ','').replace('⚠ ','') }}</div>
             {% endfor %}
         {% else %}<div class="alert-box ok">Sin alertas</div>{% endif %}
+    </div>
+    <div class="card">
+        <h2><span class="icon">⚙</span> Dispatcher Config</h2>
+        <div id="configContainer" style="font-size:0.72rem;">
+            <div style="color:var(--text-dim);">Cargando...</div>
+        </div>
     </div>
     <div class="card">
         <h2><span class="icon">📜</span> Eventos <span id="logCount" style="color:var(--text-dim);font-weight:400;font-size:0.65rem;"></span></h2>
@@ -534,7 +558,8 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <a href="/api/health" target="_blank" style="color:var(--accent);text-decoration:none;">API Health</a> |
     <a href="/api/factory" target="_blank" style="color:var(--accent);text-decoration:none;">API Factory</a> |
     <a href="/api/pipeline" target="_blank" style="color:var(--accent);text-decoration:none;">API Pipeline</a> |
-    <a href="/api/pipeline/history" target="_blank" style="color:var(--accent);text-decoration:none;">API History</a>
+    <a href="/api/pipeline/history" target="_blank" style="color:var(--accent);text-decoration:none;">API History</a> |
+    <a href="/api/config" target="_blank" style="color:var(--accent);text-decoration:none;">API Config</a>
 </div>
 
 <script>
@@ -595,6 +620,29 @@ function runPipeline() {
         status.textContent='Error de conexion';
     });
 }
+function refreshConfig() {
+    fetch('/api/config').then(function(r){return r.json()}).then(function(data){
+        var c=document.getElementById('configContainer'); if(!c) return;
+        if(!data.available){
+            c.innerHTML='<div style="color:var(--text-dim);">Config no disponible</div>'; return;
+        }
+        var labels = {
+            llm_timeout: 'LLM (Ollama)',
+            coding_timeout: 'Coding (Buffy)',
+            image_timeout: 'Image (GenFactory)',
+            pipeline_timeout: 'Pipeline (Assets)',
+            multi_timeout: 'Lote paralelo',
+        };
+        var html='';
+        for (var key in labels) {
+            var val = data[key];
+            var display = val === null ? 'sin limite' : val + 's';
+            html += '<div class=\"metric\"><span class=\"label\">' + labels[key] + '</span><span class=\"value blue\">' + display + '</span></div>';
+        }
+        c.innerHTML = html;
+    }).catch(function(){});
+}
+
 function refreshPipelineHistory() {
     fetch('/api/pipeline/history').then(function(r){return r.json()}).then(function(data){
         var c=document.getElementById('pipelineHistoryContainer'); var cnt=document.getElementById('histCount');
@@ -669,6 +717,7 @@ function escHtml(s){var d=document.createElement('div');d.textContent=s||'';retu
 refreshLogs(); setInterval(refreshLogs,10000); refreshFactory(); setInterval(refreshFactory,8000);
 refreshPipeline(); setInterval(refreshPipeline,10000);
 refreshPipelineHistory(); setInterval(refreshPipelineHistory,15000);
+refreshConfig(); setInterval(refreshConfig,15000);
 setInterval(refreshData,8000);
 </script>
 </body>
@@ -727,6 +776,11 @@ def api_health():
 @app.route("/api/agents")
 def api_agents():
     return jsonify(collect_agent_status())
+
+@app.route("/api/config")
+def api_config():
+    return jsonify(collect_dispatcher_config())
+
 
 @app.route("/api/environment")
 def api_environment():
@@ -830,7 +884,8 @@ def api_dashboard():
                        "total":len(agent_data.get("agents",[])),"list":agent_data.get("agents",[])},
         "environment":env_data,"ollama_models":ollama_models,"openhuman":openhuman_health,
         "factory":factory_data,
-        "pipeline":collect_pipeline_status()})
+        "pipeline":collect_pipeline_status(),
+        "dispatcher_config":collect_dispatcher_config()})
 
 def main():
     parser = argparse.ArgumentParser(description="SIMMOON Dashboard + FactoryGames Orquestacion")

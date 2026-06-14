@@ -922,6 +922,14 @@ try:
 except ImportError:
     _SYNC_OK = False
 
+# ── Agent Health Check (daemon agents) ─────────────────────────────────
+try:
+    import agent_health_check as ahc
+    _HEALTH_CHECK_OK = True
+except ImportError as e:
+    _HEALTH_CHECK_OK = False
+    print(f"  ⚠️  agent_health_check no disponible: {e}")
+
 
 # ── Agente Memory ───────────────────────────────────────────────────────
 def sync_memory_to_agents():
@@ -1544,12 +1552,40 @@ def send_report():
         return False
 
 
+def _run_health_check():
+    """Ejecutar health check de agentes daemon con manejo de errores."""
+    if not _HEALTH_CHECK_OK:
+        return
+    try:
+        results = ahc.check_all_agents()
+        alive = sum(1 for r in results if r["alive"])
+        total = len(results)
+        print(f"     🩺 Health Check Daemon: {alive}/{total} agentes OK")
+
+        # Si hay agentes caídos, intentar recuperación y enviar alerta
+        down = [r for r in results if not r["alive"]]
+        if down:
+            names = [r["name"] for r in down]
+            print(f"     🔴 Caídos: {', '.join(names)}")
+            ahc._intentar_recuperacion(results)
+            alert = ahc.format_alert(results)
+            if alert:
+                send_telegram(alert)
+                if _LOG_OK:
+                    syslog("Agatha Actas", "🩺",
+                           f"Health Check: {alive}/{total} OK - "
+                           f"caidos: {', '.join(names)}")
+    except Exception as e:
+        print(f"     ⚠️  Health check error: {e}")
+
+
 def daemon_loop(interval: int = DEFAULT_INTERVAL):
     """Run in daemon mode: report every interval seconds."""
     print(f"\n  📋 Agatha Actas — Modo Demonio")
     print(f"  ⏱️  Intervalo: cada {interval // 3600} horas ({interval // 60} minutos)")
     print(f"  📤 Reportes a: @Jeremias_Hermesai_bot")
     print(f"  🧠 Sync de memorias: automático")
+    print(f"  🩺 Health Check agentes: integrado")
     print(f"  {'='*50}")
     print(f"  Presiona Ctrl+C para detener.\n")
 
@@ -1563,6 +1599,10 @@ def daemon_loop(interval: int = DEFAULT_INTERVAL):
     # Initial memory sync
     print(f"  🔄 Sincronizando memorias iniciales...")
     sync_memory_to_agents()
+
+    # Initial health check
+    print(f"  🩺 Ejecutando health check inicial...")
+    _run_health_check()
 
     while True:
         next_time = time.time() + interval
@@ -1584,6 +1624,10 @@ def daemon_loop(interval: int = DEFAULT_INTERVAL):
         sync_counter += 1
         print(f"\n  🔄 Sincronizando memorias (reporte #{sync_counter})...")
         sync_memory_to_agents()
+
+        # Health check de agentes daemon en cada reporte
+        print(f"  🩺 Ejecutando health check de agentes daemon...")
+        _run_health_check()
         
         # Supervise factory every 2 reports
         # ── Resumen semanal FactoryGames (lunes 9am) ──

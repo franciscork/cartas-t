@@ -268,6 +268,28 @@ def api_agents():
     return jsonify(agent_data)
 
 
+# ── Dispatcher Config (soft import) ────────────────────────────────────
+def collect_dispatcher_config() -> dict:
+    """Obtener valores activos del dispatcher_config.json."""
+    try:
+        import factory.task_dispatcher as td
+        return {
+            "available": True,
+            "llm_timeout": td.DEFAULT_LLM_TIMEOUT,
+            "coding_timeout": td.DEFAULT_CODING_TIMEOUT,
+            "image_timeout": td.DEFAULT_IMAGE_TIMEOUT,
+            "pipeline_timeout": td.DEFAULT_PIPELINE_TIMEOUT,
+            "multi_timeout": td.DEFAULT_MULTI_TIMEOUT,
+        }
+    except Exception as e:
+        return {"available": False, "error": str(e)}
+
+
+@app.route("/api/config")
+def api_config():
+    return jsonify(collect_dispatcher_config())
+
+
 @app.route("/api/environment")
 def api_environment():
     """JSON endpoint with environment situation."""
@@ -346,6 +368,7 @@ def api_dashboard():
         "openhuman": openhuman_health,
         "obsidian": obsidian_data,
         "claude": claude_data,
+        "dispatcher_config": collect_dispatcher_config(),
     })
 
 
