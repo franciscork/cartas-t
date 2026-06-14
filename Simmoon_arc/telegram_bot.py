@@ -17,6 +17,9 @@ Comandos:
   /agents  — Agentes disponibles y su estado
   /services — Estado de servicios backend
   /gpu     — Info de GPU en tiempo real
+  /gpu_free — Liberar VRAM (descarga Ollama para ComfyUI)
+  /gpu_restore — Restaurar Ollama a GPU
+  /gen    — Generar imagen con orquestación GPU
   /ai      — Chat con IA vía Ollama (responde al mensaje siguiente)
   /buffy   — Chat con Buffy (Codebuff AI, programación y asistencia)
   /model   — Cambiar modelo de IA (admin)
@@ -30,6 +33,7 @@ import asyncio
 import json
 import os
 import re
+import socket
 import sys
 import time
 from datetime import datetime
@@ -196,6 +200,95 @@ async def ollama_list_models(ollama_url: str = "http://127.0.0.1:11434") -> list
         return [m["name"] for m in data.get("models", [])]
     except Exception:
         return []
+
+
+# ── GPU Orchestrator ─────────────────────────────────────────────────────
+# Gestiona la VRAM de la RTX 4070 (8GB) entre Ollama y ComfyUI.
+# Principio: solo uno puede usar GPU a la vez. El orquestador de Telegram
+# actúa como gestor: cuando el carril de arte está activo, Ollama hace
+# overflow a RAM (32GB). Cuando termina arte, libera GPU.
+
+async def unload_ollama_model(model: str, ollama_url: str) -> bool:
+    """Descarga el modelo de Ollama de la VRAM enviando keep_alive=0.
+
+    Más elegante que matar `ollama serve`: mantiene el servicio vivo
+    pero libera la VRAM instantáneamente para ComfyUI.
+    """
+    import urllib.request
+    import json as j
+
+    payload = {"model": model, "prompt": ".", "keep_alive": 0,
+              "options": {"num_predict": 1}}
+    data = j.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        f"{ollama_url}/api/generate",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: urllib.request.urlopen(req, timeout=15)
+        )
+        return True
+    except (socket.timeout, TimeoutError):
+        # Timeout esperado: keep_alive=0 se procesa async.
+        # La request se envió → Ollama descargará el modelo.
+        return True
+    except Exception as e:
+        print(f"[ORCH] Error descargando Ollama: {e}", file=sys.stderr)
+        return False
+
+
+async def is_comfyui_busy(comfyui_url: str = "http://localhost:8188") -> bool:
+    """Verifica si ComfyUI está generando imágenes (cola activa)."""
+    import urllib.request
+    import json as j
+
+    try:
+        req = urllib.request.Request(f"{comfyui_url}/queue", method="GET")
+        loop = asyncio.get_event_loop()
+        resp = await loop.run_in_executor(
+            None, lambda: urllib.request.urlopen(req, timeout=5)
+        )
+        result = j.loads(resp.read().decode("utf-8"))
+        return len(result.get("queue_running", [])) > 0 or len(result.get("queue_pending", [])) > 0
+    except Exception:
+        return False  # Si no responde, asumimos libre
+
+
+async def wait_for_comfyui(comfyui_url: str = "http://localhost:8188",
+                           timeout: int = 120) -> bool:
+    """Espera asíncronamente hasta que ComfyUI esté libre."""
+    start = time.time()
+    while await is_comfyui_busy(comfyui_url):
+        if time.time() - start > timeout:
+            return False
+        await asyncio.sleep(2)
+    return True
+
+
+async def get_gpu_vram_used() -> int:
+    """Devuelve VRAM usada en MB vía nvidia-smi, o -1 si falla."""
+    import subprocess
+
+    try:
+        loop = asyncio.get_event_loop()
+        out = await loop.run_in_executor(
+            None,
+            lambda: subprocess.run(
+                ["nvidia-smi", "--query-gpu=memory.used",
+                 "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, timeout=5,
+            )
+        )
+        if out.returncode == 0:
+            return int(out.stdout.strip())
+    except Exception:
+        pass
+    return -1
 
 
 # ── Hermes Bridge Integration ────────────────────────────────────────────
@@ -476,7 +569,10 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"  /agents — Agentes disponibles\n"
         f"  /services — Servicios backend\n"
         f"  /ai <mensaje> — Chat con Hermes (estilo clásico)\n"
-        f"  /gpu — Info de GPU\n\n"
+        f"  /gpu — Info de GPU\n"
+        f"  /gpu\\_free — Liberar VRAM\n"
+        f"  /gpu\\_restore — Restaurar Ollama a GPU\n"
+        f"  /gen <prompt> — Generar imagen 🎨\n\n"
         f"¡Estoy listo para ayudarte! 🚀"
     )
 
@@ -498,6 +594,10 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "  /services — Estado de servicios backend\n"
         "  /gpu — Información de GPU\n"
         "  /agents — Agentes IA disponibles\n\n"
+        "🔹 *GPU Orchestrator (VRAM 8GB):*\n"
+        "  /gpu\\_free — Liberar VRAM (descarga Ollama)\n"
+        "  /gpu\\_restore — Restaurar Ollama a GPU\n"
+        "  /gen <prompt> — Generar imagen (orquestación auto)\n\n"
         "🔹 *Chat con IA:*\n"
         "  /buffy <mensaje> — Chat con Buffy (programación)\n"
         "  /ai <mensaje> — Chat con Ollama\n"
@@ -814,6 +914,175 @@ async def cmd_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# ── GPU Orchestrator Command Handlers ─────────────────────────────────────
+
+async def cmd_gpu_free(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Libera VRAM descargando el modelo de Ollama manualmente.
+
+    Útil antes de lanzar ComfyUI manualmente o cuando necesitas
+    toda la VRAM para generación de imágenes.
+    """
+    config = load_config()
+    msg = await update.message.reply_text("🧹 Liberando VRAM de Ollama... ⏳")
+
+    vram_before = await get_gpu_vram_used()
+    success = await unload_ollama_model(config["ollama_model"], config["ollama_url"])
+    await asyncio.sleep(0.5)
+    vram_after = await get_gpu_vram_used()
+
+    if success and vram_after > 0 and vram_before > 0:
+        freed = max(0, vram_before - vram_after)
+        text = (
+            f"✅ *VRAM Liberada*\n"
+            f"   Antes: {vram_before}MB → Ahora: {vram_after}MB "
+            f"({freed}MB liberados)\n\n"
+            f"_Ollama ha descargado el modelo. ComfyUI puede usar la GPU._"
+        )
+    elif success:
+        text = "✅ *VRAM Liberada*: Ollama ha descargado el modelo."
+    else:
+        text = "❌ *Error*: No se pudo contactar con Ollama."
+
+    await msg.edit_text(text, parse_mode="Markdown")
+
+
+async def cmd_gpu_restore(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Restaura VRAM precargando el modelo de Ollama."""
+    config = load_config()
+    msg = await update.message.reply_text("🔄 Restaurando Ollama a GPU... ⏳")
+
+    vram_before = await get_gpu_vram_used()
+    # Un request simple fuerza la recarga del modelo a GPU
+    await ollama_chat(
+        model=config["ollama_model"],
+        prompt=".",
+        max_tokens=1,
+        ollama_url=config["ollama_url"],
+    )
+    await asyncio.sleep(1)
+    vram_after = await get_gpu_vram_used()
+
+    if vram_after > 0 and vram_before > 0:
+        loaded = max(0, vram_after - vram_before)
+        text = (
+            f"✅ *VRAM Restaurada*\n"
+            f"   VRAM: {vram_after}MB ({loaded}MB cargados)\n\n"
+            f"_Ollama `{config['ollama_model']}` listo en GPU._"
+        )
+    else:
+        text = "✅ *VRAM Restaurada*: Ollama está listo en GPU."
+
+    await msg.edit_text(text, parse_mode="Markdown")
+
+
+async def cmd_gen(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando /gen con orquestación automática de GPU.
+
+    Flujo:
+      1. Esperar que ComfyUI termine trabajos previos (anti-overlap)
+      2. Liberar VRAM de Ollama (keep_alive=0)
+      3. Lanzar generación en ComfyUI
+      4. Reportar resultado (Ollama se restaurará en el próximo chat)
+    """
+    if not context.args:
+        await update.message.reply_text(
+            "✏️ *Uso:* `/gen <prompt de imagen>`\n"
+            "Ejemplo: `/gen isometric pixel art building, simcity 2000 style`\n\n"
+            "También puedes usar:\n"
+            "  /gpu\\_free — Liberar VRAM manualmente\n"
+            "  /gpu\\_restore — Restaurar Ollama a GPU",
+            parse_mode="Markdown",
+        )
+        return
+
+    config = load_config()
+    prompt = " ".join(context.args)
+    msg = await update.message.reply_text("🎨 Orquestando GPU para generación... ⏳")
+
+    # 1. Esperar que ComfyUI termine trabajos previos (Anti-Overlap)
+    await msg.edit_text("⏳ Verificando cola de ComfyUI...")
+    if await is_comfyui_busy():
+        await msg.edit_text("⏳ ComfyUI está ocupado. Esperando que termine...")
+        if not await wait_for_comfyui():
+            await msg.edit_text("⚠️ Timeout esperando a ComfyUI. Intenta de nuevo.")
+            return
+
+    # 2. Liberar VRAM de Ollama
+    vram_before = await get_gpu_vram_used()
+    await msg.edit_text(f"🧹 Liberando VRAM ({vram_before}MB en uso)...")
+    freed = await unload_ollama_model(config["ollama_model"], config["ollama_url"])
+    await asyncio.sleep(1)  # Delay para que NVIDIA libere memoria
+
+    vram_after_free = await get_gpu_vram_used()
+    freed_mb = max(0, vram_before - vram_after_free) if vram_before > 0 else 0
+
+    # 3. Lanzar generación en ComfyUI
+    await msg.edit_text(
+        f"🎨 Generando en ComfyUI...\n"
+        f"   VRAM libre: ~{8192 - vram_after_free}MB\n"
+        f"   Prompt: _{prompt[:100]}_",
+        parse_mode="Markdown",
+    )
+
+    # Invocar generación real vía simmoon_generator.py
+    try:
+        sys.path.insert(0, str(SCRIPT_DIR))
+        from simmoon_generator import generate_single
+
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: generate_single(
+                prompt=prompt,
+                backend="comfyui",
+                width=512,
+                height=512,
+                steps=20,
+                cfg=7,
+            )
+        )
+
+        if result and result.get("image_path"):
+            img_path = result["image_path"]
+            # Enviar imagen al chat
+            with open(img_path, "rb") as f:
+                await update.message.reply_photo(
+                    photo=f,
+                    caption=f"🎨 *{prompt[:80]}*\n_Generado con ComfyUI · Orquestador GPU_",
+                    parse_mode="Markdown",
+                )
+            await msg.edit_text(
+                f"✅ *Generación completada* 🎨\n"
+                f"   VRAM liberada: {freed_mb}MB\n"
+                f"   Archivo: `{Path(img_path).name}`\n\n"
+                f"_Ollama se restaurará a GPU en tu próximo chat._",
+                parse_mode="Markdown",
+            )
+        else:
+            await msg.edit_text(
+                f"⚠️ *Generación finalizada sin imagen*\n"
+                f"   El backend respondió pero no devolvió imagen.\n"
+                f"   VRAM liberada: {freed_mb}MB\n\n"
+                f"_Ollama se restaurará a GPU en tu próximo chat._",
+                parse_mode="Markdown",
+            )
+    except ImportError:
+        await msg.edit_text(
+            f"⚠️ *simmoon_generator.py no disponible*\n"
+            f"   VRAM liberada: {freed_mb}MB\n"
+            f"   La GPU está libre para usar ComfyUI manualmente.\n\n"
+            f"_Usa /gpu\\_restore cuando termines para restaurar Ollama._",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        await msg.edit_text(
+            f"❌ *Error en generación:* {str(e)[:200]}\n"
+            f"   VRAM liberada: {freed_mb}MB\n\n"
+            f"_Ollama se restaurará a GPU en tu próximo chat._",
+            parse_mode="Markdown",
+        )
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle any text message — chat with Buffy by default."""
     if not update.message or not update.message.text:
@@ -917,6 +1186,9 @@ def main():
     app.add_handler(CommandHandler("ai_human", cmd_ai_human))         # /ai_human
     app.add_handler(CommandHandler("model", cmd_model))
     app.add_handler(CommandHandler("models", cmd_models))
+    app.add_handler(CommandHandler("gpu_free", cmd_gpu_free))       # /gpu_free
+    app.add_handler(CommandHandler("gpu_restore", cmd_gpu_restore)) # /gpu_restore
+    app.add_handler(CommandHandler("gen", cmd_gen))                 # /gen
 
     # Message handler (free text)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
