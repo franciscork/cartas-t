@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMMOON — Resumen Final 14 Junio 2026</title>
+<style>
+:root {
+  --bg: #08080c; --card: #101018; --border: #1c1c2e;
+  --text: #d0d0dc; --text-dim: #6a6a80; --text-bright: #f0f0ff;
+  --accent: #6c5ce7; --green: #00b894; --green-bg: rgba(0,184,148,0.1);
+  --yellow: #fdcb6e; --yellow-bg: rgba(253,203,110,0.1);
+  --red: #ff7675; --red-bg: rgba(255,118,117,0.1); --blue: #74b9ff;
+  --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:24px; font-size:14px; line-height:1.6; }
+.container { max-width:1100px; margin:0 auto; }
+.header { text-align:center; padding:30px 0 20px; border-bottom:2px solid var(--accent); margin-bottom:24px; }
+.header h1 { font-size:1.8rem; color:var(--text-bright); display:flex; align-items:center; justify-content:center; gap:10px; }
+.header .sub { color:var(--text-dim); font-size:0.9rem; margin-top:8px; }
+.grid { display:grid; gap:16px; margin-bottom:16px; }
+.grid-2 { grid-template-columns:repeat(2,1fr); }
+.grid-3 { grid-template-columns:repeat(3,1fr); }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; transition:border-color 0.2s; }
+.card:hover { border-color:var(--accent); }
+.card h2 { font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.card h2 .icon { font-size:1.1rem; }
+.metric { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+.metric .label { color:var(--text-dim); }
+.metric .value { font-weight:600; }
+.metric .value.green { color:var(--green); }
+.metric .value.yellow { color:var(--yellow); }
+.metric .value.red { color:var(--red); }
+.metric .value.blue { color:var(--blue); }
+.commit-list { font-family:'Consolas',monospace; font-size:0.75rem; line-height:1.8; }
+.commit-list .hash { color:var(--yellow); }
+.commit-list .msg { color:var(--text-dim); }
+.stack-diagram { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 24px; font-family:'Consolas',monospace; font-size:0.78rem; line-height:1.7; white-space:pre; color:var(--text); }
+.footer { text-align:center; padding:20px; color:var(--text-dim); font-size:0.7rem; margin-top:20px; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+@media (max-width:700px) { .grid-2,.grid-3 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>☾ SIMMOON — Resumen Final</h1>
+  <div class="sub">Sesión 14 Junio 2026 · 13 commits · Stack funcionando</div>
+</div>
+
+<!-- STATUS -->
+<div class="grid grid-3">
+  <div class="card">
+    <h2><span class="icon">🤖</span> Telegram Bot</h2>
+    <div class="metric"><span class="label">Estado</span><span class="value green">✓ Funcional</span></div>
+    <div class="metric"><span class="label">/gen pipeline</span><span class="value blue">4.0s</span></div>
+    <div class="metric"><span class="label">/gpu_free</span><span class="value green">✓ OK</span></div>
+    <div class="metric"><span class="label">ComfyUI</span><span class="value yellow">Lazy start</span></div>
+  </div>
+  <div class="card">
+    <h2><span class="icon">📊</span> Dashboard</h2>
+    <div class="metric"><span class="label">/api/dashboard</span><span class="value blue">6.3s</span></div>
+    <div class="metric"><span class="label">/api/agents</span><span class="value blue">4.2s</span></div>
+    <div class="metric"><span class="label">Datos reales</span><span class="value green">✓ 5/11 agents</span></div>
+    <div class="metric"><span class="label">Antes</span><span class="value red">∞ colgado</span></div>
+  </div>
+  <div class="card">
+    <h2><span class="icon">🔧</span> WSL Services</h2>
+    <div class="metric"><span class="label">Ollama</span><span class="value green">✓ tmux</span></div>
+    <div class="metric"><span class="label">ComfyUI</span><span class="value green">✓ tmux</span></div>
+    <div class="metric"><span class="label">Modelo</span><span class="value blue">deepseek-r1:7b</span></div>
+    <div class="metric"><span class="label">VRAM</span><span class="value blue">4.6GB/8GB</span></div>
+  </div>
+</div>
+
+<!-- COMMITS -->
+<div class="card" style="margin-bottom:16px;">
+  <h2><span class="icon">📦</span> 13 Commits</h2>
+  <div class="commit-list">
+<span class="hash">0436646</span>  <span class="msg">perf: parallel dashboard collectors via shared _collect_all() + as_completed()</span>
+<span class="hash">23e7f4f</span>  <span class="msg">perf: parallelize dashboard collectors for sub-5s response times</span>
+<span class="hash">83f27bc</span>  <span class="msg">feat: one-click full-stack launcher (launch_stack.bat)</span>
+<span class="hash">e5cca9e</span>  <span class="msg">feat: WSL service manager with persistent tmux sessions</span>
+<span class="hash">664569b</span>  <span class="msg">perf: timeouts in monitor_sistema.py for fast dashboard response</span>
+<span class="hash">ffac129</span>  <span class="msg">feat: generate_single() for Telegram /gen command</span>
+<span class="hash">4b9dcc6</span>  <span class="msg">fix: default model → deepseek-r1:7b (4.6GB fits in 8GB VRAM)</span>
+<span class="hash">0acc561</span>  <span class="msg">chore: update last_report timestamp</span>
+<span class="hash">e8c4944</span>  <span class="msg">fix: timeout protection in index() route</span>
+<span class="hash">c83cb69</span>  <span class="msg">fix: /api/dashboard timeout with ThreadPoolExecutor</span>
+<span class="hash">1b872f3</span>  <span class="msg">feat: Factory agents personality + parallel dispatch + health check</span>
+<span class="hash">323e71a</span>  <span class="msg">feat: GPU orchestrator for RTX 4070 8GB + smart launcher modes</span>
+<span class="hash">0a122ae</span>  <span class="msg">fix: create-release.ps1 winget install flags</span>
+  </div>
+</div>
+
+<!-- FEATURES + BUGS -->
+<div class="grid grid-2">
+  <div class="card">
+    <h2><span class="icon">🆕</span> 8 Features Nuevas</h2>
+    <div class="metric"><span class="label">GPU Orchestrator</span><span class="value">/gpu_free /gen</span></div>
+    <div class="metric"><span class="label">Smart launcher</span><span class="value">launch_ias.sh</span></div>
+    <div class="metric"><span class="label">Factory agents</span><span class="value">Pixel Cronista Q-Bot</span></div>
+    <div class="metric"><span class="label">Parallel dispatch</span><span class="value">dispatch_multi()</span></div>
+    <div class="metric"><span class="label">Agent health check</span><span class="value">auto-recovery</span></div>
+    <div class="metric"><span class="label">WSL service manager</span><span class="value">tmux persistente</span></div>
+    <div class="metric"><span class="label">One-click launcher</span><span class="value">launch_stack.bat</span></div>
+    <div class="metric"><span class="label">generate_single()</span><span class="value">wrapper standalone</span></div>
+  </div>
+  <div class="card">
+    <h2><span class="icon">🐛</span> 8 Bugs Corregidos</h2>
+    <div class="metric"><span class="label">qwen3:14b crashea</span><span class="value green">→ deepseek-r1:7b</span></div>
+    <div class="metric"><span class="label">Dashboard colgaba</span><span class="value green">→ timeout + fallback</span></div>
+    <div class="metric"><span class="label">generate_single no existía</span><span class="value green">→ creada</span></div>
+    <div class="metric"><span class="label">executor bloqueaba</span><span class="value green">→ shutdown(wait=False)</span></div>
+    <div class="metric"><span class="label">_collect_all secuencial</span><span class="value green">→ as_completed()</span></div>
+    <div class="metric"><span class="label">WSL servicios morían</span><span class="value green">→ tmux persistente</span></div>
+    <div class="metric"><span class="label">check_http lento</span><span class="value green">→ urllib directo</span></div>
+    <div class="metric"><span class="label">Filenames inseguros</span><span class="value green">→ regex sanitize</span></div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="card" style="margin-bottom:16px;">
+  <h2><span class="icon">⚡</span> Performance: Antes → Ahora</h2>
+  <div class="metric"><span class="label">collect_agent_status()</span><span class="value green">35s → 4.2s (8.3×)</span></div>
+  <div class="metric"><span class="label">_collect_all() dashboard</span><span class="value green">12s → 6.3s (1.9×)</span></div>
+  <div class="metric"><span class="label">/api/dashboard</span><span class="value green">∞ colgado → 6.3s</span></div>
+  <div class="metric"><span class="label">/api/agents</span><span class="value green">35s → 4s (8.7×)</span></div>
+  <div class="metric"><span class="label">check_http_service</span><span class="value green">2s → 0.04s (50×)</span></div>
+  <div class="metric"><span class="label">WSL timeouts</span><span class="value green">10-15s → 3s</span></div>
+  <div class="metric"><span class="label">/gen pipeline</span><span class="value blue">NUEVO · 4.0s</span></div>
+</div>
+
+<!-- STACK DIAGRAM -->
+<div class="stack-diagram">
+┌──────────────────────────────────────────────┐
+│  Windows                                     │
+│  ├── telegram_bot.py    /gpu_free /gen       │
+│  ├── dashboard_v2.py    :5001                │
+│  ├── launch_stack.bat   one-click            │
+│  └── wsl_service_manager.py                  │
+│           │ localhostForwarding               │
+│  WSL2     │  tmux persistente                │
+│  ├── Ollama  :11434  deepseek-r1:7b 4.6GB   │
+│  ├── ComfyUI :8188   --lowvram               │
+│  └── Hermes  :9119                           │
+│                                              │
+│  VRAM: 8GB  │  RAM: 32GB (28GB WSL)         │
+└──────────────────────────────────────────────┘
+</div>
+
+<!-- PARALLEL -->
+<div class="card" style="margin-top:16px;">
+  <h2><span class="icon">⚡</span> Todo trabaja en paralelo</h2>
+  <div class="metric"><span class="label">dispatch_multi()</span><span class="value">Tareas concurrentes</span></div>
+  <div class="metric"><span class="label">_collect_all()</span><span class="value">10 collectors paralelos</span></div>
+  <div class="metric"><span class="label">collect_agent_status()</span><span class="value">9 checks WSL+HTTP</span></div>
+  <div class="metric"><span class="label">Factory agents</span><span class="value">Pixel · Cronista · Q-Bot</span></div>
+  <div class="metric"><span class="label">Pipeline /gen</span><span class="value">ComfyUI + Ollama en WSL</span></div>
+</div>
+
+<!-- PENDIENTE -->
+<div class="card" style="margin-top:16px; border-color:var(--yellow);">
+  <h2><span class="icon">🔜</span> Pendiente para cerrar la sesión</h2>
+  <div style="font-size:0.9rem; padding:8px 0;">
+    Mandar desde Telegram:<br>
+    <code style="background:var(--border);padding:4px 10px;border-radius:4px;display:inline-block;margin-top:6px;">
+      /gen isometric pixel art lunar colony base, simcity 2000 style
+    </code><br>
+    <span style="color:var(--text-dim);font-size:0.75rem;">El pipeline ya pasó el test local ✓ (4.0s)</span>
+  </div>
+</div>
+
+<div class="footer">
+  SIMMOON · 14 Junio 2026 · 13 commits · <a href="http://127.0.0.1:5001">Dashboard</a>
+</div>
+
+</div>
+</body>
+</html>
