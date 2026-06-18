@@ -7,7 +7,7 @@
 #
 # Servicios:
 #   🧠 Ollama       :11434 — LLM server local
-#   🎨 ComfyUI      :8188  — Generación de imágenes
+#   🖌️  InvokeAI     :9090  — Generación de imágenes
 #   🧠 Hermes        :9119  — Agente 3 escritorios (gateway + TUI + dash)
 #   🤖 OpenHuman     :7788  — Asistente AI con GUI
 #   💬 Jarvis         :6900  — Asistente AI CLI
@@ -35,6 +35,7 @@ DIM='\033[2m'; NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SIMMOON_DIR="$SCRIPT_DIR/Simmoon_arc"
 LOG_DIR="$HOME/.simmoon-logs"
+INVOKEAI_DIR="$HOME/invokeai"
 COMFYUI_DIR="$HOME/ComfyUI"
 OPENHUMAN_DIR="$HOME/openhuman"
 JARVIS_DIR="$HOME/OpenJarvis"
@@ -48,9 +49,13 @@ _test_port() {
     curl -sf --max-time "$timeout" "http://localhost:$port$path" &>/dev/null && echo "YES" || echo "NO"
 }
 _test_ollama()   { _test_port 11434 "/api/tags"; }
+_test_invokeai() { _test_port 9090 "/api/v1/app/version"; }
 _test_comfyui()  { _test_port 8188 "/queue"; }
 _test_hermes()   { _test_port 9119; }
-_test_openhuman(){ _test_port 7788; }
+_test_openhuman(){ _test_port 7788 "/health"; }
+_test_openhuman_desktop() {
+    command -v openhuman-core &>/dev/null && echo "YES" || echo "NO"
+}
 _test_jarvis()   {
     # Jarvis is CLI-only (no HTTP server) — check if binary exists
     [ -d "$JARVIS_DIR" ] && echo "YES" || echo "NO"
@@ -111,15 +116,13 @@ cmd_status() {
     echo -e "${BOLD}📊 Estado de Servicios:${NC}"
     echo ""
     _service_status "🧠 Ollama      " "11434" _test_ollama
-    _service_status "🎨 ComfyUI     " "8188"  _test_comfyui
-    _service_status "🧠 Hermes      " "9119"  _test_hermes
+    _service_status "🖌️  InvokeAI    " "9090"  _test_invokeai
     _service_status "🤖 OpenHuman   " "7788"  _test_openhuman
-    _service_status "💬 Jarvis       " "CLI"  _test_jarvis
-    _service_status "🤖 Telegram Bot " "tmux" _test_telegram_bot
-    _service_status "🤖 Buffy Bridge  " "tmux" _test_buffy_telegram
-    _service_status "📋 Agatha Actas " "tmux" _test_agatha
     _service_status "📊 Dashboard   " "5000"  _test_dashboard
     _service_status "🗄️  PostgreSQL  " "5432"  _test_postgres
+    _service_status "🤖 Telegram Bot " "tmux" _test_telegram_bot
+    _service_status "📋 Agatha Actas " "tmux" _test_agatha
+    _service_status "🖥️  OpenHuman Desk" "WSL" _test_openhuman_desktop
 
     echo ""
     _gpu_info
@@ -162,7 +165,7 @@ cmd_stop() {
     if [ "$target" = "all" ]; then
         echo -e "${YELLOW}🛑 Deteniendo TODOS los servicios...${NC}"
         echo ""
-        for svc in ollama comfyui hermes openhuman jarvis telegram buffy dashboard; do
+        for svc in ollama invokeai openhuman telegram agatha dashboard; do
             _stop_one "$svc"
         done
         echo ""
@@ -179,6 +182,10 @@ _stop_one() {
         ollama)
             echo -n "  ⏹ Ollama... "
             pkill -f "ollama serve" 2>/dev/null && echo "OK" || echo "ya detenido"
+            ;;
+        invokeai)
+            echo -n "  ⏹ InvokeAI... "
+            pkill -f "invokeai-web" 2>/dev/null && echo "OK" || echo "ya detenido"
             ;;
         comfyui)
             echo -n "  ⏹ ComfyUI... "
@@ -225,7 +232,7 @@ _stop_one() {
             ;;
         *)
             echo "  ❓ Servicio desconocido: $svc"
-            echo "     Opciones: ollama, comfyui, hermes, openhuman, jarvis, telegram, buffy, agatha, dashboard"
+            echo "     Opciones: ollama, invokeai, comfyui, openhuman, telegram, agatha, dashboard"
             ;;
     esac
 }
@@ -247,7 +254,7 @@ cmd_start() {
 
 _start_backends() {
     # 1. Ollama
-    echo -e "${BOLD}[1/7] 🧠 Ollama${NC}"
+    echo -e "${BOLD}[1/8] 🧠 Ollama${NC}"
     if [ "$(_test_ollama)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :11434${NC}"
     else
@@ -265,7 +272,7 @@ _start_backends() {
     fi
 
     # 2. PostgreSQL
-    echo -e "\n${BOLD}[2/7] 🗄️  PostgreSQL${NC}"
+    echo -e "\n${BOLD}[2/8] 🗄️  PostgreSQL${NC}"
     if [ "$(_test_postgres)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :5432${NC}"
     else
@@ -277,53 +284,29 @@ _start_backends() {
         fi
     fi
 
-    # 3. ComfyUI
-    echo -e "\n${BOLD}[3/7] 🎨 ComfyUI${NC}"
-    if [ "$(_test_comfyui)" = "YES" ]; then
-        echo -e "  ${GREEN}✅ Ya activo en :8188${NC}"
-    elif [ -f "$COMFYUI_DIR/main.py" ]; then
-        cd "$COMFYUI_DIR"
-        nohup ./venv/bin/python main.py --listen --port 8188 &>"$LOG_DIR/comfyui.log" &
-        echo -n "  ⏳ Esperando (puede tardar 30-60s)"
-        for i in $(seq 1 60); do
-            sleep 1
-            [ $((i % 10)) -eq 0 ] && echo -n " ${i}s"
-            [ "$(_test_comfyui)" = "YES" ] && break
+    # 3. InvokeAI
+    echo -e "\n${BOLD}[3/8] 🖌️  InvokeAI${NC}"
+    if [ "$(_test_invokeai)" = "YES" ]; then
+        echo -e "  ${GREEN}✅ Ya activo en :9090${NC}"
+    elif [ -d "$INVOKEAI_DIR" ]; then
+        cd "$INVOKEAI_DIR"
+        nohup invokeai-web --host 0.0.0.0 --port 9090 &>"$LOG_DIR/invokeai.log" &
+        echo -n "  ⏳ Esperando"
+        for i in $(seq 1 20); do
+            sleep 1; echo -n "."
+            [ "$(_test_invokeai)" = "YES" ] && break
         done
-        if [ "$(_test_comfyui)" = "YES" ]; then
+        if [ "$(_test_invokeai)" = "YES" ]; then
             echo -e "\n  ${GREEN}✅ Iniciado${NC}"
         else
             echo -e "\n  ${YELLOW}⚠️  Sigue cargando — verifica con: ias status${NC}"
         fi
     else
-        echo -e "  ${RED}❌ ComfyUI no encontrado en $COMFYUI_DIR${NC}"
+        echo -e "  ${DIM}⏭️  InvokeAI no encontrado en $INVOKEAI_DIR${NC}"
     fi
 
-    # 4. Hermes
-    echo -e "\n${BOLD}[4/7] 🧠 Hermes Agent${NC}"
-    if [ "$(_test_hermes)" = "YES" ]; then
-        echo -e "  ${GREEN}✅ Ya activo en :9119${NC}"
-    elif command -v hermes &>/dev/null || [ -x "$HOME/.local/bin/hermes" ]; then
-        export PATH="$HOME/.local/bin:$PATH"
-        for s in hermes-gateway hermes-tui hermes-dashboard; do
-            tmux kill-session -t "$s" 2>/dev/null
-        done
-        pkill -f "hermes dashboard" 2>/dev/null || true
-
-        tmux new-session -d -s hermes-gateway \
-            "source ~/.bashrc 2>/dev/null; hermes gateway run 2>&1 | tee $HERMES_LOG_DIR/gateway.log; bash"
-        tmux new-session -d -s hermes-tui \
-            "source ~/.bashrc 2>/dev/null; hermes --tui 2>&1 | tee $HERMES_LOG_DIR/tui.log; bash"
-        tmux new-session -d -s hermes-dashboard \
-            "hermes dashboard --port 9119 --no-open 2>&1 | tee $HERMES_LOG_DIR/dashboard.log; bash"
-        sleep 3
-        echo -e "  ${GREEN}✅ 3 interfaces iniciadas${NC}"
-    else
-        echo -e "  ${DIM}⏭️  Hermes CLI no encontrado${NC}"
-    fi
-
-    # 5. OpenHuman (opcional — solo si está instalado)
-    echo -e "\n${BOLD}[5/7] 🤖 OpenHuman${NC}"
+    # 4. OpenHuman (opcional — solo si está instalado)
+    echo -e "\n${BOLD}[4/8] 🤖 OpenHuman${NC}"
     if [ "$(_test_openhuman)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo en :7788${NC}"
     elif [ -f "$OPENHUMAN_DIR/openhuman-core" ]; then
@@ -337,8 +320,21 @@ _start_backends() {
         echo -e "  ${DIM}⏭️  No instalado${NC}"
     fi
 
+    # 5. Dashboard (siempre)
+    echo -e "\n${BOLD}[5/8] 📊 Dashboard${NC}"
+    if [ "$(_test_dashboard)" = "YES" ]; then
+        echo -e "  ${GREEN}✅ Ya activo en :5000${NC}"
+    elif [ -f "$SIMMOON_DIR/dashboard.py" ]; then
+        cd "$SIMMOON_DIR"
+        nohup python3 dashboard.py &>"$LOG_DIR/dashboard.log" &
+        sleep 2
+        echo -e "  ${GREEN}✅ http://localhost:5000${NC}"
+    else
+        echo -e "  ${DIM}⏭️  dashboard.py no encontrado${NC}"
+    fi
+
     # 6. Telegram Bot
-    echo -e "\n${BOLD}[6/7] 🤖 Telegram Bot${NC}"
+    echo -e "\n${BOLD}[6/8] 🤖 Telegram Bot${NC}"
     if [ "$(_test_telegram_bot)" = "YES" ]; then
         echo -e "  ${GREEN}✅ Ya activo (sesión tmux: telegram-bot)${NC}"
     elif [ -f "$SIMMOON_DIR/telegram_bot.py" ]; then
@@ -356,18 +352,29 @@ _start_backends() {
         echo -e "  ${DIM}⏭️  telegram_bot.py no encontrado${NC}"
     fi
 
-    # 7. Dashboard (siempre)
-    echo -e "\n${BOLD}[7/7] 📊 Dashboard${NC}"
-    if [ "$(_test_dashboard)" = "YES" ]; then
-        echo -e "  ${GREEN}✅ Ya activo en :5000${NC}"
-    elif [ -f "$SIMMOON_DIR/dashboard.py" ]; then
+    # 7. Agatha Actas
+    echo -e "\n${BOLD}[7/8] 📋 Agatha Actas${NC}"
+    if [ "$(_test_agatha)" = "YES" ]; then
+        echo -e "  ${GREEN}✅ Ya activo (sesión tmux: agatha-actas)${NC}"
+    elif [ -f "$SIMMOON_DIR/agatha_actas.py" ]; then
+        tmux kill-session -t agatha-actas 2>/dev/null || true
         cd "$SIMMOON_DIR"
-        nohup python3 dashboard.py &>"$LOG_DIR/dashboard.log" &
-        sleep 2
-        echo -e "  ${GREEN}✅ http://localhost:5000${NC}"
+        tmux new-session -d -s agatha-actas \
+            "cd '$SIMMOON_DIR' && python3 agatha_actas.py --daemon 2>&1 | tee $LOG_DIR/agatha_actas.log; bash"
+        sleep 3
+        if [ "$(_test_agatha)" = "YES" ]; then
+            echo -e "  ${GREEN}✅ Iniciado (sesión: agatha-actas)${NC}"
+        else
+            echo -e "  ${YELLOW}⚠️  No arrancó — verifica: cat $LOG_DIR/agatha_actas.log${NC}"
+        fi
     else
-        echo -e "  ${DIM}⏭️  dashboard.py no encontrado${NC}"
+        echo -e "  ${DIM}⏭️  agatha_actas.py no encontrado${NC}"
     fi
+
+    # 8. Coding Agents (verificación)
+    echo -e "\n${BOLD}[8/8] 🤖 Coding Agents${NC}"
+    command -v aider &>/dev/null && echo -e "  🧑‍✈️ Aider      ${GREEN}✅ disponible${NC}" || echo -e "  🧑‍✈️ Aider      ${YELLOW}⚠️  no en PATH${NC}"
+    command -v goose &>/dev/null && echo -e "  🪿 goose      ${GREEN}✅ disponible${NC}" || echo -e "  🪿 goose      ${YELLOW}⚠️  no en PATH${NC}"
 }
 
 _start_one() {
@@ -380,6 +387,17 @@ _start_one() {
                 nohup ollama serve &>"$LOG_DIR/ollama.log" &
                 sleep 3
                 echo -e "${GREEN}🧠 Ollama iniciado${NC}"
+            fi
+            ;;
+        invokeai)
+            if [ "$(_test_invokeai)" = "YES" ]; then
+                echo -e "${GREEN}🖌️  InvokeAI ya activo en :9090${NC}"
+            elif [ -d "$INVOKEAI_DIR" ]; then
+                cd "$INVOKEAI_DIR"
+                nohup invokeai-web --host 0.0.0.0 --port 9090 &>"$LOG_DIR/invokeai.log" &
+                echo -e "${GREEN}🖌️  InvokeAI iniciando... (ias status para verificar)${NC}"
+            else
+                echo -e "${RED}InvokeAI no encontrado en $INVOKEAI_DIR${NC}"
             fi
             ;;
         comfyui)
@@ -478,6 +496,11 @@ _start_one() {
                 echo -e "${RED}agatha_actas.py no encontrado${NC}"
             fi
             ;;
+        bot)
+            _start_one telegram
+            _start_one agatha
+            return 0
+            ;;
         dashboard)
             if [ "$(_test_dashboard)" = "YES" ]; then
                 echo -e "${GREEN}📊 Dashboard ya activo en :5000${NC}"
@@ -492,7 +515,7 @@ _start_one() {
             ;;
         *)
             echo -e "${YELLOW}Servicio desconocido: $svc${NC}"
-            echo "  Opciones: ollama, comfyui, hermes, openhuman, jarvis, telegram, dashboard"
+            echo "  Opciones: ollama, invokeai, openhuman, dashboard, telegram, agatha, bot"
             return 1
             ;;
     esac
@@ -614,24 +637,21 @@ cmd_menu() {
         echo -e "${BOLD}📊 Estado:${NC}"
         echo ""
         _service_status "🧠 Ollama      " "11434" _test_ollama
-        _service_status "🎨 ComfyUI     " "8188"  _test_comfyui
-        _service_status "🧠 Hermes      " "9119"  _test_hermes
+        _service_status "🖌️  InvokeAI    " "9090"  _test_invokeai
         _service_status "🤖 OpenHuman   " "7788"  _test_openhuman
-        _service_status "💬 Jarvis       " "CLI"  _test_jarvis
-        _service_status "🤖 Telegram Bot " "tmux" _test_telegram_bot
-        _service_status "🤖 Buffy Bridge  " "tmux" _test_buffy_telegram
-        _service_status "📋 Agatha Actas " "tmux" _test_agatha
         _service_status "📊 Dashboard   " "5000"  _test_dashboard
         _service_status "🗄️  PostgreSQL  " "5432"  _test_postgres
+        _service_status "🤖 Telegram Bot " "tmux" _test_telegram_bot
+        _service_status "📋 Agatha Actas " "tmux" _test_agatha
+        _service_status "🖥️  OpenHuman Desk" "WSL" _test_openhuman_desktop
 
         echo ""
         echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
         echo -e "  ${BOLD}[a]${NC} Start ALL        ${BOLD}[s]${NC} Stop ALL         ${BOLD}[r]${NC} Restart ALL"
-        echo -e "  ${BOLD}[1]${NC} Ollama           ${BOLD}[2]${NC} ComfyUI          ${BOLD}[3]${NC} Hermes"
-        echo -e "  ${BOLD}[4]${NC} OpenHuman        ${BOLD}[5]${NC} Jarvis           ${BOLD}[6]${NC} Dashboard"
-        echo -e "  ${BOLD}[7]${NC} PostgreSQL       ${BOLD}[8]${NC} Telegram Bot     ${BOLD}[9]${NC} Buffy Bridge"
-        echo -e "  ${BOLD}[0]${NC} Buffy Bridge     ${BOLD}[m]${NC} Models           ${BOLD}[b]${NC} Backup DB"
-        echo -e "  ${BOLD}[g]${NC} GPU Info         ${BOLD}[q]${NC} Quit"
+        echo -e "  ${BOLD}[1]${NC} Ollama           ${BOLD}[2]${NC} InvokeAI         ${BOLD}[3]${NC} PostgreSQL"
+        echo -e "  ${BOLD}[4]${NC} OpenHuman        ${BOLD}[5]${NC} Dashboard        ${BOLD}[6]${NC} Telegram Bot"
+        echo -e "  ${BOLD}[7]${NC} Agatha Actas     ${BOLD}[8]${NC} All Bots         ${BOLD}[m]${NC} Models"
+        echo -e "  ${BOLD}[b]${NC} Backup DB        ${BOLD}[q]${NC} Quit"
         echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
         echo ""
 
@@ -644,14 +664,13 @@ cmd_menu() {
             s|stop) cmd_stop all ;;
             r|restart) cmd_restart ;;
             1) _start_one ollama ;;
-            2) _start_one comfyui ;;
-            3) cmd_start_hermes ;;
+            2) _start_one invokeai ;;
+            3) sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; [ "$(_test_postgres)" = "YES" ] && echo -e "${GREEN}✅ PostgreSQL iniciado${NC}" || echo -e "${RED}❌ Error${NC}" ;;
             4) _start_one openhuman ;;
-            5) _start_one jarvis ;;
-            6) _start_one dashboard ;;
-            7) sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; [ "$(_test_postgres)" = "YES" ] && echo -e "${GREEN}✅ PostgreSQL iniciado${NC}" || echo -e "${RED}❌ Error${NC}" ;;
-            8) _start_one telegram ;;
-            9) _start_one buffy ;;
+            5) _start_one dashboard ;;
+            6) _start_one telegram ;;
+            7) _start_one agatha ;;
+            8) _start_one bot ;;
             m|models) cmd_models ;;
             b|backup) cmd_backup ;;
             g|gpu) _gpu_info ;;
@@ -673,11 +692,11 @@ _show_summary() {
     echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
     echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🧠 Ollama       → http://localhost:11434                ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  🎨 ComfyUI      → http://localhost:8188                 ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  🧠 Hermes Dash  → http://localhost:9119                 ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  🖌️  InvokeAI     → http://localhost:9090                 ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🤖 OpenHuman    → http://localhost:7788                 ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  🤖 Telegram Bot → tmux attach -t telegram-bot           ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  📊 Dashboard    → http://localhost:5000                 ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  🤖 Telegram Bot → tmux attach -t telegram-bot           ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  📋 Agatha Actas → tmux attach -t agatha-actas           ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  🛑 Detener: ias stop                                   ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}  📊 Estado:  ias status                                 ${CYAN}║${NC}"
@@ -706,14 +725,12 @@ cmd_help() {
     echo ""
     echo -e "${BOLD}Servicios:${NC}"
     echo "  ollama      LLM server local           :11434"
-    echo "  comfyui     Generación de imágenes      :8188"
-    echo "  hermes      Agente 3 escritorios        :9119"
+    echo "  invokeai    Generación de imágenes      :9090"
     echo "  openhuman   Asistente AI GUI            :7788"
-    echo "  jarvis      Asistente AI CLI            :6900"
-  echo "  telegram    Bot multi-agente Telegram    tmux"
-  echo "  buffy       Buffy Telegram Bridge        tmux"
-  echo "  agatha      Agente reportes horarios     tmux"
     echo "  dashboard   Monitor web                 :5000"
+    echo "  telegram    Bot multi-agente Telegram    tmux"
+    echo "  agatha      Agente reportes horarios     tmux"
+    echo "  bot         Inicia Telegram + Agatha juntos"
     echo ""
     echo -e "${BOLD}Agentes Python:${NC}"
     echo "  ias agent [args]       Simmoon Agent (AI Director)"

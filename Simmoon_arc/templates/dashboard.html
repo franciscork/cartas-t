@@ -417,6 +417,90 @@
             font-size: 0.5rem;
         }
 
+        /* ── Factory Production Line ── */
+        .factory-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            transition: border-color 0.15s;
+        }
+        .factory-card:hover { border-color: var(--accent); }
+        .factory-card h2 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px;
+        }
+        .dept-col {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            min-width: 0;
+        }
+        .dept-header {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dept-header .dept-count {
+            font-size: 0.58rem;
+            font-weight: 400;
+            color: var(--text-dim);
+        }
+        .ws-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 2px;
+            font-size: 0.72rem;
+            border-radius: 3px;
+            transition: background 0.12s;
+            cursor: default;
+        }
+        .ws-row:hover { background: rgba(108, 92, 231, 0.08); }
+        .ws-emoji { font-size: 0.8rem; width: 16px; text-align: center; flex-shrink: 0; }
+        .ws-dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+        }
+        .ws-dot.on { background: var(--green); box-shadow: 0 0 3px var(--green); }
+        .ws-dot.off { background: var(--red); opacity: 0.4; }
+        .ws-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.68rem;
+        }
+        .ws-name.off { opacity: 0.5; }
+        .factory-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid var(--border);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+        }
+        .factory-stats span strong { color: var(--text-bright); }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
             .grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -654,6 +738,22 @@
     </div>
 </div>
 
+<!-- ═══ FACTORY · LÍNEA DE PRODUCCIÓN ═══ -->
+<div class="grid grid-3">
+    <div class="factory-card grid-full">
+        <h2>
+            <span class="icon">🏭</span> FACTORY · Línea de Producción
+            <span style="font-weight:400;font-size:0.62rem;color:var(--text-dim);margin-left:4px;" id="factoryTs"></span>
+        </h2>
+        <div id="factoryContainer">
+            <div style="color:var(--text-dim);padding:8px 0;font-size:0.72rem;">
+                <span class="live-dot" style="width:5px;height:5px;display:inline-block;margin-right:6px;"></span>
+                Cargando línea de producción...
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ ENVIRONMENT + CONTROLS ═══ -->
 <div class="grid grid-3">
     <!-- Situación del Entorno -->
@@ -772,6 +872,90 @@
 </div>
 
 <script>
+// ── Factory Dashboard ─────────────────────────────────────────────────
+function refreshFactory() {
+    const c = document.getElementById('factoryContainer');
+    if (!c) return;
+    c.setAttribute('data-loading', '1');
+
+    fetch('/api/factory')
+        .then(r => r.json())
+        .then(data => {
+            const c = document.getElementById('factoryContainer');
+            const ts = document.getElementById('factoryTs');
+            if (!c) return;
+
+            if (!data.available && data.error) {
+                c.innerHTML = '<div style="color:var(--text-dim);font-size:0.72rem;padding:6px 0;">⚠️ ' + escHtml(data.error) + '</div>';
+                return;
+            }
+
+            if (ts) ts.textContent = '· ' + (data.timestamp || '');
+
+            const depts = data.by_department || {};
+            const deptKeys = Object.keys(depts);
+
+            if (deptKeys.length === 0) {
+                c.innerHTML = '<div style="color:var(--text-dim);font-size:0.72rem;padding:6px 0;">Sin datos de producción</div>';
+                return;
+            }
+
+            let totalActive = 0, totalWs = 0;
+            let html = '<div class="dept-grid">';
+
+            for (const dk of deptKeys) {
+                const dept = depts[dk];
+                const members = dept.members || [];
+                const active = members.filter(m => m.running).length;
+                const total = members.length;
+                totalActive += active;
+                totalWs += total;
+
+                const pct = total > 0 ? Math.round((active / total) * 100) : 0;
+                let healthColor = 'var(--green)';
+                if (pct < 30) healthColor = 'var(--red)';
+                else if (pct < 60) healthColor = 'var(--yellow)';
+
+                html += '<div class="dept-col">';
+                html += '<div class="dept-header">';
+                html += '<span>' + escHtml(dept.label || dk) + '</span>';
+                html += '<span class="dept-count" style="color:' + healthColor + ';">' + active + '/' + total + '</span>';
+                html += '</div>';
+
+                for (const m of members) {
+                    const dotClass = m.running ? 'on' : 'off';
+                    html += '<div class="ws-row" title="' + escHtml(m.role || '') + '">';
+                    html += '<span class="ws-emoji">' + escHtml(m.emoji || '📌') + '</span>';
+                    html += '<span class="ws-dot ' + dotClass + '"></span>';
+                    html += '<span class="ws-name' + (m.running ? '' : ' off') + '">' + escHtml(m.name) + '</span>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+
+            // Stats footer
+            const svcHealthy = data.stats ? data.stats.services_healthy : 0;
+            const svcTotal = data.stats ? data.stats.services_total : 0;
+            html += '<div class="factory-stats">';
+            html += '<span>🏭 Workstations: <strong>' + totalActive + '</strong>/' + totalWs + ' activas</span>';
+            html += '<span>🔌 Servicios: <strong>' + svcHealthy + '</strong>/' + svcTotal + ' OK</span>';
+            if (data.alerts && data.alerts.length > 0) {
+                html += '<span style="color:var(--red);">🚨 ' + data.alerts.length + ' alerta(s)</span>';
+            } else {
+                html += '<span style="color:var(--green);">✅ Sin alertas</span>';
+            }
+            html += '</div>';
+
+            c.innerHTML = html;
+        })
+        .catch(() => {
+            if (c && c.getAttribute('data-loading') === '1') {
+                c.innerHTML = '<div style="color:var(--text-dim);font-size:0.72rem;padding:6px 0;">⚠️ /api/factory no disponible</div>';
+            }
+        });
+}
+
 // ── Auto-refresh via fetch ──────────────────────────────────────────────
 function copyCmd(cmd) {
     navigator.clipboard.writeText(cmd).then(() => {
@@ -925,6 +1109,10 @@ function refreshConfig() {
 // Auto-refresh logs every 10s
 refreshLogs();
 setInterval(refreshLogs, 10000);
+
+// ── Factory refresh (every 15s) ──
+refreshFactory();
+setInterval(refreshFactory, 15000);
 
 // ── Dashboard data refresh ──────────────────────────────────────────────
 refreshConfig();

@@ -27,7 +27,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, 'reconfigure'):
 SCRIPT_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_file
 
 # ── Dashboard Collectors ─────────────────────────────────────────────────
 from dashboard_collectors import (
@@ -37,7 +37,14 @@ from dashboard_collectors import (
     _http_healthy,
     _MONITOR_OK, check_gpu, check_ram, check_disk,
     check_services, check_cpu_temp, detect_alerts,
-)
+)        # ── Shared services (dynamic service catalog) ────────────────────────────
+try:
+    from shared_services_agents import ENTITIES as _ENTITIES, resolve_app_path as _resolve_app_path
+    _HAS_ENTITIES = True
+except ImportError:
+    _HAS_ENTITIES = False
+    _ENTITIES = []
+    _resolve_app_path = None
 
 # ── System Logger ────────────────────────────────────────────────────────
 try:
@@ -45,6 +52,105 @@ try:
     _LOG_OK = True
 except ImportError:
     _LOG_OK = False
+
+
+# ── Helper: Dynamic Service Catalog from shared_services_agents ──────────
+def _build_service_catalog(agents_list, claude_data, obsidian_data, services):
+    """Build service catalog dynamically from shared_services_agents.ENTITIES.
+
+    Falls back to a minimal hardcoded catalog if ENTITIES is unavailable.
+    """
+    result = []
+
+    if _HAS_ENTITIES:
+        # Build from ENTITIES — entities with kind "service" or "dashboard"
+        seen = set()
+        for e in _ENTITIES:
+            kinds = e.get("kinds", [])
+            key = e["key"]
+            if key in seen:
+                continue
+            # Skip deprecated
+            if e.get("deprecated"):
+                continue
+            # Only include if it has service or dashboard kind
+            if "service" not in kinds and "dashboard" not in kinds:
+                continue
+            seen.add(key)
+
+            port = e.get("port", 0)
+            icon = e.get("emoji", "📌")
+            name = e["name"]
+            role = e.get("role", "")
+            check_type = e.get("check_type", "")
+
+            # ── Determine health ──
+            healthy = False
+            url = "#"
+            if check_type == "http":
+                target = e.get("check_target", f"http://localhost:{port}")
+                timeout = e.get("check_timeout", 2)
+                healthy = _http_healthy(target, timeout=timeout)
+                if healthy and port:
+                    url = f"http://localhost:{port}"
+            elif check_type == "db_conn":
+                svc_data = services.get(key, {})
+                healthy = svc_data.get("healthy", False)
+            elif check_type == "windows_process":
+                # Check from agent data (name match)
+                for a in agents_list:
+                    if a["name"] == name:
+                        healthy = a["running"]
+                        break
+            elif check_type == "always_on":
+                healthy = True
+            elif check_type == "claude_collector":
+                healthy = claude_data.get("available", False)
+            elif check_type == "obsidian_collector":
+                healthy = obsidian_data.get("available", False)
+            elif check_type == "script_exists":
+                target = e.get("check_target", "")
+                healthy = bool(target) and (SCRIPT_DIR / target).exists()
+            elif check_type == "app_discover":
+                healthy = bool(_resolve_app_path(key) if _resolve_app_path else False)
+            else:
+                # For unknown types, check services dict
+                svc_data = services.get(key, {})
+                healthy = svc_data.get("healthy", False)
+
+            result.append({
+                "name": name,
+                "port": port,
+                "icon": icon,
+                "desc": role[:80] if role else name,
+                "health_key": key,
+                "healthy": healthy,
+                "url": url,
+            })
+    else:
+        # Minimal fallback catalog
+        fallback = [
+            {"name": "Ollama",    "port": 11434, "icon": "🧠", "desc": "LLM Server local",           "health_key": "ollama"},
+            {"name": "PostgreSQL","port": 5432,  "icon": "🗄️", "desc": "Base de datos",             "health_key": "postgresql"},
+            {"name": "Dashboard", "port": 5000,  "icon": "📊", "desc": "Monitor web del sistema",    "health_key": "dashboard_web"},
+            {"name": "Telegram",  "port": 0,     "icon": "🤖", "desc": "Bot multi-agente (tmux)",   "health_key": "telegram_bot"},
+            {"name": "Agatha",    "port": 0,     "icon": "📋", "desc": "Reportes horarios (tmux)",    "health_key": "agatha_actas"},
+            {"name": "Obsidian",  "port": 0,     "icon": "🪨", "desc": "Memoria persistente",           "health_key": "obsidian_memory"},
+        ]
+        for svc in fallback:
+            svc_data = services.get(svc["health_key"], {})
+            if svc["health_key"] == "telegram_bot":
+                svc["healthy"] = any(a["name"] == "Telegram Bot" and a["running"] for a in agents_list)
+            elif svc["health_key"] == "agatha_actas":
+                svc["healthy"] = any(a["name"] == "Agatha Actas" and a["running"] for a in agents_list)
+            elif svc["health_key"] == "obsidian_memory":
+                svc["healthy"] = obsidian_data.get("available", False)
+            else:
+                svc["healthy"] = svc_data.get("healthy", False)
+            svc["url"] = f"http://localhost:{svc['port']}" if svc.get("port") else "#"
+            result.append(svc)
+
+    return result
 
 
 # ── Flask App ────────────────────────────────────────────────────────────
@@ -126,90 +232,8 @@ def index():
     if running < total:
         alerts.append(f"⚠️  {total - running} agente(s) offline")
 
-    # ── Services with ports for enable/disable buttons ──
-    SERVICE_CATALOG = [
-        {"name": "Ollama",    "port": 11434, "icon": "🧠", "desc": "LLM Server local",           "health_key": "ollama"},
-        {"name": "ComfyUI",   "port": 8188,  "icon": "🎨", "desc": "Generación de imágenes",    "health_key": "comfyui"},
-        {"name": "Hermes",    "port": 9119,  "icon": "🧠", "desc": "Agente 3 escritorios",       "health_key": "hermes"},
-        {"name": "OpenHuman", "port": 7788,  "icon": "🤖", "desc": "API core (sin web UI)",    "health_key": "openhuman"},
-        {"name": "OpenHuman Desk","port": 0, "icon": "🖥️", "desc": "App nativa local-first",      "health_key": "openhuman_desktop"},
-        {"name": "PostgreSQL","port": 5432,  "icon": "🗄️", "desc": "Base de datos",             "health_key": "postgresql"},
-        {"name": "Vote API",  "port": 9099,  "icon": "🗳️", "desc": "API de votación de assets", "health_key": "vote"},
-        {"name": "Telegram",  "port": 0,     "icon": "🤖", "desc": "Bot multi-agente (tmux)",   "health_key": "telegram_bot"},
-        {"name": "Agatha",    "port": 0,     "icon": "📋", "desc": "Reportes horarios (tmux)",    "health_key": "agatha"},
-        {"name": "DonHermes", "port": 0,     "icon": "🤖", "desc": "Bot de Agatha (@...ai_bot)", "health_key": "donhermes"},
-        {"name": "Hermes Dash","port": 9120, "icon": "📊", "desc": "Web UI de Hermes Agent",    "health_key": "hermes_dashboard"},
-        {"name": "Hermes Desk","port": 0,    "icon": "🖥️", "desc": "App nativa Hermes Desktop",  "health_key": "hermes_desktop"},
-        {"name": "Claude Code", "port": 0,   "icon": "🤖", "desc": "Sub-agente de Buffy",         "health_key": "claude"},
-        {"name": "Obsidian",   "port": 0,     "icon": "🪨", "desc": "Memoria persistente",           "health_key": "obsidian"},
-    ]
-
-    # Enrich with health status
-    servicios = []
-    for svc in SERVICE_CATALOG:
-        if svc["health_key"] == "telegram_bot":
-            # Check from agent data
-            for a in agents_list:
-                if a["name"] == "Telegram Bot":
-                    svc["healthy"] = a["running"]
-                    break
-            else:
-                svc["healthy"] = False
-            svc["url"] = "#"
-        elif svc["health_key"] == "agatha":
-            # Check from agent data
-            for a in agents_list:
-                if a["name"] == "Agatha Actas":
-                    svc["healthy"] = a["running"]
-                    break
-            else:
-                svc["healthy"] = False
-            svc["url"] = "#"
-        elif svc["health_key"] == "donhermes":
-            # Check from agent data
-            for a in agents_list:
-                if a["name"] == "DonHermes Bot":
-                    svc["healthy"] = a["running"]
-                    break
-            else:
-                svc["healthy"] = False
-            svc["url"] = "#"
-        elif svc["health_key"] == "hermes":
-            # Direct HTTP check (not in check_services())
-            svc["healthy"] = _http_healthy(f"http://localhost:{svc['port']}", timeout=2)
-            svc["url"] = f"http://localhost:{svc['port']}"
-        elif svc["health_key"] == "hermes_dashboard":
-            # Web UI de Hermes en :9120
-            svc["healthy"] = _http_healthy(f"http://localhost:{svc['port']}", timeout=2)
-            svc["url"] = f"http://localhost:{svc['port']}"
-        elif svc["health_key"] == "hermes_desktop":
-            # Native app - no se puede verificar desde aquí
-            svc["healthy"] = False
-            svc["url"] = "#"
-        elif svc["health_key"] == "openhuman":
-            # Solo API core — no tiene web UI, el botón no debe abrir :7788
-            svc["healthy"] = _http_healthy("http://localhost:7788", timeout=2)
-            svc["url"] = "#"
-        elif svc["health_key"] == "openhuman_desktop":
-            # Native app - no verificable
-            svc["healthy"] = False
-            svc["url"] = "#"
-        elif svc["health_key"] == "claude":
-            # Claude Code - check from agent data
-            svc["healthy"] = claude_data.get("available", False)
-            svc["url"] = "#"
-        elif svc["health_key"] == "obsidian":
-            # Obsidian Memory - check from collected data
-            svc["healthy"] = obsidian_data.get("available", False)
-            svc["url"] = "#"
-        elif svc["health_key"] == "vote":
-            svc["healthy"] = _http_healthy(f"http://localhost:{svc['port']}/api/stats", timeout=2)
-            svc["url"] = f"http://localhost:{svc['port']}"
-        else:
-            svc_data = services.get(svc["health_key"], {})
-            svc["healthy"] = svc_data.get("healthy", False)
-            svc["url"] = f"http://localhost:{svc['port']}"
-        servicios.append(svc)
+    # ── Services with ports for enable/disable buttons (DYNAMIC from ENTITIES) ──
+    servicios = _build_service_catalog(agents_list, claude_data, obsidian_data, services)
 
     try:
         return render_template('dashboard.html',
@@ -318,6 +342,149 @@ def api_obsidian():
 def api_claude():
     """JSON endpoint with Claude Code status."""
     return jsonify(collect_claude_status())
+
+
+@app.route("/api/factory")
+def api_factory():
+    """JSON endpoint with Factory production line status from agatha_actas.
+
+    Returns workstations grouped by department (management, design,
+    production, engine, agent, communication, storage, monitoring),
+    services health, system metrics, and alerts.
+    """
+    result = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "workstations": [],
+        "by_department": {},
+        "services": [],
+        "system": {},
+        "alerts": [],
+        "available": False,
+    }
+
+    try:
+        from agatha_actas import collect_activity, _check_workstation
+        from shared_services_agents import WORKSTATIONS, ENTITIES
+
+        # ── Workstations grouped by department ──
+        dept_order = [
+            ("management", "🏢 GESTIÓN"),
+            ("design", "✏️ DISEÑO"),
+            ("production", "⚙️ PRODUCCIÓN"),
+            ("engine", "🔧 MOTORES"),
+            ("agent", "🤖 AGENTES IA"),
+            ("communication", "📡 COMUNICACIÓN"),
+            ("storage", "💾 DATOS"),
+            ("monitoring", "📊 MONITOREO"),
+        ]
+
+        workstations = []
+        by_department = {}
+        for ws in WORKSTATIONS:
+            if ws.get("deprecated"):
+                continue
+            checked = _check_workstation(ws)
+            entry = {
+                "key": checked["key"],
+                "name": checked["name"],
+                "emoji": checked["emoji"],
+                "type": checked["type"],
+                "running": checked["running"],
+                "status_emoji": checked.get("status_emoji", "🟢" if checked["running"] else "🔴"),
+                "role": checked.get("role", ""),
+            }
+            workstations.append(entry)
+            dtype = checked["type"]
+            if dtype not in by_department:
+                by_department[dtype] = []
+            by_department[dtype].append(entry)
+
+        result["workstations"] = workstations
+        result["by_department"] = {
+            dtype: {"label": dlabel, "members": by_department.get(dtype, [])}
+            for dtype, dlabel in dept_order
+            if dtype in by_department
+        }
+
+        # ── Services from ENTITIES ──
+        svc_entities = [e for e in ENTITIES if "service" in e.get("kinds", [])
+                        and not e.get("deprecated")]
+        for svc in svc_entities:
+            check_type = svc.get("check_type", "")
+            target = svc.get("check_target")
+            port = svc.get("port", 0)
+            healthy = False
+            if check_type == "http" and target:
+                healthy = _http_healthy(target, timeout=svc.get("check_timeout", 3))
+            elif check_type == "db_conn":
+                if _MONITOR_OK:
+                    svc_services = check_services()
+                    svc_data = svc_services.get(svc["key"], {})
+                    healthy = svc_data.get("healthy", False)
+            elif check_type == "always_on":
+                healthy = True
+
+            result["services"].append({
+                "key": svc["key"],
+                "name": svc["name"],
+                "emoji": svc.get("emoji", "📡"),
+                "port": port,
+                "healthy": healthy,
+                "role": svc.get("role", ""),
+            })
+
+        # ── System metrics ──
+        if _MONITOR_OK:
+            result["system"] = {
+                "gpu": check_gpu() if check_gpu else {"available": False},
+                "ram": check_ram() if check_ram else {},
+                "disk": check_disk() if check_disk else {},
+            }
+
+        # ── Alerts ──
+        active_ws = sum(1 for w in workstations if w["running"])
+        ws_total = len(workstations)
+        active_svc = sum(1 for s in result["services"] if s["healthy"])
+        svc_total = len(result["services"])
+
+        if active_ws < ws_total:
+            result["alerts"].append(f"🔴 {ws_total - active_ws} workstation(s) inactivas")
+        if active_svc < svc_total:
+            result["alerts"].append(f"❌ {svc_total - active_svc} servicio(s) caídos")
+
+        result["available"] = True
+        result["stats"] = {
+            "workstations_active": active_ws,
+            "workstations_total": ws_total,
+            "services_healthy": active_svc,
+            "services_total": svc_total,
+        }
+
+    except ImportError as e:
+        result["error"] = f"agatha_actas or shared_services_agents not available: {e}"
+    except Exception as e:
+        result["error"] = str(e)
+
+    return jsonify(result)
+
+
+@app.route("/blender")
+def serve_blender_viewer():
+    """Serve the 3D Blender assets viewer."""
+    viewer_path = SCRIPT_DIR / "blender_viewer.html"
+    if viewer_path.exists():
+        return viewer_path.read_text(encoding="utf-8"), 200, {"Content-Type": "text/html; charset=utf-8"}
+    return "<h2>blender_viewer.html not found</h2>", 404
+
+
+@app.route("/render/<filename>")
+def serve_render(filename: str):
+    """Serve a raw Blender render PNG from blender_renders/."""
+    safe_name = Path(filename).name  # Prevent path traversal
+    filepath = SCRIPT_DIR / "blender_renders" / safe_name
+    if filepath.exists():
+        return send_file(str(filepath), mimetype="image/png")
+    return "<h2>Render not found</h2>", 404
 
 
 @app.route("/viewer.html")

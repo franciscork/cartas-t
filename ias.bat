@@ -46,22 +46,21 @@ echo %BOLD%📊 Estado de Servicios:%NC%
 echo.
 
 call :test_svc "🧠 Ollama       " 11434 "/api/tags"
-call :test_svc "🎨 ComfyUI      " 8188 "/queue"
-call :test_svc "🧠 Hermes       " 9119 ""
-call :test_svc "🤖 OpenHuman    " 7788 ""
-call :test_svc "📊 Dashboard    " 5000 ""
+call :test_svc "🖌️  InvokeAI     " 9090 "/api/v1/app/version"
+call :test_svc "🤖 OpenHuman    " 7788 "/health"
+call :test_svc "📊 Dashboard    " 5000 "/api/health"
 call :test_svc_postgres
 call :test_svc_telegram
 call :test_svc_agatha
+call :test_svc_openhuman_desktop
 
 echo.
 echo %CYAN%──────────────────────────────────────────────────────────%NC%
-echo   %BOLD%[a]%NC% Start ALL        %BOLD%[s]%NC% Stop ALL         %BOLD%[r]%NC% Restart ALL
-echo   %BOLD%[1]%NC% Ollama           %BOLD%[2]%NC% ComfyUI          %BOLD%[3]%NC% Hermes
-echo   %BOLD%[4]%NC% OpenHuman        %BOLD%[5]%NC% PostgreSQL       %BOLD%[6]%NC% Dashboard
-echo   %BOLD%[7]%NC% Dashboard        %BOLD%[8]%NC% Telegram Bot     %BOLD%[9]%NC% Agatha Actas
-echo   %BOLD%[m]%NC% Models           %BOLD%[b]%NC% Backup DB
-echo   %BOLD%[q]%NC% Quit
+echo   %BOLD%[a]%NC% Start ALL       %BOLD%[s]%NC% Stop ALL        %BOLD%[r]%NC% Restart ALL
+echo   %BOLD%[1]%NC% Ollama          %BOLD%[2]%NC% InvokeAI         %BOLD%[3]%NC% PostgreSQL
+echo   %BOLD%[4]%NC% OpenHuman       %BOLD%[5]%NC% Dashboard        %BOLD%[6]%NC% Telegram Bot
+echo   %BOLD%[7]%NC% Agatha Actas    %BOLD%[8]%NC% All Bots         %BOLD%[m]%NC% Models
+echo   %BOLD%[b]%NC% Backup DB       %BOLD%[q]%NC% Quit
 echo %CYAN%──────────────────────────────────────────────────────────%NC%
 echo.
 goto :eof
@@ -109,6 +108,16 @@ if "%AG_RESULT%"=="YES" (
 )
 goto :eof
 
+:test_svc_openhuman_desktop
+wsl -d %DISTRO% -- bash -c "command -v openhuman-core >/dev/null 2>&1 && echo YES || echo NO" 2>nul > "%TMPFILE%"
+set /p OH_RESULT=<"%TMPFILE%"
+if "%OH_RESULT%"=="YES" (
+    echo   %GREEN%🟢%NC% 🖥️  OpenHuman Desk %DIM%→ WSL bin%NC%
+) else (
+    echo   %DIM%⚫%NC% 🖥️  OpenHuman Desk %DIM%(no instalado)%NC%
+)
+goto :eof
+
 REM ═══════════════════════════════════════════════════════════════════════════
 REM  START
 REM ═══════════════════════════════════════════════════════════════════════════
@@ -127,39 +136,48 @@ echo %CYAN%║%NC%       %BOLD%☾  SIMMOON  —  Launching ALL IAs%NC%         
 echo %CYAN%╚══════════════════════════════════════════════════════════╝%NC%
 echo.
 
-echo %BOLD%[1/5] 🧠 Ollama...%NC%
+echo %BOLD%[1/6] 🧠 Ollama...%NC%
 wsl -d %DISTRO% -- bash -c "nohup ollama serve > /dev/null 2>&1 & sleep 3; curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null && echo 'OK' || echo 'WAIT'" 2>nul
 echo   %GREEN%✅ Iniciado%NC%
 
 echo.
-echo %BOLD%[2/5] 🗄️  PostgreSQL...%NC%
+echo %BOLD%[2/6] 🗄️  PostgreSQL...%NC%
 wsl -d %DISTRO% -- bash -c "sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null; pg_isready -q -h localhost && echo 'OK' || echo 'FAIL'" 2>nul
 echo   %GREEN%✅ Iniciado%NC%
 
 echo.
-echo %BOLD%[3/5] 🎨 ComfyUI...%NC%
-wsl -d %DISTRO% -- bash -c "cd ~/ComfyUI && nohup ./venv/bin/python main.py --listen --port 8188 > /dev/null 2>&1 &" 2>nul
-echo   %GREEN%✅ Iniciando (puede tardar 30-60s)%NC%
-
-echo.
-echo %BOLD%[4/5] 🧠 Hermes Agent...%NC%
-wsl -d %DISTRO% -- bash -c "export PATH=$HOME/.local/bin:$PATH; mkdir -p ~/.hermes/logs; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; tmux new-session -d -s hermes-gateway 'source ~/.bashrc 2>/dev/null; hermes gateway run 2>&1 | tee ~/.hermes/logs/gateway.log; bash'; tmux new-session -d -s hermes-tui 'source ~/.bashrc 2>/dev/null; hermes --tui 2>&1 | tee ~/.hermes/logs/tui.log; bash'; tmux new-session -d -s hermes-dashboard 'hermes dashboard --port 9119 --no-open 2>&1 | tee ~/.hermes/logs/dashboard.log; bash'" 2>nul
-echo   %GREEN%✅ 3 interfaces iniciadas%NC%
-
-echo.
-echo %BOLD%[5/5] 📊 Dashboard...%NC%
+echo %BOLD%[3/6] 📊 Dashboard...%NC%
 wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && nohup python3 dashboard.py > /dev/null 2>&1 & sleep 2" 2>nul
 echo   %GREEN%✅ http://localhost:5000%NC%
 
 echo.
+echo %BOLD%[4/6] 🤖 Telegram Bot...%NC%
+wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux kill-session -t telegram-bot 2>/dev/null; tmux new-session -d -s telegram-bot 'python3 telegram_bot.py 2>&1 | tee ~/.simmoon-logs/telegram_bot.log; bash'" 2>nul
+echo   %GREEN%✅ Iniciado (sesion: telegram-bot)%NC%
+
+echo.
+echo %BOLD%[5/6] 📋 Agatha Actas...%NC%
+wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux kill-session -t agatha-actas 2>/dev/null; tmux new-session -d -s agatha-actas 'python3 agatha_actas.py --daemon 2>&1 | tee ~/.simmoon-logs/agatha_actas.log; bash'" 2>nul
+echo   %GREEN%✅ Iniciado (sesion: agatha-actas)%NC%
+
+echo.
+echo %BOLD%[6/6] 🤖 Coding Agents...%NC%
+where goose >nul 2>nul && echo   🪿 goose      %GREEN%✅ disponible%NC% || echo   🪿 goose      %YELLOW%⚠️  no en PATH%NC%
+where aider >nul 2>nul && echo   🧑‍✈️ Aider      %GREEN%✅ disponible%NC% || echo   🧑‍✈️ Aider      %YELLOW%⚠️  no en PATH%NC%
+where devin >nul 2>nul && echo   🧑‍💻 Devin      %GREEN%✅ disponible%NC% || echo   🧑‍💻 Devin      %YELLOW%⚠️  no en PATH%NC%
+where amp >nul 2>nul && echo   ⚡ Amp         %GREEN%✅ disponible%NC% || echo   ⚡ Amp         %YELLOW%⚠️  no en PATH%NC%
+
+echo.
 echo %CYAN%╔══════════════════════════════════════════════════════════╗%NC%
-echo %CYAN%║%NC%              %GREEN%✅  TODAS LAS IAs ACTIVAS%NC%                   %CYAN%║%NC%
+echo %CYAN%║%NC%              %GREEN%✅  STACK ACTIVO%NC%                              %CYAN%║%NC%
 echo %CYAN%╠══════════════════════════════════════════════════════════╣%NC%
 echo %CYAN%║%NC%  🧠 Ollama       → http://localhost:11434                %CYAN%║%NC%
-echo %CYAN%║%NC%  🎨 ComfyUI      → http://localhost:8188                 %CYAN%║%NC%
-echo %CYAN%║%NC%  🧠 Hermes Dash  → http://localhost:9119                 %CYAN%║%NC%
 echo %CYAN%║%NC%  🗄️  PostgreSQL   → localhost:5432                        %CYAN%║%NC%
 echo %CYAN%║%NC%  📊 Dashboard    → http://localhost:5000                 %CYAN%║%NC%
+echo %CYAN%║%NC%  🤖 Telegram Bot → tmux attach -t telegram-bot            %CYAN%║%NC%
+echo %CYAN%║%NC%  📋 Agatha Actas → tmux attach -t agatha-actas            %CYAN%║%NC%
+echo %CYAN%║%NC%  🪿 goose        → CLI (Block's open-source agent)        %CYAN%║%NC%
+echo %CYAN%║%NC%  🧑‍✈️ Aider        → CLI (AI pair-programmer)                 %CYAN%║%NC%
 echo %CYAN%║%NC%                                                          %CYAN%║%NC%
 echo %CYAN%║%NC%  🛑 Detener: ias stop                                   %CYAN%║%NC%
 echo %CYAN%║%NC%  📊 Estado:  ias status                                 %CYAN%║%NC%
@@ -173,38 +191,51 @@ if "%svc%"=="ollama" (
     echo 🧠 Iniciando Ollama...
     wsl -d %DISTRO% -- bash -c "nohup ollama serve > /dev/null 2>&1 &"
     echo %GREEN%✅ Ollama iniciado en :11434%NC%
-) else if "%svc%"=="comfyui" (
-    echo 🎨 Iniciando ComfyUI...
-    wsl -d %DISTRO% -- bash -c "cd ~/ComfyUI && nohup ./venv/bin/python main.py --listen --port 8188 > /dev/null 2>&1 &"
-    echo %GREEN%✅ ComfyUI iniciando (30-60s)%NC%    ) else if "%svc%"=="hermes" (
-    echo 🧠 Iniciando Hermes...
-    wsl -d %DISTRO% -- bash -c "export PATH=$HOME/.local/bin:$PATH; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; tmux new-session -d -s hermes-gateway 'hermes gateway run; bash'; tmux new-session -d -s hermes-tui 'hermes --tui; bash'; tmux new-session -d -s hermes-dashboard 'hermes dashboard --port 9119 --no-open; bash'"
-    echo %GREEN%✅ Hermes iniciado en :9119%NC%
-) else if "%svc%"=="openhuman" (
-    echo 🤖 Iniciando OpenHuman...
-    wsl -d %DISTRO% -- bash -c "export LD_LIBRARY_PATH=~/openhuman; cd ~/openhuman && nohup ./openhuman-core run --jsonrpc-only --host 0.0.0.0 --port 7788 > /dev/null 2>&1 &"
-    echo %GREEN%✅ OpenHuman iniciado (puerto 7788)%NC%
 ) else if "%svc%"=="postgres" (
     echo 🗄️  Iniciando PostgreSQL...
     wsl -d %DISTRO% -- bash -c "sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null"
-    echo %GREEN%✅ PostgreSQL iniciado%NC%    ) else if "%svc%"=="jarvis" (
-    echo 💬 Iniciando Jarvis (CLI interactivo)...
-    wsl -d %DISTRO% -- bash -c "cd ~/OpenJarvis && export PATH=$HOME/.local/bin:$PATH && uv run jarvis chat"    ) else if "%svc%"=="telegram" (
+    echo %GREEN%✅ PostgreSQL iniciado%NC%
+) else if "%svc%"=="invokeai" (
+    echo 🖌️  Iniciando InvokeAI...
+    wsl -d %DISTRO% -- bash -c "cd ~/invokeai 2>/dev/null && nohup invokeai-web --host 0.0.0.0 --port 9090 > /dev/null 2>&1 &" 2>nul
+    echo %GREEN%✅ InvokeAI → http://localhost:9090%NC%
+) else if "%svc%"=="openhuman" (
+    echo 🤖 Iniciando OpenHuman...
+    wsl -d %DISTRO% -- bash -c "cd ~/openhuman 2>/dev/null && export LD_LIBRARY_PATH=.:\$LD_LIBRARY_PATH && nohup ./openhuman-core run --jsonrpc-only --host 0.0.0.0 --port 7788 > /dev/null 2>&1 &" 2>nul
+    echo %GREEN%✅ OpenHuman → http://localhost:7788%NC%
+) else if "%svc%"=="telegram" (
     echo 🤖 Iniciando Telegram Bot...
-    wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux new-session -d -s telegram-bot 'python3 telegram_bot.py 2>&1 | tee ~/.simmoon-logs/telegram_bot.log; bash'"
-    echo %GREEN%✅ Telegram Bot iniciado (sesión: telegram-bot)%NC%
+    wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux kill-session -t telegram-bot 2>/dev/null; tmux new-session -d -s telegram-bot 'python3 telegram_bot.py 2>&1 | tee ~/.simmoon-logs/telegram_bot.log; bash'"
+    echo %GREEN%✅ Telegram Bot iniciado (sesion: telegram-bot)%NC%
 ) else if "%svc%"=="agatha" (
     echo 📋 Iniciando Agatha Actas (reportes horarios)...
-    wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux new-session -d -s agatha-actas 'python3 agatha_actas.py --daemon 2>&1 | tee ~/.simmoon-logs/agatha_actas.log; bash'"
-    echo %GREEN%✅ Agatha Actas iniciado (sesión: agatha-actas)%NC%
+    wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && tmux kill-session -t agatha-actas 2>/dev/null; tmux new-session -d -s agatha-actas 'python3 agatha_actas.py --daemon 2>&1 | tee ~/.simmoon-logs/agatha_actas.log; bash'"
+    echo %GREEN%✅ Agatha Actas iniciado (sesion: agatha-actas)%NC%
 ) else if "%svc%"=="dashboard" (
     echo 📊 Iniciando Dashboard...
     wsl -d %DISTRO% -- bash -c "cd ~/Simmoon_arc && nohup python3 dashboard.py > /dev/null 2>&1 &"
     echo %GREEN%✅ Dashboard → http://localhost:5000%NC%
+) else if "%svc%"=="bot" (
+    call :start_one telegram
+    call :start_one agatha
+    goto :eof
+) else if "%svc%"=="coding" (
+    call :start_coding_agents
 ) else (
     echo %YELLOW%Servicio desconocido: %svc%%NC%
-    echo   Opciones: ollama, comfyui, hermes, openhuman, postgres, jarvis, dashboard
+    echo   Opciones: ollama, invokeai, postgres, openhuman, dashboard, telegram, agatha, bot, coding
 )
+
+:start_coding_agents
+echo %CYAN%🤖 Iniciando Coding Agents (verificación en PATH)...%NC%
+where goose >nul 2>nul && (echo   🪿 goose    %GREEN%✅ disponible%NC%) || (echo   🪿 goose    %YELLOW%⚠️  no instalado%NC%)
+where aider >nul 2>nul && (echo   🧑‍✈️ Aider    %GREEN%✅ disponible%NC%) || (echo   🧑‍✈️ Aider    %YELLOW%⚠️  no instalado%NC%)
+where devin >nul 2>nul && (echo   🧑‍💻 Devin    %GREEN%✅ disponible%NC%) || (echo   🧑‍💻 Devin    %YELLOW%⚠️  no instalado%NC%)
+where amp >nul 2>nul && (echo   ⚡ Amp       %GREEN%✅ disponible%NC%) || (echo   ⚡ Amp       %YELLOW%⚠️  no instalado%NC%)
+echo.
+echo %DIM%Nota: Coding Agents son CLI/Desktop; este script solo verifica PATH.%NC%
+echo %DIM%Para invocar: 'aider', 'goose', etc. desde terminal.%NC%
+goto :eof
 goto :eof
 
 REM ═══════════════════════════════════════════════════════════════════════════
@@ -213,8 +244,9 @@ REM ═════════════════════════�
 :stop
 if "%~2"=="" (
     echo %YELLOW%🛑 Deteniendo TODOS los servicios...%NC%
-    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null; pkill -f 'main.py.*--port 8188' 2>/dev/null; for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes dashboard' 2>/dev/null; pkill -f 'hermes gateway' 2>/dev/null; pkill -f 'openhuman-core' 2>/dev/null; pkill -f 'dashboard.py' 2>/dev/null; sudo systemctl stop postgresql 2>/dev/null || sudo service postgresql stop 2>/dev/null; echo DONE"
-    echo %GREEN%✅ Todos los servicios detenidos%NC%
+    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null; pkill -f 'dashboard.py' 2>/dev/null; sudo systemctl stop postgresql 2>/dev/null || sudo service postgresql stop 2>/dev/null; echo DONE"
+    wsl -d %DISTRO% -- bash -c "tmux kill-session -t telegram-bot 2>/dev/null; tmux kill-session -t agatha-actas 2>/dev/null; echo OK"
+    echo %GREEN%✅ Servicios backend detenidos (coding agents son CLI/Desktop, gestionar manualmente si necesario)%NC%
 ) else (
     call :stop_one %2
 )
@@ -223,13 +255,21 @@ goto :eof
 :stop_one
 echo Deteniendo %1...
 if "%~1"=="ollama"    wsl -d %DISTRO% -- bash -c "pkill -f 'ollama serve' 2>/dev/null || true"
-if "%~1"=="comfyui"   wsl -d %DISTRO% -- bash -c "pkill -f 'main.py.*--port 8188' 2>/dev/null || true"
-if "%~1"=="hermes"    wsl -d %DISTRO% -- bash -c "for s in hermes-gateway hermes-tui hermes-dashboard; do tmux kill-session -t $s 2>/dev/null; done; pkill -f 'hermes' 2>/dev/null || true"
+if "%~1"=="invokeai"  wsl -d %DISTRO% -- bash -c "pkill -f 'invokeai-web' 2>/dev/null || true"
 if "%~1"=="openhuman" wsl -d %DISTRO% -- bash -c "pkill -f 'openhuman-core' 2>/dev/null || true"
 if "%~1"=="postgres"  wsl -d %DISTRO% -- bash -c "sudo service postgresql stop 2>/dev/null || true"
-if "%~1"=="telegram" wsl -d %DISTRO% -- bash -c "tmux kill-session -t telegram-bot 2>/dev/null; pkill -f 'telegram_bot.py' 2>/dev/null || true"
-if "%~1"=="agatha" wsl -d %DISTRO% -- bash -c "tmux kill-session -t agatha-actas 2>/dev/null; pkill -f 'agatha_actas.py' 2>/dev/null || true"
+if "%~1"=="telegram"  wsl -d %DISTRO% -- bash -c "tmux kill-session -t telegram-bot 2>/dev/null; pkill -f 'telegram_bot.py' 2>/dev/null || true"
+if "%~1"=="agatha"    wsl -d %DISTRO% -- bash -c "tmux kill-session -t agatha-actas 2>/dev/null; pkill -f 'agatha_actas.py' 2>/dev/null || true"
 if "%~1"=="dashboard" wsl -d %DISTRO% -- bash -c "pkill -f 'dashboard.py' 2>/dev/null || true"
+if "%~1"=="bot" (
+    call :stop_one telegram
+    call :stop_one agatha
+    goto :eof
+)
+if "%~1"=="coding" (
+    echo %DIM%Los Coding Agents (goose/aider/devin/amp) son procesos CLI/Desktop interactivos. Detener manualmente desde su terminal.%NC%
+    goto :eof
+)
 echo ✅ Detenido
 goto :eof
 
@@ -257,17 +297,17 @@ if "%~1"=="" (
     if /i "!CHOICE!"=="a" call :start all
     if /i "!CHOICE!"=="s" call :stop all
     if /i "!CHOICE!"=="r" ( call :stop all & timeout /t 2 >nul & call :start all )
-    if /i "!CHOICE!"=="1" call :start_one ollama
-    if /i "!CHOICE!"=="2" call :start_one comfyui
-    if /i "!CHOICE!"=="3" call :start_one hermes
-    if /i "!CHOICE!"=="4" call :start_one openhuman
-    if /i "!CHOICE!"=="5" call :start_one postgres
-    if /i "!CHOICE!"=="6" call :start_one dashboard
-    if /i "!CHOICE!"=="7" call :start_one telegram
-    if /i "!CHOICE!"=="8" call :start_one agatha
-    if /i "!CHOICE!"=="m" call :models
-    if /i "!CHOICE!"=="b" call :backup
-    goto :eof
+if /i "!CHOICE!"=="1" call :start_one ollama
+if /i "!CHOICE!"=="2" call :start_one invokeai
+if /i "!CHOICE!"=="3" call :start_one postgres
+if /i "!CHOICE!"=="4" call :start_one openhuman
+if /i "!CHOICE!"=="5" call :start_one dashboard
+if /i "!CHOICE!"=="6" call :start_one telegram
+if /i "!CHOICE!"=="7" call :start_one agatha
+if /i "!CHOICE!"=="8" call :start_one bot
+if /i "!CHOICE!"=="m" call :models
+if /i "!CHOICE!"=="b" call :backup
+goto :eof
 )
 
 if /i "%~1"=="start"   ( call :start %* & goto :eof )
